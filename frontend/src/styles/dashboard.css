@@ -1,0 +1,50 @@
+/* Dashboard Specific Styles */
+
+.dashboard-tab-button {
+  position: relative;
+}
+
+.dashboard-tab-content {
+  /* Content styles without animations */
+}
+
+.dashboard-portfolio-tab {
+  min-height: 400px;
+}
+
+.rwa-portfolio-isolated-container {
+  contain: layout;
+  position: relative;
+}
+
+/* Removed animations for stability */
+
+/* Custom scrollbar for dashboard content */
+.dashboard-tab-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.dashboard-tab-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.dashboard-tab-content::-webkit-scrollbar-thumb {
+  background: rgba(59, 130, 246, 0.3);
+  border-radius: 3px;
+}
+
+.dashboard-tab-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.5);
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .dashboard-tab-button {
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .dashboard-tab-content {
+    padding: 0 1rem;
+  }
+}

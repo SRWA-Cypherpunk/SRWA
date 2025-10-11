@@ -1,0 +1,149 @@
+/**
+ * Mobile Optimizations for SRWA Platform
+ * Melhorias específicas para dispositivos móveis
+ */
+
+/* Touch-friendly interactions */
+@media (hover: none) and (pointer: coarse) {
+  /* Increase touch targets */
+  button,
+  a,
+  [role="button"] {
+    min-height: 48px;
+    min-width: 48px;
+  }
+
+  /* Reduce animations for better performance */
+  * {
+    animation-duration: 0.2s !important;
+    transition-duration: 0.2s !important;
+  }
+
+  /* Remove hover effects on touch devices */
+  .hover-lift:hover,
+  .hover-glow:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* Small screens optimizations */
+@media (max-width: 640px) {
+  /* Typography adjustments */
+  .text-display-1 {
+    font-size: 2rem !important;
+    line-height: 2.5rem !important;
+  }
+
+  .text-h1 {
+    font-size: 1.75rem !important;
+    line-height: 2.25rem !important;
+  }
+
+  /* Spacing optimizations */
+  .container {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Card optimizations */
+  .card-institutional {
+    padding: 1rem;
+  }
+
+  /* Grid optimizations */
+  .grid {
+    gap: 1rem;
+  }
+
+  /* Button optimizations */
+  .btn-primary,
+  .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .text-display-1 {
+    font-size: 3rem !important;
+    line-height: 3.5rem !important;
+  }
+}
+
+/* Landscape mobile optimizations */
+@media (max-height: 500px) and (orientation: landscape) {
+  /* Reduce vertical padding */
+  section {
+    padding-top: 2rem !important;
+    padding-bottom: 2rem !important;
+  }
+
+  /* Compact hero */
+  .hero-section {
+    min-height: auto !important;
+  }
+}
+
+/* High DPI screens */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Sharper borders */
+  .border {
+    border-width: 0.5px;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .animate-pulse {
+    animation: none;
+  }
+
+  .animate-spin {
+    animation: none;
+  }
+}
+
+/* Dark mode specific mobile optimizations */
+@media (max-width: 640px) {
+  /* Reduce glow effects for battery saving */
+  .glow-purple,
+  .glow-orange,
+  .glow-solana {
+    box-shadow: none;
+  }
+
+  /* Simplified gradients */
+  .bg-gradient-solana {
+    background: linear-gradient(135deg, #9945FF 0%, #FF6B35 100%);
+  }
+}
+
+/* iOS specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* Fix iOS safe area */
+  .fixed {
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Fix iOS scroll bounce */
+  body {
+    overscroll-behavior-y: none;
+  }
+
+  /* Fix iOS button styling */
+  button,
+  [role="button"] {
+    -webkit-appearance: none;
+  }
+}

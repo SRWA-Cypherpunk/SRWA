@@ -1,0 +1,50 @@
+/**
+ * Custom Wallet Styles - Modern, Clean, Professional
+ *
+ * Note: Default wallet-adapter styles are hidden/overridden
+ * We use our custom components instead
+ */
+
+/* Hide default wallet adapter modal (we use custom) */
+.wallet-adapter-modal-wrapper {
+  display: none !important;
+}
+
+.wallet-adapter-modal-overlay {
+  display: none !important;
+}
+
+/* Reset any default button styles if they leak through */
+.wallet-adapter-button {
+  all: unset;
+}
+
+.wallet-adapter-button-trigger {
+  all: unset;
+}
+
+/* Scrollbar styling for modal */
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(153, 69, 255, 0.3);
+  border-radius: 4px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: rgba(153, 69, 255, 0.5);
+}
+
+/* Focus visible for accessibility */
+button:focus-visible {
+  outline: 2px solid rgba(153, 69, 255, 0.5);
+  outline-offset: 2px;
+}
