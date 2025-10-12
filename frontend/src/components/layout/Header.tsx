@@ -1,28 +1,48 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { SolanaWalletButton } from "@/components/wallet/SolanaWalletButton";
 import { ROUTES } from "@/lib/constants";
 import Logo from "@/assets/logo.png";
+import SRWALetters from "@/assets/srwa_letters.png";
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
+
+  useEffect(() => {
+    const controlNavbar = () => {
+      const currentScrollY = window.scrollY;
+
+      if (currentScrollY < 10) {
+        // Always show at top
+        setIsVisible(true);
+      } else if (currentScrollY > lastScrollY) {
+        // Scrolling down
+        setIsVisible(false);
+      } else {
+        // Scrolling up
+        setIsVisible(true);
+      }
+
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', controlNavbar);
+    return () => window.removeEventListener('scroll', controlNavbar);
+  }, [lastScrollY]);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-stroke-line bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className={`sticky top-0 z-50 w-full border-b border-stroke-line bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-transform duration-300 ${
+      isVisible ? 'translate-y-0' : '-translate-y-full'
+    }`}>
       <div className="container mx-auto flex h-14 sm:h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
 
         {/* Logo */}
-        <a href={ROUTES.HOME} className="flex items-center space-x-2 sm:space-x-3 group">
-          <img src={Logo} alt="SRWA Logo" className="h-auto w-12 sm:w-16 md:w-20 transition-transform group-hover:scale-105" />
-          <div className="flex flex-col">
-            <span className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-brand-400 via-accent-orange-500 to-brand-500 bg-clip-text text-transparent">
-              SRWA
-            </span>
-            <span className="text-[8px] sm:text-[10px] text-fg-muted uppercase tracking-wider hidden sm:block">
-              Solana RWA
-            </span>
-          </div>
+        <a href={ROUTES.HOME} className="flex items-center gap-2 sm:gap-3 group">
+          <img src={Logo} alt="SRWA Logo" className="h-auto w-4 sm:w-6 md:w-8 transition-transform group-hover:scale-105" />
+          <img src={SRWALetters} alt="SRWA" className="h-auto w-16 sm:w-20 md:w-24 transition-transform group-hover:scale-105" />
         </a>
 
         {/* Spacer for centering */}

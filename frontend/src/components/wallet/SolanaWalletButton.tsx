@@ -177,79 +177,20 @@ export function SolanaWalletButton({ className }: SolanaWalletButtonProps) {
   // Disconnected state - primary CTA
   return (
     <>
-      <motion.button
+      <HeroButton
         onClick={handleConnect}
-        whileHover={{ scale: 1.03 }}
-        whileTap={{ scale: 0.97 }}
+        variant="brand"
         className={cn(
-          'relative inline-flex items-center justify-center gap-2',
-          'px-4 py-2 sm:px-5 sm:py-2.5',
-          'text-xs sm:text-sm font-semibold text-white',
-          'rounded-lg',
-          'overflow-hidden group',
-          'transition-all duration-300',
-          'border border-purple-500/30',
-          'shadow-md shadow-purple-500/20',
-          'hover:shadow-lg hover:shadow-purple-500/30',
           'w-full sm:w-auto',
+          '!px-4 !py-2 sm:!px-5 sm:!py-2.5', // Manter tamanho original menor
+          '!text-xs sm:!text-sm', // Manter font size original
           className
         )}
+        icon={<Wallet className="h-3.5 w-3.5 sm:h-4 sm:w-4" />}
       >
-        {/* Animated gradient background */}
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-purple-600 via-purple-500 to-blue-500"
-          animate={{
-            backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-          }}
-          transition={{
-            duration: 5,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-          style={{
-            backgroundSize: '200% 200%',
-          }}
-        />
-
-        {/* Hover gradient overlay */}
-        <motion.div
-          className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-400"
-          transition={{ duration: 0.3 }}
-        />
-
-        {/* Pulsing glow effect */}
-        <motion.div
-          className="absolute inset-0 rounded-lg blur-lg opacity-0 group-hover:opacity-30 shadow-2xl shadow-blue-500/40"
-          animate={{
-            opacity: [0, 0.2, 0],
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
-        />
-
-        {/* Shine effect */}
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12"
-          initial={{ x: '-200%' }}
-          animate={{ x: '200%' }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            repeatDelay: 5,
-            ease: 'easeInOut',
-          }}
-        />
-
-        {/* Content */}
-        <span className="relative z-10 flex items-center gap-2">
-          <Wallet className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-          <span className="hidden sm:inline">Connect Wallet</span>
-          <span className="sm:hidden">Connect</span>
-        </span>
-      </motion.button>
+        <span className="hidden sm:inline">Connect Wallet</span>
+        <span className="sm:hidden">Connect</span>
+      </HeroButton>
 
       {/* Custom Modal */}
       <WalletModal open={modalOpen} onClose={() => setModalOpen(false)} />
