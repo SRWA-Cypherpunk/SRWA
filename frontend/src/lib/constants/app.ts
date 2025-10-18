@@ -31,12 +31,36 @@ export const SOCIAL_LINKS = {
  * PARTNERS & INTEGRATIONS
  */
 export const PARTNERS = [
-  'Solana Foundation',
-  'Jupiter',
-  'Pyth Network',
-  'MarginFi',
-  'Kamino Finance',
-  'RWA Capital',
+  {
+    name: 'Pyth Network',
+    logo: '/partners/pyth.svg',
+    website: 'https://pyth.network',
+  },
+  {
+    name: 'Solend',
+    logo: '/partners/solend.svg',
+    website: 'https://solend.fi',
+  },
+  {
+    name: 'MarginFi',
+    logo: '/partners/marginfi.svg',
+    website: 'https://marginfi.com',
+  },
+  {
+    name: 'Solana Foundation',
+    logo: '/partners/solana.svg',
+    website: 'https://solana.org',
+  },
+  {
+    name: 'Solana Superteam',
+    logo: '/partners/superteam.svg',
+    website: 'https://superteam.fun',
+  },
+  {
+    name: 'Inteli',
+    logo: '/partners/inteli.svg',
+    website: 'https://inteli.edu.br',
+  },
 ] as const;
 
 /**

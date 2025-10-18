@@ -5,12 +5,9 @@ import {
   useWallet as useSolanaWallet,
 } from '@solana/wallet-adapter-react';
 import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
-import {
-  PhantomWalletAdapter,
-  SolflareWalletAdapter,
-  LedgerWalletAdapter,
-  TorusWalletAdapter,
-} from '@solana/wallet-adapter-wallets';
+import { PhantomWalletAdapter } from '@solana/wallet-adapter-phantom';
+import { SolflareWalletAdapter } from '@solana/wallet-adapter-solflare';
+import { TorusWalletAdapter } from '@solana/wallet-adapter-torus';
 import { BackpackWalletAdapter } from '@solana/wallet-adapter-backpack';
 import { clusterApiUrl } from '@solana/web3.js';
 
@@ -23,7 +20,7 @@ import '@/styles/features/wallet.css';
  * WalletProvider - Real Solana wallet integration
  *
  * Wraps the application with Solana wallet adapter providers
- * Supports: Phantom, Backpack, Solflare, Ledger, Torus
+ * Supports: Phantom, Backpack, Solflare, Torus
  */
 
 interface WalletProviderProps {
@@ -50,13 +47,12 @@ export function WalletProvider({ children }: WalletProviderProps) {
     return clusterApiUrl(network);
   }, [network]);
 
-  // Configure supported wallets
+  // Configure supported wallets (web wallets only - no hardware wallets)
   const wallets = useMemo(
     () => [
       new PhantomWalletAdapter(),
       new BackpackWalletAdapter(),
       new SolflareWalletAdapter(),
-      new LedgerWalletAdapter(),
       new TorusWalletAdapter(),
     ],
     []

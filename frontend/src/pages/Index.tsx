@@ -635,51 +635,57 @@ const Index = () => {
       </section>
 
 
-      {/* Social Proof Section */}
+      {/* Powered by Section */}
       <section className="container mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-20">
-        <motion.div 
+        <motion.div
           className="text-center space-y-6 mb-16"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
         >
-          <motion.h2 
+          <motion.h2
             className="text-2xl sm:text-3xl lg:text-h1 font-semibold text-fg-primary px-4"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            Trusted by Leading Institutions
+            Powered by Industry Leaders
           </motion.h2>
-          <motion.p 
+          <motion.p
             className="text-sm sm:text-body-1 text-fg-secondary max-w-2xl mx-auto px-4"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
-            Join institutional investors who trust our platform for their RWA lending needs.
+            Built in collaboration with leading blockchain protocols and institutions.
           </motion.p>
         </motion.div>
 
-        {/* Partner Logos */}
-        <motion.div 
-          className="flex flex-wrap justify-center items-center gap-4 sm:gap-6 lg:gap-8 mb-12 sm:mb-16 opacity-60 px-4"
+        <motion.div
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 sm:gap-12 mb-12 sm:mb-16 px-4"
           initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 0.6, y: 0 }}
+          whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
         >
           {PARTNERS.map((partner, index) => (
-            <motion.div
-              key={partner}
-              className="px-4 sm:px-6 py-2 sm:py-3 bg-card/50 rounded-lg border border-stroke-line/50"
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: 1, scale: 1 }}
+            <motion.a
+              key={partner.name}
+              href={partner.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity duration-300"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 0.7, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
-              whileHover={{ scale: 1.05, opacity: 0.8 }}
+              whileHover={{ scale: 1.1, opacity: 1 }}
             >
-              <span className="text-xs sm:text-body-2 font-medium text-fg-muted">{partner}</span>
-            </motion.div>
+              <img
+                src={partner.logo}
+                alt={partner.name}
+                className="w-full h-auto max-h-12 object-contain"
+              />
+            </motion.a>
           ))}
         </motion.div>
 
