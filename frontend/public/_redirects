@@ -1,0 +1,8 @@
+# Cloudflare Pages Redirects
+# https://developers.cloudflare.com/pages/platform/redirects/
+
+# SPA fallback - todas as rotas não encontradas vão para index.html
+/*    /index.html   200
+
+# Opcional: Redirects de rotas antigas (se houver)
+# /old-path    /new-path    301
