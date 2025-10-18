@@ -13,8 +13,6 @@ dist/
 build/
 .next/
 out/
-.vercel/
-.netlify/
 
 # Environment variables
 .env
