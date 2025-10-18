@@ -6,8 +6,8 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, AlertCircle, Loader2, Wallet, Copy, ExternalLink } from 'lucide-react';
-import { useWallet } from '@/hooks/useWallet';
-import { useProvider } from '@/hooks/useProvider';
+import { useWallet } from '@/hooks/wallet/useWallet';
+import { useProvider } from '@/hooks/settings/useProvider';
 import { toast } from 'sonner';
 
 // Contract IDs - using working IDs from useProvider

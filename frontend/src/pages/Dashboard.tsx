@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
-import '@/styles/dashboard.css';
+import '@/styles/features/dashboard.css';
 import { Header } from "@/components/layout/Header";
 import { KPICard } from "@/components/ui/kpi-card";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, PieChart, 
 import { useBlendPools } from '@/hooks/markets/useBlendPools';
 import { useEnhancedPoolData } from '@/hooks/markets/useDefIndexData';
 import { useSRWAMarkets } from '@/hooks/markets/useSRWAMarkets';
-import { useWallet } from '@/components/wallet/WalletProvider';
+import { useWallet } from '@/contexts/wallet/WalletContext';
 import { useWalletAssets } from '@/hooks/wallet/useWalletAssets';
 import { useUserBlendPositions, formatPositionValue } from '@/hooks/markets/useUserBlendPositions';
 import { useWalletTransactions } from '@/hooks/wallet/useWalletTransactions';

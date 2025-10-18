@@ -21,7 +21,7 @@ import {
   BarChart3,
   RefreshCw
 } from 'lucide-react';
-import { useUserRWATokens } from '@/hooks/useUserRWATokens';
+import { useUserRWATokens } from '@/hooks/rwa/useUserRWATokens';
 import { RWALendingModal } from './RWALendingModal';
 import { cn } from '@/lib/utils';
 

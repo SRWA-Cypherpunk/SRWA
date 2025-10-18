@@ -1,0 +1,444 @@
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Rocket,
+  Building2,
+  Trophy,
+  Globe2
+} from "lucide-react";
+import "@/styles/features/roadmap.css";
+
+interface RoadmapPhase {
+  phase: string;
+  title: string;
+  period: string;
+  status: "completed" | "in-progress" | "upcoming" | "planned";
+  icon: typeof Rocket;
+  milestones: string[];
+  progress?: number;
+}
+
+const roadmapData: RoadmapPhase[] = [
+  {
+    phase: "Phase 1",
+    title: "Foundation & Mainnet Launch",
+    period: "Q4 2024",
+    status: "in-progress",
+    icon: Rocket,
+    progress: 50,
+    milestones: [
+      "Audited smart contracts deployed on Solana Mainnet",
+      "Fully functional RWA tokenization platform",
+      "Secondary marketplace for RWA token trading",
+      "First active liquidity pools",
+      "Institutional interface for token creation and management",
+      "Integrated oracle system (Pyth Network)"
+    ]
+  },
+  {
+    phase: "Phase 2",
+    title: "Governance & Global Compliance",
+    period: "Q1-Q2 2025",
+    status: "upcoming",
+    icon: Building2,
+    milestones: [
+      "DAO structuring and launch (decentralized governance model)",
+      "Complete tokenomics development and incentive model",
+      "Strategic partnerships with global KYC/KYB providers",
+      "Regulatory certifications across multiple jurisdictions",
+      "Modular and adaptable compliance framework"
+    ]
+  },
+  {
+    phase: "Phase 3",
+    title: "Token Launch & Institutional Adoption",
+    period: "Q3-Q4 2025",
+    status: "upcoming",
+    icon: Trophy,
+    milestones: [
+      "Fully operational DAO with decentralized treasury",
+      "Token Generation Event (TGE) and governance distribution",
+      "Partnerships with banks, asset managers, and family offices",
+      "Integration with legacy systems (TradFi)",
+      "Incentive program for institutional early adopters"
+    ]
+  },
+  {
+    phase: "Phase 4",
+    title: "Global Expansion & Advanced Products",
+    period: "2026+",
+    status: "planned",
+    icon: Globe2,
+    milestones: [
+      "Cross-chain expansion (Ethereum, Base, Arbitrum)",
+      "Advanced DeFi products (derivatives, yield strategies, structured products)",
+      "Integration with institutional custodians (Fireblocks, Copper)",
+      "Geographic expansion: Latin America, Europe, Asia-Pacific",
+      "Institutional API for white-label integration",
+      "Grant and acceleration program for RWA projects"
+    ]
+  }
+];
+
+const statusConfig = {
+  completed: {
+    label: "Completed",
+    color: "text-green-400",
+    bgColor: "bg-green-500/10",
+    borderColor: "border-green-500/40"
+  },
+  "in-progress": {
+    label: "In Progress",
+    color: "text-brand-400",
+    bgColor: "bg-brand-500/10",
+    borderColor: "border-brand-500/40"
+  },
+  upcoming: {
+    label: "Upcoming",
+    color: "text-orange-400",
+    bgColor: "bg-orange-500/10",
+    borderColor: "border-orange-500/40"
+  },
+  planned: {
+    label: "Planned",
+    color: "text-purple-400",
+    bgColor: "bg-purple-500/10",
+    borderColor: "border-purple-500/40"
+  }
+};
+
+export const RoadmapSection = () => {
+  const sectionRef = useRef(null);
+  const isSectionInView = useInView(sectionRef, { once: true, margin: "-100px" });
+
+  return (
+    <section
+      ref={sectionRef}
+      className="container mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-20 relative overflow-hidden"
+    >
+      {/* Background gradient effects */}
+      <div className="absolute inset-0 pointer-events-none opacity-30">
+        <motion.div
+          className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full blur-[120px]"
+          style={{ background: 'radial-gradient(circle, rgba(153,69,255,0.3) 0%, transparent 70%)' }}
+          animate={{
+            scale: [1, 1.2, 1],
+            opacity: [0.2, 0.3, 0.2],
+          }}
+          transition={{ duration: 8, repeat: Infinity }}
+        />
+        <motion.div
+          className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full blur-[100px]"
+          style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.3) 0%, transparent 70%)' }}
+          animate={{
+            scale: [1.2, 1, 1.2],
+            opacity: [0.3, 0.2, 0.3],
+          }}
+          transition={{ duration: 10, repeat: Infinity }}
+        />
+      </div>
+
+      {/* Header */}
+      <motion.div
+        className="text-center space-y-4 mb-16 sm:mb-20 relative z-10"
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        viewport={{ once: true }}
+      >
+        <motion.h2
+          className="text-3xl sm:text-4xl lg:text-5xl font-bold px-4"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <span className="bg-gradient-to-r from-orange-400 via-orange-500 to-purple-500 bg-clip-text text-transparent">
+            Roadmap to the Future
+          </span>
+        </motion.h2>
+        <motion.p
+          className="text-sm sm:text-lg text-fg-muted max-w-2xl mx-auto px-4"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+        >
+          Our journey to transform the Real-World Assets market on blockchain
+        </motion.p>
+      </motion.div>
+
+      {/* Roadmap Timeline */}
+      <div className="relative max-w-5xl mx-auto">
+        <div className="roadmap-timeline">
+          {roadmapData.map((phase, index) => {
+            const PhaseIcon = phase.icon;
+
+            return (
+              <motion.div
+                key={index}
+                className={`roadmap-item ${phase.status}`}
+                initial={{ opacity: 0, y: 50 }}
+                animate={isSectionInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+                transition={{ duration: 0.6, delay: index * 0.2 }}
+              >
+                {/* Timeline Node (Icon) */}
+                <div className="roadmap-node">
+                  <motion.div
+                    className={`node-circle ${statusConfig[phase.status].bgColor} border-4 ${statusConfig[phase.status].borderColor} backdrop-blur-md`}
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={isSectionInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
+                    transition={{
+                      duration: 0.8,
+                      delay: index * 0.2 + 0.3,
+                      type: "spring",
+                      stiffness: 150,
+                      damping: 12
+                    }}
+                    whileHover={{ scale: 1.1, rotate: 10 }}
+                  >
+                    {/* Pulsing ring for in-progress */}
+                    {phase.status === "in-progress" && (
+                      <motion.div
+                        className="absolute inset-0 rounded-full border-2 border-brand-400"
+                        animate={{
+                          scale: [1, 1.4, 1],
+                          opacity: [0.8, 0, 0.8]
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "easeInOut"
+                        }}
+                      />
+                    )}
+                    <PhaseIcon className={`h-10 w-10 lg:h-12 lg:w-12 ${statusConfig[phase.status].color}`} />
+                  </motion.div>
+                </div>
+
+                {/* Card Content */}
+                <div className="roadmap-content">
+                  <motion.div
+                    whileHover={{ y: -8, scale: 1.01 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Card
+                      className="relative overflow-hidden bg-gradient-to-br from-[#0D0D0D] via-[#121212] to-bg-black border-[3px] transition-all duration-500 group"
+                      style={{
+                        borderRadius: "20px",
+                        borderColor: phase.status === "completed"
+                          ? "rgba(34, 197, 94, 0.6)"
+                          : phase.status === "in-progress"
+                          ? "rgba(153, 69, 255, 0.6)"
+                          : phase.status === "upcoming"
+                          ? "rgba(255, 107, 53, 0.6)"
+                          : "rgba(168, 85, 247, 0.6)",
+                        boxShadow: `
+                          0 0 60px ${
+                            phase.status === "completed"
+                              ? "rgba(34, 197, 94, 0.4)"
+                              : phase.status === "in-progress"
+                              ? "rgba(153, 69, 255, 0.4)"
+                              : phase.status === "upcoming"
+                              ? "rgba(255, 107, 53, 0.4)"
+                              : "rgba(168, 85, 247, 0.4)"
+                          }
+                        `
+                      }}
+                    >
+                      {/* Glow effect on hover */}
+                      <motion.div
+                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                        style={{
+                          background: phase.status === "completed"
+                            ? "linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, transparent 60%)"
+                            : phase.status === "in-progress"
+                            ? "linear-gradient(135deg, rgba(153, 69, 255, 0.15) 0%, rgba(255, 107, 53, 0.15) 100%)"
+                            : phase.status === "upcoming"
+                            ? "linear-gradient(135deg, rgba(255, 107, 53, 0.15) 0%, transparent 60%)"
+                            : "linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, transparent 60%)"
+                        }}
+                      />
+
+                      {/* Shimmer effect */}
+                      <motion.div
+                        className="absolute inset-0 opacity-0 group-hover:opacity-100"
+                        style={{
+                          background: `linear-gradient(90deg, transparent, ${
+                            phase.status === "completed"
+                              ? "rgba(34, 197, 94, 0.1)"
+                              : phase.status === "in-progress"
+                              ? "rgba(153, 69, 255, 0.1)"
+                              : phase.status === "upcoming"
+                              ? "rgba(255, 107, 53, 0.1)"
+                              : "rgba(168, 85, 247, 0.1)"
+                          }, transparent)`
+                        }}
+                        animate={{
+                          x: ["-100%", "200%"]
+                        }}
+                        transition={{
+                          duration: 2,
+                          repeat: Infinity,
+                          ease: "linear"
+                        }}
+                      />
+
+                      <div className="relative z-10 p-6 sm:p-8 space-y-5">
+                        {/* Phase Header */}
+                        <div className="roadmap-header flex flex-col gap-3">
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <motion.div whileHover={{ scale: 1.05 }}>
+                              <Badge className="relative text-xs sm:text-sm font-extrabold px-5 py-2 bg-gradient-to-r from-orange-500 via-orange-600 to-purple-600 text-white border-0 shadow-lg overflow-hidden">
+                                {/* Shimmer effect on badge */}
+                                <motion.div
+                                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                                  animate={{
+                                    x: ["-100%", "200%"]
+                                  }}
+                                  transition={{
+                                    duration: 3,
+                                    repeat: Infinity,
+                                    ease: "linear",
+                                    repeatDelay: 1
+                                  }}
+                                />
+                                <span className="relative z-10">{phase.phase.toUpperCase()}</span>
+                              </Badge>
+                            </motion.div>
+                            <span className="text-sm sm:text-base text-fg-muted font-semibold">{phase.period}</span>
+                          </div>
+
+                          {/* Title */}
+                          <h3 className="text-xl sm:text-2xl font-extrabold text-fg-primary leading-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-fg-primary group-hover:to-brand-300 transition-all duration-300">
+                            {phase.title}
+                          </h3>
+                        </div>
+
+                        {/* Key Features */}
+                        <div className="pt-4 border-t border-stroke-line/40">
+                          <p className="text-orange-400 font-bold text-sm sm:text-base mb-4 tracking-wide" style={{
+                            textShadow: "0 0 20px rgba(255, 107, 53, 0.3)"
+                          }}>
+                            Key Features:
+                          </p>
+
+                          {/* Milestones */}
+                          <div className="roadmap-milestones flex flex-col gap-3">
+                            {phase.milestones.map((milestone, mIndex) => (
+                              <motion.div
+                                key={mIndex}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={isSectionInView ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
+                                transition={{ duration: 0.4, delay: index * 0.2 + mIndex * 0.08 }}
+                                className="milestone-item flex items-start gap-3 group/milestone"
+                              >
+                                {/* Circle with check inside */}
+                                <motion.div
+                                  className={`mt-0.5 flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                                    phase.status === "completed"
+                                      ? "border-green-400 text-green-400"
+                                      : phase.status === "in-progress"
+                                      ? "border-brand-400 text-brand-400"
+                                      : phase.status === "upcoming"
+                                      ? "border-orange-400 text-orange-400"
+                                      : "border-purple-400 text-purple-400"
+                                  } group-hover/milestone:scale-125 transition-transform duration-300`}
+                                  whileHover={{
+                                    boxShadow: `0 0 15px ${
+                                      phase.status === "completed"
+                                        ? "rgba(34, 197, 94, 0.6)"
+                                        : phase.status === "in-progress"
+                                        ? "rgba(153, 69, 255, 0.6)"
+                                        : phase.status === "upcoming"
+                                        ? "rgba(255, 107, 53, 0.6)"
+                                        : "rgba(168, 85, 247, 0.6)"
+                                    }`
+                                  }}
+                                >
+                                  <svg
+                                    className="w-3 h-3"
+                                    fill="none"
+                                    strokeWidth="3"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M5 13l4 4L19 7"
+                                    />
+                                  </svg>
+                                </motion.div>
+                                <p className="text-sm sm:text-base text-fg-secondary group-hover/milestone:text-fg-primary transition-colors leading-relaxed flex-1">
+                                  {milestone}
+                                </p>
+                              </motion.div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Progress indicator for in-progress phase */}
+                        {phase.status === "in-progress" && phase.progress !== undefined && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.6, delay: 0.8 }}
+                            className="pt-5 border-t border-stroke-line/40"
+                          >
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-xs sm:text-sm text-fg-muted font-semibold">Overall Progress</span>
+                              <motion.span
+                                className="text-xs sm:text-sm font-extrabold text-brand-400"
+                                animate={{
+                                  textShadow: [
+                                    "0 0 10px rgba(153, 69, 255, 0.3)",
+                                    "0 0 20px rgba(153, 69, 255, 0.5)",
+                                    "0 0 10px rgba(153, 69, 255, 0.3)"
+                                  ]
+                                }}
+                                transition={{
+                                  duration: 2,
+                                  repeat: Infinity,
+                                  ease: "easeInOut"
+                                }}
+                              >
+                                {phase.progress}%
+                              </motion.span>
+                            </div>
+                            <div className="w-full bg-bg-elev-2 rounded-full h-2.5 overflow-hidden border-2 border-brand-500/30 relative">
+                              <motion.div
+                                className="h-full rounded-full bg-gradient-to-r from-brand-600 via-brand-500 to-brand-400 relative overflow-hidden"
+                                initial={{ width: 0 }}
+                                whileInView={{ width: `${phase.progress}%` }}
+                                transition={{ duration: 1.5, delay: 0.5, ease: "easeOut" }}
+                              >
+                                {/* Animated shimmer on progress bar */}
+                                <motion.div
+                                  className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent"
+                                  animate={{
+                                    x: ["-100%", "200%"]
+                                  }}
+                                  transition={{
+                                    duration: 1.5,
+                                    repeat: Infinity,
+                                    ease: "linear",
+                                    repeatDelay: 0.5
+                                  }}
+                                />
+                              </motion.div>
+                            </div>
+                          </motion.div>
+                        )}
+                      </div>
+                    </Card>
+                  </motion.div>
+                </div>
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+};

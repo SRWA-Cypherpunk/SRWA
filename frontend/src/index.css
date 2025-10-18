@@ -1,3 +1,13 @@
+/* Import CSS Architecture */
+@import './styles/base/variables.css';
+@import './styles/base/reset.css';
+@import './styles/components/buttons.css';
+@import './styles/components/cards.css';
+@import './styles/features/wallet.css';
+@import './styles/features/roadmap.css';
+@import './styles/features/dashboard.css';
+@import './styles/features/mobile.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

@@ -25,7 +25,7 @@ import {
 } from 'lucide-react';
 import { BlendPool, TransactionPreview } from '@/types/lending';
 import { useLendingOperations } from '@/hooks/markets/useLendingOperations';
-import { useWallet } from '@/components/wallet/WalletProvider';
+import { useWallet } from '@/contexts/wallet/WalletContext';
 import { TransactionPreview as TransactionPreviewComponent } from './TransactionPreview';
 import { cn } from '@/lib/utils';
 

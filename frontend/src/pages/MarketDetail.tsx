@@ -12,7 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { mockMarkets, mockPositions, type RWAMarket } from "@/lib/mock-data";
 import { ArrowLeft, DollarSign, TrendingUp, Shield, AlertTriangle, Plus, Minus } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/ui/use-toast";
 
 export default function MarketDetail() {
   const { id } = useParams();

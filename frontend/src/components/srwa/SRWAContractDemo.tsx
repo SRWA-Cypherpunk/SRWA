@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useWallet } from "@/hooks/useWallet";
+import { useWallet } from "@/hooks/wallet/useWallet";
 import { useSRWAOperations } from "@/hooks/useSRWAOperations";
 import { toast } from "sonner";
 import { 

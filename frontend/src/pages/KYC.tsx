@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle, Clock, AlertCircle, Upload, FileText, Shield } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "@/hooks/ui/use-toast";
 
 type KYCStatus = "not-started" | "in-progress" | "under-review" | "approved" | "rejected";
 

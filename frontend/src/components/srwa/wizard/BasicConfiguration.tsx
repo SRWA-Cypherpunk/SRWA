@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, CheckCircle, Wallet, Loader2, Info } from 'lucide-react';
-import { useWallet } from '@/components/wallet/WalletProvider';
+import { useWallet } from '@/contexts/wallet/WalletContext';
 
 import { TokenCreationForm } from '@/types/srwa-contracts';
 import { RWATemplate } from '@/types/templates';

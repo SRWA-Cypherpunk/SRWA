@@ -17,13 +17,13 @@ import { clusterApiUrl } from '@solana/web3.js';
 // Import wallet adapter CSS
 import '@solana/wallet-adapter-react-ui/styles.css';
 // Import custom SRWA wallet styles
-import './wallet-styles.css';
+import '@/styles/features/wallet.css';
 
 /**
  * WalletProvider - Real Solana wallet integration
  *
  * Wraps the application with Solana wallet adapter providers
- * Supports: Phantom, Solflare, Ledger, Torus
+ * Supports: Phantom, Backpack, Solflare, Ledger, Torus
  */
 
 interface WalletProviderProps {

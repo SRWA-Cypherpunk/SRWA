@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useWallet } from '@/components/wallet/WalletProvider';
+import { useWallet } from '@/contexts/wallet/WalletContext';
 import { BlendPool, BlendReserve, BlendAsset } from '@/types/lending';
 import { mockUserPositions, UserPosition } from '@/lib/mock-data';
 

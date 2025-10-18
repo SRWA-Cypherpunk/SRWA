@@ -5,9 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { CheckCircle, AlertCircle, Loader2, Sparkles } from 'lucide-react';
-import { useWallet } from '@/components/wallet/WalletProvider';
-import { useSRWAOperations } from '@/hooks/useSRWAOperations';
-import { useProvider } from '@/hooks/useProvider';
+import { useWallet } from '@/contexts/wallet/WalletContext';
+import { useSRWAOperations } from '@/hooks/rwa/useSRWAOperations';
+import { useProvider } from '@/hooks/settings/useProvider';
 import { toast } from 'sonner';
 
 // Step components

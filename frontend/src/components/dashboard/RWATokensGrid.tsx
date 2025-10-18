@@ -17,7 +17,7 @@ import {
   TrendingDown
 } from "lucide-react";
 import { toast } from "sonner";
-import { useUserRWATokens, type RWAToken } from "@/hooks/useUserRWATokens";
+import { useUserRWATokens, type RWAToken } from "@/hooks/rwa/useUserRWATokens";
 import { RWALendingModal } from "@/components/rwa/RWALendingModal";
 
 const RWATokenCard = ({ token, index }: { token: RWAToken; index: number }) => {

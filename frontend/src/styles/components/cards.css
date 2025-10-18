@@ -1,0 +1,43 @@
+/**
+ * Card Component Styles
+ * Shared card styles that work alongside Tailwind/Radix
+ */
+
+.card-base {
+  background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-secondary) 100%);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-lg);
+  transition: all var(--transition-normal);
+}
+
+.card-base:hover {
+  border-color: var(--border-accent);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+}
+
+.card-glass {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-xl);
+}
+
+.card-glow {
+  position: relative;
+  overflow: hidden;
+}
+
+.card-glow::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(153, 69, 255, 0.1) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity var(--transition-normal);
+}
+
+.card-glow:hover::before {
+  opacity: 1;
+}

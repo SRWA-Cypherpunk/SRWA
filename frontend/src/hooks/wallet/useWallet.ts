@@ -3,7 +3,7 @@
  * Placeholder for Solana wallet integration
  */
 
-import { useWallet as useWalletProvider } from '@/components/wallet/WalletProvider';
+import { useWallet as useWalletProvider } from '@/contexts/wallet/WalletContext';
 
 export const useWallet = useWalletProvider;
 

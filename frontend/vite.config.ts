@@ -31,4 +31,37 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    target: 'es2020',
+    minify: 'esbuild',
+    sourcemap: mode === 'development',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // React core
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          // Solana wallet adapters
+          'solana-vendor': [
+            '@solana/web3.js',
+            '@solana/wallet-adapter-react',
+            '@solana/wallet-adapter-react-ui',
+            '@solana/wallet-adapter-base',
+            '@solana/wallet-adapter-wallets',
+          ],
+          // UI libraries
+          'ui-vendor': [
+            'framer-motion',
+            'lucide-react',
+            'recharts',
+          ],
+          // Query and state management
+          'state-vendor': [
+            '@tanstack/react-query',
+            'zustand',
+          ],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000,
+  },
 }));

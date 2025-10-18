@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useUserRWATokens, type RWAToken } from "@/hooks/useUserRWATokens";
+import { useUserRWATokens, type RWAToken } from "@/hooks/rwa/useUserRWATokens";
 import { type EnhancedPoolData } from "@/types/markets";
 
 export interface SRWAMarketData extends EnhancedPoolData {

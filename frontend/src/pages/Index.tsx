@@ -7,9 +7,10 @@ import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { MarketChart } from "@/components/ui/market-chart";
 import { HeroButton } from "@/components/ui/hero-button";
 import { Globe as GlobeComponent } from "@/components/ui/globe";
+import { RoadmapSection } from "@/components/sections/RoadmapSection";
 import { useBlendPools } from "@/hooks/markets/useBlendPools";
 import { useEnhancedPoolData } from "@/hooks/markets/useDefIndexData";
-import { useWallet } from "@/components/wallet/WalletProvider";
+import { useWallet } from "@/contexts/wallet/WalletContext";
 import { mockMarketStats, mockMarkets, mockMarketCharts } from "@/lib/mock-data";
 import { ROUTES, COLORS, PARTNERS } from "@/lib/constants";
 import Logo from "@/assets/logo.png";
@@ -857,6 +858,9 @@ const Index = () => {
           </Card>
         </motion.div>
       </section>
+
+      {/* Roadmap Section */}
+      <RoadmapSection />
 
       {/* Modern Crypto-Style Footer */}
       <footer className="relative border-t border-stroke-line bg-gradient-to-b from-background via-bg-elev-1 to-background overflow-hidden">

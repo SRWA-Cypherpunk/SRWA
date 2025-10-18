@@ -31,9 +31,9 @@ import {
   RefreshCw,
   Info
 } from 'lucide-react';
-import { RWAToken } from '@/hooks/useUserRWATokens';
-import { useRWALending, RWALendingPreview } from '@/hooks/useRWALending';
-import { useWallet } from '@/components/wallet/WalletProvider';
+import { RWAToken } from '@/hooks/rwa/useUserRWATokens';
+import { useRWALending, RWALendingPreview } from '@/hooks/rwa/useRWALending';
+import { useWallet } from '@/contexts/wallet/WalletContext';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 

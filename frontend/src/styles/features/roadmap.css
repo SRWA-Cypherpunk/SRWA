@@ -1,0 +1,168 @@
+/* Roadmap Section Styles - Based on Best Practices */
+
+.roadmap-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 60px;
+  position: relative;
+}
+
+/* Timeline vertical line - Desktop (centered) */
+.roadmap-timeline::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg,
+    rgba(34, 197, 94, 0.4) 0%,
+    rgba(153, 69, 255, 0.4) 50%,
+    rgba(255, 107, 53, 0.4) 100%);
+  transform: translateX(-50%);
+  z-index: 1;
+}
+
+/* Roadmap Item - Grid Layout Desktop */
+.roadmap-item {
+  display: grid;
+  grid-template-columns: 1fr 100px 1fr;
+  gap: 0;
+  align-items: start;
+  position: relative;
+}
+
+/* Alternating layout for desktop */
+.roadmap-item:nth-child(even) {
+  grid-template-areas: "empty node content";
+}
+
+.roadmap-item:nth-child(odd) {
+  grid-template-areas: "content node empty";
+}
+
+/* Node (Icon) positioning */
+.roadmap-node {
+  grid-area: node;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  position: relative;
+}
+
+/* Content (Card) positioning */
+.roadmap-item:nth-child(even) .roadmap-content {
+  grid-area: content;
+  text-align: left;
+  margin-left: 40px;
+}
+
+.roadmap-item:nth-child(odd) .roadmap-content {
+  grid-area: content;
+  text-align: right;
+  margin-right: 40px;
+}
+
+/* Headers alignment */
+.roadmap-item:nth-child(even) .roadmap-header {
+  align-items: flex-start;
+}
+
+.roadmap-item:nth-child(odd) .roadmap-header {
+  align-items: flex-end;
+}
+
+/* Milestones alignment */
+.roadmap-item:nth-child(odd) .roadmap-milestones {
+  align-items: flex-end;
+}
+
+.roadmap-item:nth-child(odd) .milestone-item {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+/* Node Circle Styles */
+.node-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+/* Status-based node styling */
+.roadmap-item.completed .node-circle {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(34, 197, 94, 0.1) 100%);
+  box-shadow: 0 0 40px rgba(34, 197, 94, 0.4);
+}
+
+.roadmap-item.in-progress .node-circle {
+  background: linear-gradient(135deg, rgba(153, 69, 255, 0.2) 0%, rgba(153, 69, 255, 0.1) 100%);
+  box-shadow: 0 0 40px rgba(153, 69, 255, 0.4);
+}
+
+.roadmap-item.upcoming .node-circle {
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.2) 0%, rgba(255, 107, 53, 0.1) 100%);
+  box-shadow: 0 0 40px rgba(255, 107, 53, 0.4);
+}
+
+.roadmap-item.planned .node-circle {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(168, 85, 247, 0.1) 100%);
+  box-shadow: 0 0 40px rgba(168, 85, 247, 0.4);
+}
+
+/* Card Content */
+.roadmap-content {
+  max-width: 480px;
+  width: 100%;
+}
+
+/* MOBILE RESPONSIVE */
+@media (max-width: 768px) {
+  .roadmap-timeline::before {
+    left: 30px;
+    transform: none;
+  }
+
+  .roadmap-item {
+    grid-template-columns: 60px 1fr;
+    grid-template-areas: "node content" !important;
+    gap: 20px;
+  }
+
+  .roadmap-item:nth-child(even) .roadmap-content,
+  .roadmap-item:nth-child(odd) .roadmap-content {
+    grid-area: content;
+    text-align: left;
+    margin: 0;
+    max-width: none;
+  }
+
+  .roadmap-item:nth-child(even) .roadmap-header,
+  .roadmap-item:nth-child(odd) .roadmap-header {
+    align-items: flex-start;
+  }
+
+  .roadmap-item:nth-child(odd) .roadmap-milestones {
+    align-items: flex-start;
+  }
+
+  .roadmap-item:nth-child(odd) .milestone-item {
+    flex-direction: row;
+    text-align: left;
+  }
+
+  .node-circle {
+    width: 60px;
+    height: 60px;
+  }
+
+  .roadmap-timeline {
+    gap: 40px;
+  }
+}
