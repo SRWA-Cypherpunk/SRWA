@@ -630,7 +630,7 @@ export default function Docs() {
                     External Resources
                   </h3>
                   <a
-                    href="https://github.com/srwa"
+                    href="https://github.com/SRWA-Cypherpunk"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-fg-secondary hover:bg-bg-elev-1 hover:text-fg-primary transition-colors"
@@ -639,13 +639,13 @@ export default function Docs() {
                     GitHub
                   </a>
                   <a
-                    href="https://discord.gg/srwa"
+                    href="https://x.com/SRWAdotsol"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-fg-secondary hover:bg-bg-elev-1 hover:text-fg-primary transition-colors"
                   >
                     <ExternalLink className="h-4 w-4" />
-                    Discord
+                    Twitter
                   </a>
                 </div>
               </div>
