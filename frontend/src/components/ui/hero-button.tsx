@@ -59,7 +59,7 @@ export function HeroButton({
         'relative inline-flex items-center justify-center gap-2.5',
         'px-6 sm:px-8 py-3 sm:py-4',
         'text-sm sm:text-base font-bold text-white',
-        'rounded-xl',
+        'rounded-3xl',
         'overflow-hidden group',
         'transition-all duration-300',
         'border-2',
@@ -102,7 +102,7 @@ export function HeroButton({
       {/* Pulsing glow effect */}
       <motion.div
         className={cn(
-          'absolute inset-0 rounded-xl blur-xl opacity-0 group-hover:opacity-50',
+          'absolute inset-0 rounded-3xl blur-xl opacity-0 group-hover:opacity-50',
           currentVariant.glow
         )}
         animate={{
@@ -117,7 +117,7 @@ export function HeroButton({
 
       {/* Border glow animation */}
       <motion.div
-        className="absolute inset-0 rounded-xl"
+        className="absolute inset-0 rounded-3xl"
         style={{
           background: `linear-gradient(45deg, transparent, ${
             variant === 'solana' ? '#4DB2FF' : '#FF6B35'

@@ -186,14 +186,12 @@ export const RoadmapSection = () => {
         viewport={{ once: true }}
       >
         <motion.h2
-          className="text-3xl sm:text-4xl lg:text-5xl font-bold px-4"
+          className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white px-4"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
-          <span className="bg-gradient-to-r from-orange-400 via-orange-500 to-purple-500 bg-clip-text text-transparent">
-            Roadmap to the Future
-          </span>
+          Roadmap to the Future
         </motion.h2>
         <motion.p
           className="text-sm sm:text-lg text-fg-muted max-w-2xl mx-auto px-4"

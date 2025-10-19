@@ -8,6 +8,7 @@ import { MarketChart } from "@/components/ui/market-chart";
 import { HeroButton } from "@/components/ui/hero-button";
 import { Globe as GlobeComponent } from "@/components/ui/globe";
 import { RoadmapSection } from "@/components/sections/RoadmapSection";
+import { FlowDiagram } from "@/components/FlowDiagram";
 import { useBlendPools } from "@/hooks/markets/useBlendPools";
 import { useEnhancedPoolData } from "@/hooks/markets/useDefIndexData";
 import { useWallet } from "@/contexts/wallet/WalletContext";
@@ -41,7 +42,8 @@ import {
   FileText,
   BookOpen,
   Mail,
-  MessageCircle
+  MessageCircle,
+  Wallet
 } from "lucide-react";
 
 const Index = () => {
@@ -519,7 +521,7 @@ const Index = () => {
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
         >
-          <h2 className="text-2xl sm:text-3xl lg:text-h1 font-bold bg-gradient-to-r from-brand-400 via-brand-300 to-green-400 bg-clip-text text-transparent">
+          <h2 className="text-2xl sm:text-3xl lg:text-h1 font-bold text-white">
             Our Numbers
           </h2>
           <p className="text-sm sm:text-body-1 text-fg-secondary max-w-xl mx-auto">
@@ -588,7 +590,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Protocol Flow Section - How SRWA Works */}
       <section ref={featuresRef} className="relative py-16 sm:py-20 overflow-visible">
         {/* Horizontal lines pattern */}
         <div
@@ -632,6 +634,7 @@ const Index = () => {
 
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 relative z-10">
 
+        {/* Header */}
         <motion.div
           className="text-center space-y-4 mb-16"
           initial={{ opacity: 0, y: 30 }}
@@ -639,104 +642,17 @@ const Index = () => {
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
         >
-          <motion.h2
-            className="text-2xl sm:text-3xl lg:text-h1 font-bold px-4"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            <span className="bg-gradient-to-r from-brand-400 to-green-400 bg-clip-text text-transparent">
-              Institutional-Grade
-            </span>
-            <span className="text-fg-primary ml-3">Infrastructure</span>
-          </motion.h2>
-          <motion.p
-            className="text-sm sm:text-body-1 text-fg-secondary max-w-2xl mx-auto px-4"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
-            Purpose-built for professional asset managers, treasuries, and institutional investors.
-          </motion.p>
+          <h2 className="text-2xl sm:text-3xl lg:text-h1 font-bold text-white">
+            How SRWA Protocol Works
+          </h2>
+          <p className="text-sm sm:text-body-1 text-fg-secondary max-w-2xl mx-auto">
+            End-to-end real-world asset tokenization and lending flow
+          </p>
         </motion.div>
 
-        <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
-          initial={{ opacity: 0 }}
-          animate={isFeatureInView ? { opacity: 1 } : { opacity: 0 }}
-          transition={{ duration: 0.8, staggerChildren: 0.1 }}
-        >
-          {[
-            {
-              icon: Shield,
-              title: "Permissioned Markets",
-              description: "KYC/KYB compliance with role-based access controls and regulatory transparency.",
-              color: "text-green-400"
-            },
-            {
-              icon: Globe,
-              title: "Hybrid Oracles",
-              description: "Pyth Network price feeds combined with NAV attestations from custodians.",
-              color: "text-brand-400"
-            },
-            {
-              icon: Zap,
-              title: "Efficient Capital",
-              description: "Optimized lending protocols with isolated risk pools for maximum capital efficiency.",
-              color: "text-orange-400"
-            },
-            {
-              icon: BarChart3,
-              title: "Risk Premiums",
-              description: "Granular risk modeling with base rates plus asset-specific premiums.",
-              color: "text-brand-400"
-            },
-            {
-              icon: Zap,
-              title: "Lightning Fast",
-              description: "Built on Solana for sub-second finality and ultra-low transaction costs.",
-              color: "text-green-400"
-            },
-            {
-              icon: Users,
-              title: "Institutional UX",
-              description: "Professional dashboards, reporting, and treasury-grade position management.",
-              color: "text-orange-400"
-            }
-          ].map((feature, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 50, scale: 0.9 }}
-              animate={isFeatureInView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 50, scale: 0.9 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              whileHover={{ y: -6 }}
-              className="group relative"
-            >
-              <Card className="card-institutional h-full relative border-stroke-line hover:border-brand-500/30 transition-all duration-300">
-                {/* Subtle hover glow */}
-                <div className="absolute inset-0 bg-brand-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+        {/* Flow Diagram */}
+        <FlowDiagram />
 
-                <div className="space-y-6 relative z-10">
-                  <motion.div
-                    className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-500/10 border border-brand-500/20 group-hover:border-brand-500/40 transition-all"
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ duration: 0.3, ease: "easeOut" }}
-                  >
-                    <feature.icon className={`h-8 w-8 ${feature.color}`} />
-                  </motion.div>
-                  <div className="space-y-3">
-                    <h3 className="text-h3 font-bold text-fg-primary group-hover:text-brand-300 transition-colors">
-                      {feature.title}
-                    </h3>
-                    <p className="text-body-2 text-fg-secondary leading-relaxed group-hover:text-fg-primary/90 transition-colors">
-                      {feature.description}
-                    </p>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-          ))}
-        </motion.div>
         </div>
       </section>
 
@@ -824,14 +740,12 @@ const Index = () => {
           viewport={{ once: true }}
         >
           <motion.h2
-            className="text-2xl sm:text-3xl lg:text-h1 font-bold px-4"
+            className="text-2xl sm:text-3xl lg:text-h1 font-bold text-white px-4"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <span className="bg-gradient-to-r from-green-400 to-brand-400 bg-clip-text text-transparent">
-              Active Markets
-            </span>
+            Active Markets
           </motion.h2>
           <motion.p
             className="text-sm sm:text-body-1 text-fg-secondary max-w-2xl mx-auto px-4"
@@ -1000,23 +914,20 @@ const Index = () => {
           )}
         </motion.div>
 
-        <motion.div 
+        <motion.div
           className="text-center"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
           viewport={{ once: true }}
         >
-          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-            <Button
-              className="btn-primary px-8 py-4 text-body-1 relative overflow-hidden group"
-              onClick={() => window.location.href = ROUTES.DASHBOARD}
-            >
-              <span className="relative z-10">Explore All Markets</span>
-              <ArrowRight className="ml-2 h-5 w-5 relative z-10 group-hover:translate-x-1 transition-transform" />
-              <div className="absolute inset-0 bg-gradient-to-r from-brand-500 to-green-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
-            </Button>
-          </motion.div>
+          <HeroButton
+            onClick={() => window.location.href = ROUTES.DASHBOARD}
+            variant="brand"
+            icon={<ArrowRight className="h-5 w-5" />}
+          >
+            Launch App
+          </HeroButton>
         </motion.div>
         </div>
       </section>
@@ -1057,24 +968,22 @@ const Index = () => {
                   </p>
                 </div>
                 <div className="flex gap-3 flex-shrink-0">
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button
-                      className="btn-primary px-6 py-3 relative overflow-hidden group"
-                      onClick={() => window.location.href = ROUTES.DASHBOARD}
-                    >
-                      <span className="relative z-10">Connect Wallet</span>
-                      <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    </Button>
-                  </motion.div>
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button
-                      variant="outline"
-                      className="px-6 py-3 border-purple-500/30 hover:border-purple-400/50 hover:text-purple-300 transition-all"
-                      onClick={() => window.location.href = ROUTES.DASHBOARD}
-                    >
-                      View Dashboard
-                    </Button>
-                  </motion.div>
+                  <HeroButton
+                    onClick={isConnected ? () => window.location.href = ROUTES.DASHBOARD : connect}
+                    variant="brand"
+                    className="!px-6 !py-3 !text-sm"
+                    icon={<Wallet className="h-4 w-4" />}
+                  >
+                    {isConnected ? 'Launch App' : 'Connect Wallet'}
+                  </HeroButton>
+                  <HeroButton
+                    onClick={() => window.location.href = ROUTES.DASHBOARD}
+                    variant="solana"
+                    className="!px-6 !py-3 !text-sm"
+                    icon={<ArrowRight className="h-4 w-4" />}
+                  >
+                    View Dashboard
+                  </HeroButton>
                 </div>
               </div>
             </div>
@@ -1276,39 +1185,6 @@ const Index = () => {
               </div>
             </motion.div>
           </div>
-
-          {/* Powered By Section */}
-          <motion.div
-            className="pt-12 pb-8 border-t border-stroke-line/50"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-            viewport={{ once: true }}
-          >
-            <div className="text-center mb-8">
-              <h4 className="text-xs font-semibold text-fg-muted uppercase tracking-widest mb-6">
-                Powered by
-              </h4>
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-8 items-center justify-items-center">
-                {PARTNERS.map((partner) => (
-                  <motion.a
-                    key={partner.name}
-                    href={partner.website}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="opacity-50 hover:opacity-100 transition-opacity duration-300"
-                    whileHover={{ scale: 1.1 }}
-                  >
-                    <img
-                      src={partner.logo}
-                      alt={partner.name}
-                      className="h-8 w-auto object-contain grayscale hover:grayscale-0 transition-all"
-                    />
-                  </motion.a>
-                ))}
-              </div>
-            </div>
-          </motion.div>
 
           {/* Bottom Bar */}
           <motion.div
