@@ -757,6 +757,8 @@
   animation: orbit-reverse linear infinite;
 }
 
+/* Clean, minimal animations for professional UI */
+
 /* High contrast mode support */
 @media (prefers-contrast: high) {
   .card-institutional {

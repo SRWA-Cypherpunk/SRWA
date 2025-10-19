@@ -16,6 +16,9 @@ import { ROUTES, COLORS, PARTNERS } from "@/lib/constants";
 import Logo from "@/assets/logo.png";
 import SRWALetters from "@/assets/srwa_letters.png";
 
+// Simplified backgrounds - just colors
+import { COLORS as BG_COLORS } from "@/lib/constants/backgrounds";
+
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
 import {
@@ -85,90 +88,208 @@ const Index = () => {
   }, [rotatingPhrases.length]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      {/* MASTER BACKGROUND - Ultra-smooth gradient with anti-banding */}
+      <div className="absolute top-0 left-0 right-0 z-0 pointer-events-none" style={{ height: '600vh' }}>
+        {/* SVG Noise Overlay for dithering (anti-banding) */}
+        <svg className="absolute inset-0 opacity-[0.015] pointer-events-none w-full h-full">
+          <filter id="noiseFilter">
+            <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" />
+            <feColorMatrix type="saturate" values="0" />
+          </filter>
+          <rect width="100%" height="100%" filter="url(#noiseFilter)" />
+        </svg>
+
+        {/* Ultra-detailed gradient with 110+ stops - NO GREEN */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: `
+              linear-gradient(
+                to bottom,
+                #0A0A0A 0%,
+                #0A0A0A 8vh,
+                #0b0a0c 12vh,
+                #0c0b0d 16vh,
+                #0d0b0e 20vh,
+                #0e0c0f 24vh,
+                #100d12 28vh,
+                #110d14 32vh,
+                #130e16 36vh,
+                #140f18 40vh,
+                #16101a 44vh,
+                #17101b 48vh,
+                #19111d 52vh,
+                #1a0f1f 56vh,
+                #1b1020 60vh,
+                #1c1021 64vh,
+                #1d1122 68vh,
+                #1e1223 72vh,
+                #1f1224 76vh,
+                #201324 80vh,
+                #221426 84vh,
+                rgba(40,18,45,0.98) 87vh,
+                rgba(48,22,55,0.96) 89vh,
+                rgba(55,24,65,0.94) 91vh,
+                rgba(62,25,75,0.92) 93vh,
+                rgba(68,26,85,0.90) 95vh,
+                rgba(75,27,100,0.88) 97vh,
+                rgba(80,27,112,0.86) 99vh,
+                rgba(84,28,125,0.82) 101vh,
+                rgba(87,28,132,0.78) 103vh,
+                rgba(88,28,135,0.75) 105vh,
+                rgba(88,28,135,0.72) 108vh,
+                rgba(88,28,135,0.68) 112vh,
+                rgba(88,28,135,0.65) 116vh,
+                rgba(88,28,135,0.62) 121vh,
+                rgba(88,28,135,0.60) 126vh,
+                rgba(88,28,135,0.60) 132vh,
+                rgba(87,28,133,0.59) 136vh,
+                rgba(85,28,130,0.58) 140vh,
+                rgba(82,27,125,0.56) 144vh,
+                rgba(79,26,120,0.54) 148vh,
+                rgba(75,25,114,0.52) 152vh,
+                rgba(70,24,105,0.48) 156vh,
+                rgba(65,23,98,0.44) 160vh,
+                rgba(58,21,88,0.40) 164vh,
+                rgba(50,19,75,0.35) 168vh,
+                rgba(42,17,62,0.30) 172vh,
+                rgba(34,15,50,0.24) 176vh,
+                rgba(26,12,38,0.18) 180vh,
+                rgba(20,10,28,0.13) 184vh,
+                rgba(15,8,20,0.08) 188vh,
+                #0A0A0A 192vh,
+                #0A0A0A 196vh,
+                #0A0A0A 200vh,
+                rgba(11,10,13,0.04) 203vh,
+                rgba(14,11,16,0.08) 206vh,
+                rgba(18,12,20,0.12) 209vh,
+                rgba(22,13,24,0.16) 212vh,
+                rgba(28,15,30,0.20) 215vh,
+                rgba(35,18,38,0.25) 218vh,
+                rgba(42,20,46,0.30) 221vh,
+                rgba(50,22,56,0.36) 224vh,
+                rgba(58,24,66,0.42) 227vh,
+                rgba(66,25,78,0.48) 230vh,
+                rgba(72,27,90,0.54) 233vh,
+                rgba(78,28,104,0.58) 236vh,
+                rgba(83,28,118,0.62) 239vh,
+                rgba(86,28,128,0.64) 242vh,
+                rgba(88,28,135,0.65) 245vh,
+                rgba(88,28,135,0.65) 252vh,
+                rgba(90,29,133,0.66) 257vh,
+                rgba(94,31,130,0.68) 262vh,
+                rgba(100,33,126,0.70) 267vh,
+                rgba(106,35,121,0.72) 272vh,
+                rgba(113,37,114,0.74) 277vh,
+                rgba(120,40,105,0.76) 282vh,
+                rgba(117,39,95,0.74) 287vh,
+                rgba(112,37,84,0.72) 292vh,
+                rgba(105,34,72,0.69) 297vh,
+                rgba(96,31,60,0.66) 302vh,
+                rgba(86,27,48,0.63) 307vh,
+                rgba(77,24,38,0.60) 312vh,
+                rgba(70,21,30,0.57) 317vh,
+                rgba(67,20,7,0.55) 322vh,
+                rgba(67,20,7,0.55) 342vh,
+                rgba(67,20,7,0.55) 362vh,
+                rgba(69,21,12,0.57) 366vh,
+                rgba(72,23,20,0.59) 370vh,
+                rgba(77,26,32,0.62) 374vh,
+                rgba(82,29,48,0.64) 378vh,
+                rgba(85,31,65,0.67) 382vh,
+                rgba(87,33,82,0.69) 386vh,
+                rgba(88,34,98,0.71) 390vh,
+                rgba(88,35,115,0.73) 394vh,
+                rgba(88,35,128,0.74) 398vh,
+                rgba(88,28,135,0.75) 402vh,
+                rgba(88,28,135,0.75) 422vh,
+                rgba(88,28,135,0.75) 442vh,
+                rgba(86,30,132,0.73) 446vh,
+                rgba(83,32,128,0.71) 450vh,
+                rgba(78,35,122,0.68) 454vh,
+                rgba(72,38,115,0.65) 458vh,
+                rgba(64,42,105,0.61) 462vh,
+                rgba(55,45,92,0.56) 466vh,
+                rgba(45,48,78,0.50) 470vh,
+                rgba(35,50,62,0.44) 474vh,
+                rgba(26,48,48,0.37) 478vh,
+                rgba(18,42,35,0.30) 482vh,
+                rgba(12,32,24,0.22) 486vh,
+                rgba(10,22,16,0.15) 490vh,
+                rgba(10,14,12,0.08) 494vh,
+                rgba(10,10,10,0.03) 498vh,
+                #0A0A0A 502vh,
+                #0A0A0A 100%
+              ),
+              radial-gradient(
+                ellipse 100% 30% at 50% 110vh,
+                rgba(153,69,255,0.18),
+                transparent 60%
+              )
+            `,
+          }}
+        />
+      </div>
+
+      <div className="relative z-10">
+        <Header />
+      </div>
 
       {/* Enhanced Hero Section with Dynamic Gradients */}
-      <section className="relative min-h-screen flex items-center overflow-hidden bg-gradient-to-br from-[#0A0A0A] via-[#1a0f1f] to-[#0A0A0A]">
+      <section className="relative min-h-screen flex items-center overflow-hidden">
         {/* Background Globe */}
-        <div className="absolute inset-0 z-10 flex items-center justify-center">
+        <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
           <div className="blur-[2px] opacity-30">
             <GlobeComponent size={1000} className="max-w-none" />
           </div>
         </div>
 
-        {/* Dark overlay for readability */}
-        <div className="absolute inset-0 z-20 bg-gradient-to-b from-[#0A0A0A]/60 via-[#0A0A0A]/40 to-[#0A0A0A]/80 pointer-events-none" />
+        {/* Dark overlay for readability - muito reduzido */}
+        <div className="absolute inset-0 z-20 bg-gradient-to-b from-[#0A0A0A]/20 via-transparent to-transparent pointer-events-none" />
 
-        {/* Animated mesh gradient backgrounds */}
+        {/* Mesh gradient - CSS puro */}
         <div className="absolute inset-0 z-0">
-          {/* Purple gradient orb */}
-          <motion.div
-            className="absolute w-[600px] h-[600px] rounded-full blur-[120px] opacity-30"
-            style={{ background: 'radial-gradient(circle, rgba(153,69,255,0.4) 0%, transparent 70%)' }}
-            animate={{
-              x: ['-10%', '10%', '-10%'],
-              y: ['20%', '30%', '20%'],
+          <div
+            className="absolute inset-0 opacity-10"
+            style={{
+              background: 'radial-gradient(circle at 20% 30%, rgba(153,69,255,0.15), transparent 40%), radial-gradient(circle at 80% 50%, rgba(255,107,53,0.12), transparent 40%)'
             }}
-            transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-          />
-
-          {/* Orange gradient orb */}
-          <motion.div
-            className="absolute right-0 w-[500px] h-[500px] rounded-full blur-[100px] opacity-25"
-            style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.5) 0%, transparent 70%)' }}
-            animate={{
-              x: ['10%', '-5%', '10%'],
-              y: ['10%', '25%', '10%'],
-            }}
-            transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-          />
-
-          {/* Secondary purple accent */}
-          <motion.div
-            className="absolute bottom-0 left-1/3 w-[400px] h-[400px] rounded-full blur-[90px] opacity-20"
-            style={{ background: 'radial-gradient(circle, rgba(153,69,255,0.3) 0%, transparent 70%)' }}
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.2, 0.3, 0.2],
-            }}
-            transition={{ duration: 15, repeat: Infinity, ease: "easeInOut" }}
           />
         </div>
 
-        {/* Animated grid pattern */}
-        <div className="absolute inset-0 z-30 opacity-[0.02]">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `
-              linear-gradient(to right, rgba(255,107,53,0.3) 1px, transparent 1px),
-              linear-gradient(to bottom, rgba(153,69,255,0.3) 1px, transparent 1px)
-            `,
+        {/* Grid pattern sutil */}
+        <div
+          className="absolute inset-0 z-5 opacity-[0.01]"
+          style={{
+            backgroundImage: 'linear-gradient(rgba(153,69,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,107,53,0.3) 1px, transparent 1px)',
             backgroundSize: '60px 60px'
-          }} />
-        </div>
+          }}
+        />
 
         {/* Floating particles */}
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 rounded-full z-30"
-            style={{
-              background: i % 2 === 0 ? 'rgba(153,69,255,0.6)' : 'rgba(255,107,53,0.6)',
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              y: [0, -30, 0],
-              opacity: [0.2, 0.8, 0.2],
-              scale: [1, 1.5, 1],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
-          />
-        ))}
+        <div className="absolute inset-0 z-30 pointer-events-none">
+          {[...Array(15)].map((_, i) => (
+            <motion.div
+              key={i}
+              className={`absolute w-1 h-1 rounded-full ${i % 2 === 0 ? 'bg-purple-500/20' : 'bg-orange-500/20'}`}
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+              }}
+              animate={{
+                y: [0, -30, 0],
+                opacity: [0.2, 0.6, 0.2],
+                scale: [1, 1.5, 1],
+              }}
+              transition={{
+                duration: 3 + Math.random() * 2,
+                repeat: Infinity,
+                delay: Math.random() * 2,
+              }}
+            />
+          ))}
+        </div>
 
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-24 relative z-40">
           <motion.div
@@ -242,8 +363,170 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Powered by Section */}
+      <section className="relative py-16 sm:py-20">
+        {/* Gradiente radial de fundo */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'radial-gradient(circle at 50% 50%, rgba(153,69,255,0.08), transparent 60%)'
+          }}
+        />
+
+        {/* Círculos concêntricos animados */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-[0.08] pointer-events-none">
+          {[...Array(8)].map((_, i) => (
+            <motion.div
+              key={i}
+              className={`absolute border-2 rounded-full ${i % 2 === 0 ? 'border-purple-500' : 'border-orange-500'}`}
+              style={{
+                width: `${200 + i * 120}px`,
+                height: `${200 + i * 120}px`,
+              }}
+              animate={{
+                opacity: [0.8, 1, 0.8],
+                scale: [1, 1.02, 1],
+              }}
+              transition={{
+                duration: 4 + i * 0.5,
+                repeat: Infinity,
+                ease: "easeInOut",
+                delay: i * 0.2
+              }}
+            />
+          ))}
+        </div>
+
+        {/* Partículas flutuantes sutis */}
+        <div className="absolute inset-0 pointer-events-none">
+          {[...Array(8)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-2 h-2 rounded-full bg-purple-500/10 animate-pulse"
+              style={{
+                left: `${15 + Math.random() * 70}%`,
+                top: `${20 + Math.random() * 60}%`,
+                animationDelay: `${Math.random() * 2}s`
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6 relative z-10">
+        <motion.div
+          className="text-center space-y-6 mb-16"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+        >
+          <motion.h2
+            className="text-2xl sm:text-3xl lg:text-h1 font-semibold text-fg-primary px-4"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            Powered by Industry Leaders
+          </motion.h2>
+          <motion.p
+            className="text-sm sm:text-body-1 text-fg-secondary max-w-2xl mx-auto px-4"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+          >
+            Built in collaboration with leading blockchain protocols and institutions.
+          </motion.p>
+        </motion.div>
+
+        <motion.div
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 sm:gap-12 mb-12 sm:mb-16 px-4"
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.3 }}
+        >
+          {PARTNERS.map((partner, index) => (
+            <motion.a
+              key={partner.name}
+              href={partner.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity duration-300"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 0.7, y: 0 }}
+              transition={{ duration: 0.6, delay: index * 0.1 }}
+              whileHover={{
+                scale: 1.1,
+                opacity: 1,
+                transition: { duration: 0.3, ease: "easeOut" }
+              }}
+            >
+              <img
+                src={partner.logo}
+                alt={partner.name}
+                className="w-full h-auto max-h-12 object-contain"
+              />
+            </motion.a>
+          ))}
+        </motion.div>
+        </div>
+      </section>
+
       {/* Enhanced Stats Section */}
-      <section className="container mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-20 -mt-8 sm:-mt-16 relative z-20">
+      <section className="relative py-16 sm:py-20 -mt-8 sm:-mt-16">
+        {/* Diagonal gradient overlay */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(135deg, rgba(153,69,255,0.05) 0%, transparent 50%, rgba(153,69,255,0.02) 100%)'
+          }}
+        />
+
+        {/* Diagonal grid pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: 'linear-gradient(45deg, rgba(153,69,255,0.3) 1px, transparent 1px), linear-gradient(-45deg, rgba(153,69,255,0.3) 1px, transparent 1px)',
+            backgroundSize: '80px 80px'
+          }}
+        />
+
+        {/* Decorative orbs */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {/* Purple orb - top left */}
+          <div
+            className="absolute -top-20 -left-20 w-96 h-96 rounded-full opacity-[0.04]"
+            style={{
+              background: 'radial-gradient(circle, rgba(153,69,255,0.3), transparent 70%)',
+              filter: 'blur(60px)'
+            }}
+          />
+          {/* Purple orb - bottom right (suave) */}
+          <div
+            className="absolute -bottom-20 -right-20 w-96 h-96 rounded-full opacity-[0.02]"
+            style={{
+              background: 'radial-gradient(circle, rgba(153,69,255,0.2), transparent 70%)',
+              filter: 'blur(60px)'
+            }}
+          />
+        </div>
+
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6 relative z-10">
+
+        <motion.div
+          className="text-center space-y-4 mb-12"
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+        >
+          <h2 className="text-2xl sm:text-3xl lg:text-h1 font-bold bg-gradient-to-r from-brand-400 via-brand-300 to-green-400 bg-clip-text text-transparent">
+            Our Numbers
+          </h2>
+          <p className="text-sm sm:text-body-1 text-fg-secondary max-w-xl mx-auto">
+            Real-time metrics powered by on-chain data
+          </p>
+        </motion.div>
+
         <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
           initial={{ opacity: 0, y: 50 }}
@@ -255,64 +538,119 @@ const Index = () => {
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0 }}
-            whileHover={{ y: -5, scale: 1.02 }}
+            whileHover={{ y: -6 }}
+            className="group relative"
           >
+            <div className="absolute inset-0 bg-brand-500 rounded-xl blur-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
             <KPICard
               title="Total Value Locked"
               value={isLoading ? "Loading..." : marketStats.totalValueLocked}
               icon={DollarSign}
               trend="up"
               trendValue="Live"
+              className="relative border-brand-500/20 hover:border-brand-400/40 transition-colors"
             />
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            whileHover={{ y: -5, scale: 1.02 }}
+            whileHover={{ y: -6 }}
+            className="group relative"
           >
+            <div className="absolute inset-0 bg-green-500 rounded-xl blur-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
             <KPICard
               title="Tokenized Assets"
               value={isLoading ? "-" : marketStats.tokenizedAssets.toString()}
               icon={Coins}
               subtitle="RWA Markets"
+              className="relative border-green-500/20 hover:border-green-400/40 transition-colors"
             />
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            whileHover={{ y: -5, scale: 1.02 }}
+            whileHover={{ y: -6 }}
+            className="group relative"
           >
+            <div className="absolute inset-0 bg-orange-500 rounded-xl blur-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
             <KPICard
               title="Total Yield Distributed"
               value={isLoading ? "-" : marketStats.totalYieldDistributed}
               icon={PiggyBank}
               trend="up"
               trendValue="Active"
+              className="relative border-orange-500/20 hover:border-orange-400/40 transition-colors"
             />
           </motion.div>
         </motion.div>
+        </div>
       </section>
 
-      {/* Enhanced Features Section */}
-      <section ref={featuresRef} className="container mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-20">
-        <motion.div 
+      {/* Features Section */}
+      <section ref={featuresRef} className="relative py-16 sm:py-20 overflow-visible">
+        {/* Horizontal lines pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.04]"
+          style={{
+            backgroundImage: 'linear-gradient(rgba(153,69,255,0.5) 1px, transparent 1px)',
+            backgroundSize: '100% 100px'
+          }}
+        />
+
+        {/* Radial gradient */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'radial-gradient(circle at 30% 50%, rgba(153,69,255,0.06), transparent 50%)'
+          }}
+        />
+
+        {/* Green accent particles (subtle) */}
+        <div className="absolute inset-0 pointer-events-none">
+          {[...Array(6)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1 h-1 rounded-full bg-green-500/15"
+              style={{
+                left: `${20 + Math.random() * 60}%`,
+                top: `${20 + Math.random() * 60}%`,
+              }}
+              animate={{
+                opacity: [0.1, 0.3, 0.1],
+                scale: [1, 1.5, 1],
+              }}
+              transition={{
+                duration: 4 + Math.random() * 2,
+                repeat: Infinity,
+                delay: Math.random() * 2,
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6 relative z-10">
+
+        <motion.div
           className="text-center space-y-4 mb-16"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
         >
-          <motion.h2 
-            className="text-2xl sm:text-3xl lg:text-h1 font-semibold text-fg-primary px-4"
+          <motion.h2
+            className="text-2xl sm:text-3xl lg:text-h1 font-bold px-4"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            Institutional-Grade Infrastructure
+            <span className="bg-gradient-to-r from-brand-400 to-green-400 bg-clip-text text-transparent">
+              Institutional-Grade
+            </span>
+            <span className="text-fg-primary ml-3">Infrastructure</span>
           </motion.h2>
-          <motion.p 
+          <motion.p
             className="text-sm sm:text-body-1 text-fg-secondary max-w-2xl mx-auto px-4"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -322,7 +660,7 @@ const Index = () => {
           </motion.p>
         </motion.div>
 
-        <motion.div 
+        <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
           initial={{ opacity: 0 }}
           animate={isFeatureInView ? { opacity: 1 } : { opacity: 0 }}
@@ -339,31 +677,31 @@ const Index = () => {
               icon: Globe,
               title: "Hybrid Oracles",
               description: "Pyth Network price feeds combined with NAV attestations from custodians.",
-              color: "text-blue-400"
+              color: "text-brand-400"
             },
             {
               icon: Zap,
               title: "Efficient Capital",
               description: "Optimized lending protocols with isolated risk pools for maximum capital efficiency.",
-              color: "text-yellow-400"
+              color: "text-orange-400"
             },
             {
               icon: BarChart3,
-              title: "Risk Premiums", 
+              title: "Risk Premiums",
               description: "Granular risk modeling with base rates plus asset-specific premiums.",
-              color: "text-purple-400"
+              color: "text-brand-400"
             },
             {
               icon: Zap,
               title: "Lightning Fast",
               description: "Built on Solana for sub-second finality and ultra-low transaction costs.",
-              color: "text-solana-500"
+              color: "text-green-400"
             },
             {
               icon: Users,
               title: "Institutional UX",
               description: "Professional dashboards, reporting, and treasury-grade position management.",
-              color: "text-pink-400"
+              color: "text-orange-400"
             }
           ].map((feature, index) => (
             <motion.div
@@ -371,22 +709,23 @@ const Index = () => {
               initial={{ opacity: 0, y: 50, scale: 0.9 }}
               animate={isFeatureInView ? { opacity: 1, y: 0, scale: 1 } : { opacity: 0, y: 50, scale: 0.9 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
-              whileHover={{ y: -8, scale: 1.03 }}
-              className="group"
+              whileHover={{ y: -6 }}
+              className="group relative"
             >
-              <Card className="card-institutional hover-lift h-full relative overflow-hidden border-brand-500/20">
-                <motion.div 
-                  className="absolute inset-0 bg-gradient-to-br from-brand-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                />
+              <Card className="card-institutional h-full relative border-stroke-line hover:border-brand-500/30 transition-all duration-300">
+                {/* Subtle hover glow */}
+                <div className="absolute inset-0 bg-brand-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
                 <div className="space-y-6 relative z-10">
-                  <motion.div 
-                    className="flex h-14 w-14 items-center justify-center rounded-xl bg-brand-500/10 group-hover:bg-brand-500/20 transition-colors"
-                    whileHover={{ rotate: 10, scale: 1.1 }}
+                  <motion.div
+                    className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-500/10 border border-brand-500/20 group-hover:border-brand-500/40 transition-all"
+                    whileHover={{ scale: 1.05 }}
+                    transition={{ duration: 0.3, ease: "easeOut" }}
                   >
-                    <feature.icon className={`h-7 w-7 text-brand-400 group-hover:${feature.color} transition-colors`} />
+                    <feature.icon className={`h-8 w-8 ${feature.color}`} />
                   </motion.div>
                   <div className="space-y-3">
-                    <h3 className="text-h3 font-semibold text-fg-primary group-hover:text-brand-300 transition-colors">
+                    <h3 className="text-h3 font-bold text-fg-primary group-hover:text-brand-300 transition-colors">
                       {feature.title}
                     </h3>
                     <p className="text-body-2 text-fg-secondary leading-relaxed group-hover:text-fg-primary/90 transition-colors">
@@ -398,33 +737,103 @@ const Index = () => {
             </motion.div>
           ))}
         </motion.div>
+        </div>
       </section>
 
-      {/* Enhanced Markets Preview */}
-      <section ref={marketsRef} className="container mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-20 bg-gradient-to-b from-transparent via-bg-elev-1/30 to-transparent">
-        <motion.div 
+      {/* Markets Preview */}
+      <section ref={marketsRef} className="relative py-16 sm:py-20 overflow-visible">
+        {/* Radial mesh gradient */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: 'radial-gradient(circle at 20% 20%, rgba(153,69,255,0.06), transparent 40%), radial-gradient(circle at 50% 50%, rgba(255,107,53,0.08), transparent 50%)'
+          }}
+        />
+
+        {/* Multiple floating orbs */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {/* Orange orb - top center */}
+          <motion.div
+            className="absolute top-10 left-1/2 -translate-x-1/2 w-80 h-80 rounded-full opacity-[0.05]"
+            style={{
+              background: 'radial-gradient(circle, rgba(255,107,53,0.4), transparent 70%)',
+              filter: 'blur(80px)'
+            }}
+            animate={{
+              y: [0, 20, 0],
+              opacity: [0.05, 0.08, 0.05],
+            }}
+            transition={{
+              duration: 8,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+          {/* Purple orb - bottom left */}
+          <motion.div
+            className="absolute bottom-20 left-20 w-72 h-72 rounded-full opacity-[0.04]"
+            style={{
+              background: 'radial-gradient(circle, rgba(153,69,255,0.4), transparent 70%)',
+              filter: 'blur(70px)'
+            }}
+            animate={{
+              x: [0, 15, 0],
+              opacity: [0.04, 0.06, 0.04],
+            }}
+            transition={{
+              duration: 10,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+          {/* Green orb - right */}
+          <motion.div
+            className="absolute top-1/2 right-10 w-60 h-60 rounded-full opacity-[0.03]"
+            style={{
+              background: 'radial-gradient(circle, rgba(20,241,149,0.3), transparent 70%)',
+              filter: 'blur(60px)'
+            }}
+            animate={{
+              y: [0, -15, 0],
+              opacity: [0.03, 0.05, 0.03],
+            }}
+            transition={{
+              duration: 9,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+        </div>
+
+        {/* Subtle dot pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.02]"
+          style={{
+            backgroundImage: 'radial-gradient(circle, rgba(255,107,53,0.5) 1px, transparent 1px)',
+            backgroundSize: '50px 50px'
+          }}
+        />
+
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6 relative z-10">
+
+        <motion.div
           className="text-center space-y-6 mb-16"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
           viewport={{ once: true }}
         >
-          <motion.h2 
-            className="text-2xl sm:text-3xl lg:text-h1 font-semibold text-fg-primary px-4"
+          <motion.h2
+            className="text-2xl sm:text-3xl lg:text-h1 font-bold px-4"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            Active Markets
-            <motion.span 
-              className="inline-block ml-2"
-              animate={{ rotate: [0, 10, -10, 0] }}
-              transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-            >
-              <Star className="h-5 w-5 sm:h-6 sm:w-6 text-brand-400 inline" />
-            </motion.span>
+            <span className="bg-gradient-to-r from-green-400 to-brand-400 bg-clip-text text-transparent">
+              Active Markets
+            </span>
           </motion.h2>
-          <motion.p 
+          <motion.p
             className="text-sm sm:text-body-1 text-fg-secondary max-w-2xl mx-auto px-4"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -485,20 +894,8 @@ const Index = () => {
                 className="group perspective-1000"
               >
                 <Card className="card-institutional hover-lift h-full relative overflow-hidden border-brand-500/30 group-hover:border-brand-400/50 transition-all duration-300">
-                  {/* Animated background gradient */}
-                  <motion.div 
-                    className="absolute inset-0 bg-gradient-to-br from-brand-500/10 via-transparent to-brand-600/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    initial={false}
-                    whileHover={{
-                      background: [
-                        "linear-gradient(135deg, rgba(77,178,255,0.1) 0%, transparent 50%, rgba(77,178,255,0.05) 100%)",
-                        "linear-gradient(225deg, rgba(77,178,255,0.1) 0%, transparent 50%, rgba(77,178,255,0.05) 100%)",
-                        "linear-gradient(315deg, rgba(77,178,255,0.1) 0%, transparent 50%, rgba(77,178,255,0.05) 100%)",
-                        "linear-gradient(135deg, rgba(77,178,255,0.1) 0%, transparent 50%, rgba(77,178,255,0.05) 100%)"
-                      ]
-                    }}
-                    transition={{ duration: 3, repeat: Infinity }}
-                  />
+                  {/* Subtle brand gradient on hover */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   
                   <div className="space-y-6 relative z-10">
                     <div className="flex items-center justify-between">
@@ -617,293 +1014,24 @@ const Index = () => {
             >
               <span className="relative z-10">Explore All Markets</span>
               <ArrowRight className="ml-2 h-5 w-5 relative z-10 group-hover:translate-x-1 transition-transform" />
-              <motion.div
-                className="absolute inset-0 bg-gradient-to-r from-brand-600 to-brand-400 opacity-0 group-hover:opacity-100 transition-opacity"
-                whileHover={{
-                  background: [
-                    "linear-gradient(45deg, #3A9FEA, #4DB2FF)",
-                    "linear-gradient(135deg, #4DB2FF, #66BEFF)",
-                    "linear-gradient(225deg, #66BEFF, #3A9FEA)",
-                    "linear-gradient(315deg, #3A9FEA, #4DB2FF)"
-                  ]
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
-              />
+              <div className="absolute inset-0 bg-gradient-to-r from-brand-500 to-green-500 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
             </Button>
           </motion.div>
         </motion.div>
+        </div>
       </section>
 
-
-      {/* Powered by Section */}
-      <section className="container mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-20">
-        <motion.div
-          className="text-center space-y-6 mb-16"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-        >
-          <motion.h2
-            className="text-2xl sm:text-3xl lg:text-h1 font-semibold text-fg-primary px-4"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
-            Powered by Industry Leaders
-          </motion.h2>
-          <motion.p
-            className="text-sm sm:text-body-1 text-fg-secondary max-w-2xl mx-auto px-4"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
-            Built in collaboration with leading blockchain protocols and institutions.
-          </motion.p>
-        </motion.div>
-
-        <motion.div
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 sm:gap-12 mb-12 sm:mb-16 px-4"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.3 }}
-        >
-          {PARTNERS.map((partner, index) => (
-            <motion.a
-              key={partner.name}
-              href={partner.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity duration-300"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 0.7, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              whileHover={{ scale: 1.1, opacity: 1 }}
-            >
-              <img
-                src={partner.logo}
-                alt={partner.name}
-                className="w-full h-auto max-h-12 object-contain"
-              />
-            </motion.a>
-          ))}
-        </motion.div>
-
-        {/* Testimonials */}
-        <motion.div 
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ duration: 0.8, staggerChildren: 0.2 }}
-          viewport={{ once: true }}
-        >
-          {[
-            {
-              quote: "The institutional-grade compliance and transparency gives us confidence to deploy significant capital.",
-              author: "Sarah Chen",
-              role: "CTO, Meridian Capital",
-              avatar: "SC",
-              rating: 5
-            },
-            {
-              quote: "Seamless Solana integration and professional UX makes treasury management effortless.",
-              author: "Marcus Rodriguez",
-              role: "Treasury Director, Block Ventures",
-              avatar: "MR",
-              rating: 5
-            },
-            {
-              quote: "Superior yields with institutional-grade risk management. Exactly what we needed.",
-              author: "Dr. Emily Watson",
-              role: "Head of Investments, RWA Fund",
-              avatar: "EW",
-              rating: 5
-            }
-          ].map((testimonial, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 50 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.2 }}
-              whileHover={{ y: -8, scale: 1.02 }}
-            >
-              <Card className="card-institutional h-full border-brand-500/20 bg-gradient-to-br from-card to-bg-elev-1">
-                <div className="space-y-6">
-                  {/* Star Rating */}
-                  <div className="flex space-x-1">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, scale: 0 }}
-                        whileInView={{ opacity: 1, scale: 1 }}
-                        transition={{ duration: 0.3, delay: index * 0.2 + i * 0.1 }}
-                      >
-                        <Star className="h-4 w-4 text-brand-400 fill-current" />
-                      </motion.div>
-                    ))}
-                  </div>
-                  
-                  {/* Quote */}
-                  <blockquote className="text-body-2 text-fg-secondary italic leading-relaxed">
-                    "{testimonial.quote}"
-                  </blockquote>
-                  
-                  {/* Author */}
-                  <div className="flex items-center space-x-3 pt-4 border-t border-stroke-line/50">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/20 text-brand-400 font-semibold text-sm">
-                      {testimonial.avatar}
-                    </div>
-                    <div>
-                      <p className="text-body-2 font-semibold text-fg-primary">{testimonial.author}</p>
-                      <p className="text-micro text-fg-muted">{testimonial.role}</p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-          ))}
-        </motion.div>
-      </section>
-
-      {/* Enhanced Trust Indicators */}
-      <section className="container mx-auto max-w-7xl px-4 sm:px-6 py-12 sm:py-16">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
-        >
-          <Card className="card-institutional bg-gradient-to-br from-bg-elev-1 via-bg-elev-2 to-bg-elev-1 border-brand-500/30 relative overflow-hidden">
-            {/* Animated background pattern */}
-            <div className="absolute inset-0 opacity-10">
-              {[...Array(50)].map((_, i) => (
-                <motion.div
-                  key={i}
-                  className="absolute w-1 h-1 bg-brand-400 rounded-full"
-                  style={{
-                    left: `${Math.random() * 100}%`,
-                    top: `${Math.random() * 100}%`,
-                  }}
-                  animate={{
-                    opacity: [0.3, 0.8, 0.3],
-                    scale: [1, 1.5, 1],
-                  }}
-                  transition={{
-                    duration: 2 + Math.random() * 2,
-                    repeat: Infinity,
-                    delay: Math.random() * 2,
-                  }}
-                />
-              ))}
-            </div>
-            
-            <div className="text-center space-y-12 relative z-10">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                <h2 className="text-xl sm:text-2xl lg:text-h2 font-semibold text-fg-primary mb-4 px-4">
-                  Enterprise-Ready Platform
-                </h2>
-                <p className="text-sm sm:text-body-1 text-fg-secondary max-w-2xl mx-auto px-4">
-                  Built with institutional standards from day one
-                </p>
-              </motion.div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 lg:gap-10">
-                {[
-                  {
-                    icon: CheckCircle,
-                    title: "Regulatory Compliant",
-                    description: "Full KYC/KYB with jurisdiction controls and real-time monitoring",
-                    highlight: "SOC 2 Type II"
-                  },
-                  {
-                    icon: Shield,
-                    title: "Audited & Secure",
-                    description: "Smart contracts audited by leading security firms with bug bounties",
-                    highlight: "$2M+ Bounty Pool"
-                  },
-                  {
-                    icon: BarChart3,
-                    title: "Real-Time Reporting",
-                    description: "Institutional-grade analytics with custom reporting and API access",
-                    highlight: "99.9% Uptime"
-                  }
-                ].map((item, index) => (
-                  <motion.div 
-                    key={index} 
-                    className="flex flex-col items-center space-y-4 group"
-                    initial={{ opacity: 0, y: 50 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.6, delay: index * 0.2 }}
-                    whileHover={{ y: -5 }}
-                  >
-                    <motion.div 
-                      className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-500/10 group-hover:bg-brand-500/20 transition-all duration-300 border border-brand-500/20"
-                      whileHover={{ scale: 1.1, rotate: 5 }}
-                    >
-                      <item.icon className="h-8 w-8 text-brand-400" />
-                    </motion.div>
-                    <div className="space-y-2 text-center">
-                      <Badge variant="outline" className="text-micro text-brand-400 border-brand-500/30 mb-2">
-                        {item.highlight}
-                      </Badge>
-                      <h3 className="text-h3 font-semibold text-fg-primary group-hover:text-brand-300 transition-colors">
-                        {item.title}
-                      </h3>
-                      <p className="text-body-2 text-fg-secondary text-center leading-relaxed max-w-xs">
-                        {item.description}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </Card>
-        </motion.div>
-      </section>
 
       {/* Roadmap Section */}
       <RoadmapSection />
 
-      {/* Modern Crypto-Style Footer */}
-      <footer className="relative border-t border-stroke-line bg-gradient-to-b from-background via-bg-elev-1 to-background overflow-hidden">
-        {/* Animated background */}
-        <div className="absolute inset-0 opacity-[0.03]">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `
-              linear-gradient(to right, rgba(153,69,255,0.3) 1px, transparent 1px),
-              linear-gradient(to bottom, rgba(153,69,255,0.3) 1px, transparent 1px)
-            `,
-            backgroundSize: '40px 40px'
-          }} />
-        </div>
+      {/* Professional Footer - Clean Black */}
+      <footer className="relative py-16 sm:py-20">
+        <div className="container mx-auto max-w-7xl px-4 sm:px-6">
+          {/* Footer Container - Clean */}
+          <div className="relative rounded-2xl border border-stroke-line overflow-hidden">
 
-        {/* Gradient orbs */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <motion.div
-            className="absolute -bottom-48 -left-48 w-96 h-96 rounded-full blur-3xl opacity-10"
-            style={{ background: 'radial-gradient(circle, rgba(153,69,255,0.8) 0%, transparent 70%)' }}
-            animate={{
-              scale: [1, 1.2, 1],
-              opacity: [0.1, 0.15, 0.1],
-            }}
-            transition={{ duration: 8, repeat: Infinity }}
-          />
-          <motion.div
-            className="absolute -bottom-48 -right-48 w-96 h-96 rounded-full blur-3xl opacity-10"
-            style={{ background: 'radial-gradient(circle, rgba(77,178,255,0.8) 0%, transparent 70%)' }}
-            animate={{
-              scale: [1.2, 1, 1.2],
-              opacity: [0.15, 0.1, 0.15],
-            }}
-            transition={{ duration: 8, repeat: Infinity, delay: 1 }}
-          />
-        </div>
-
-        <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-20 relative z-10">
+            <div className="relative z-10 px-6 sm:px-12 py-12 sm:py-16">
           {/* Main Footer Content */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-12">
             {/* Brand Column */}
@@ -1101,20 +1229,68 @@ const Index = () => {
             </motion.div>
           </div>
 
-          {/* Bottom Bar */}
+          {/* Powered By Section */}
           <motion.div
-            className="pt-8 border-t border-stroke-line/50"
+            className="pt-12 pb-8 border-t border-stroke-line/50"
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.4 }}
             viewport={{ once: true }}
           >
-            <div className="flex flex-col items-center gap-3 text-center">
-              <p className="text-xs text-fg-muted">
-                © 2025 SRWA Platform. All rights reserved.
-              </p>
+            <div className="text-center mb-8">
+              <h4 className="text-xs font-semibold text-fg-muted uppercase tracking-widest mb-6">
+                Powered by
+              </h4>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-8 items-center justify-items-center">
+                {PARTNERS.map((partner) => (
+                  <motion.a
+                    key={partner.name}
+                    href={partner.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="opacity-50 hover:opacity-100 transition-opacity duration-300"
+                    whileHover={{ scale: 1.1 }}
+                  >
+                    <img
+                      src={partner.logo}
+                      alt={partner.name}
+                      className="h-8 w-auto object-contain grayscale hover:grayscale-0 transition-all"
+                    />
+                  </motion.a>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Bottom Bar */}
+          <motion.div
+            className="pt-8 border-t border-stroke-line/50"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.6, delay: 0.5 }}
+            viewport={{ once: true }}
+          >
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-xs text-fg-muted">
+                <p>© 2025 SRWA Platform. All rights reserved.</p>
+                <div className="flex items-center gap-3">
+                  <a
+                    href="/privacy"
+                    className="hover:text-brand-400 transition-colors"
+                  >
+                    Privacy Policy
+                  </a>
+                  <span>•</span>
+                  <a
+                    href="/terms"
+                    className="hover:text-brand-400 transition-colors"
+                  >
+                    Terms of Service
+                  </a>
+                </div>
+              </div>
               <p className="text-xs text-fg-muted/80">
-                Built with ❤️ on{' '}
+                Built on{' '}
                 <motion.a
                   href="https://solana.com"
                   target="_blank"
@@ -1124,19 +1300,11 @@ const Index = () => {
                 >
                   Solana
                 </motion.a>
-                {' • '}
-                <motion.a
-                  href="https://github.com/SRWA-Cypherpunk"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-fg-secondary hover:text-brand-400 transition-colors"
-                  whileHover={{ scale: 1.05 }}
-                >
-                  Open Source
-                </motion.a>
               </p>
             </div>
           </motion.div>
+        </div>
+          </div>
         </div>
       </footer>
       

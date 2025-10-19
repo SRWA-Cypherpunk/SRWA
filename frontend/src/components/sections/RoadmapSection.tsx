@@ -116,29 +116,66 @@ export const RoadmapSection = () => {
   return (
     <section
       ref={sectionRef}
-      className="container mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-20 relative overflow-hidden"
+      className="relative py-16 sm:py-20 overflow-hidden"
     >
-      {/* Background gradient effects */}
-      <div className="absolute inset-0 pointer-events-none opacity-30">
+      {/* Dot pattern */}
+      <div
+        className="absolute inset-0 opacity-[0.02]"
+        style={{
+          backgroundImage: 'radial-gradient(circle, rgba(153,69,255,0.6) 1.5px, transparent 1.5px)',
+          backgroundSize: '40px 40px'
+        }}
+      />
+
+      {/* Radial gradient overlay */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: 'radial-gradient(circle at 30% 20%, rgba(255,107,53,0.05), transparent 40%), radial-gradient(circle at 60% 50%, rgba(153,69,255,0.05), transparent 60%)'
+        }}
+      />
+
+      {/* Subtle animated orbs */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Purple orb - left */}
         <motion.div
-          className="absolute top-0 left-1/4 w-[500px] h-[500px] rounded-full blur-[120px]"
-          style={{ background: 'radial-gradient(circle, rgba(153,69,255,0.3) 0%, transparent 70%)' }}
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.2, 0.3, 0.2],
+          className="absolute top-1/4 -left-20 w-96 h-96 rounded-full opacity-[0.04]"
+          style={{
+            background: 'radial-gradient(circle, rgba(153,69,255,0.4), transparent 70%)',
+            filter: 'blur(80px)'
           }}
-          transition={{ duration: 8, repeat: Infinity }}
+          animate={{
+            x: [0, 30, 0],
+            y: [0, -20, 0],
+            opacity: [0.04, 0.06, 0.04],
+          }}
+          transition={{
+            duration: 12,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
         />
+        {/* Orange orb - right */}
         <motion.div
-          className="absolute bottom-0 right-1/4 w-[400px] h-[400px] rounded-full blur-[100px]"
-          style={{ background: 'radial-gradient(circle, rgba(255,107,53,0.3) 0%, transparent 70%)' }}
-          animate={{
-            scale: [1.2, 1, 1.2],
-            opacity: [0.3, 0.2, 0.3],
+          className="absolute bottom-1/4 -right-20 w-80 h-80 rounded-full opacity-[0.05]"
+          style={{
+            background: 'radial-gradient(circle, rgba(255,107,53,0.4), transparent 70%)',
+            filter: 'blur(70px)'
           }}
-          transition={{ duration: 10, repeat: Infinity }}
+          animate={{
+            x: [0, -20, 0],
+            y: [0, 25, 0],
+            opacity: [0.05, 0.07, 0.05],
+          }}
+          transition={{
+            duration: 10,
+            repeat: Infinity,
+            ease: "easeInOut"
+          }}
         />
       </div>
+
+      <div className="container mx-auto max-w-7xl px-4 sm:px-6 relative z-10">
 
       {/* Header */}
       <motion.div
@@ -438,6 +475,7 @@ export const RoadmapSection = () => {
             );
           })}
         </div>
+      </div>
       </div>
     </section>
   );

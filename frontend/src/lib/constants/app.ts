@@ -33,32 +33,32 @@ export const SOCIAL_LINKS = {
 export const PARTNERS = [
   {
     name: 'Pyth Network',
-    logo: '/partners/pyth.svg',
+    logo: '/partners/pyth-network.webp',
     website: 'https://pyth.network',
   },
   {
     name: 'Solend',
-    logo: '/partners/solend.svg',
+    logo: '/partners/solend-logo.webp',
     website: 'https://solend.fi',
   },
   {
     name: 'MarginFi',
-    logo: '/partners/marginfi.svg',
+    logo: '/partners/marginfi-logo.webp',
     website: 'https://marginfi.com',
   },
   {
     name: 'Solana Foundation',
-    logo: '/partners/solana.svg',
+    logo: '/partners/solana-foundation.svg',
     website: 'https://solana.org',
   },
   {
     name: 'Solana Superteam',
-    logo: '/partners/superteam.svg',
+    logo: '/partners/superteam-logo.png',
     website: 'https://superteam.fun',
   },
   {
     name: 'Inteli',
-    logo: '/partners/inteli.svg',
+    logo: '/partners/inteli-logo.png',
     website: 'https://inteli.edu.br',
   },
 ] as const;
