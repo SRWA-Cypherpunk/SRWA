@@ -142,12 +142,24 @@ export default {
             transform: "translateX(100%)",
           },
         },
+        "gradient-pan": {
+          "0%": {
+            backgroundPosition: "0% 50%",
+          },
+          "50%": {
+            backgroundPosition: "100% 50%",
+          },
+          "100%": {
+            backgroundPosition: "0% 50%",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         orbit: "orbit calc(var(--duration)*1s) linear infinite",
         shimmer: "shimmer 2s ease-in-out infinite",
+        "gradient-pan": "gradient-pan 6s ease-in-out infinite",
       },
     },
   },

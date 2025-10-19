@@ -814,7 +814,10 @@ const Index = () => {
                   <div className="space-y-6 relative z-10">
                     <div className="flex items-center justify-between">
                       <motion.div whileHover={{ scale: 1.1 }}>
-                        <Badge variant="outline" className="text-micro border-brand-500/40 text-brand-300">
+                        <Badge
+                          variant="gradient"
+                          className="text-micro px-3 py-1 bg-[length:200%_200%] animate-gradient-pan shadow-[0_12px_32px_rgba(153,69,255,0.25)]"
+                        >
                           {market.name.slice(0, 4).toUpperCase()}
                         </Badge>
                       </motion.div>
@@ -829,32 +832,57 @@ const Index = () => {
                         {market.name}
                       </h3>
                       <p className="text-body-2 text-fg-muted group-hover:text-fg-secondary transition-colors">
-                        Class: <span className="text-brand-400 font-medium">{market.class}</span>
+                        Class:{" "}
+                        <span className="bg-gradient-to-r from-brand-500 via-brand-400 to-orange-400 bg-clip-text text-transparent bg-[length:200%_200%] animate-gradient-pan font-medium">
+                          {market.class}
+                        </span>
                       </p>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-6">
                       <motion.div 
-                        className="text-center p-3 rounded-lg bg-brand-500/5 group-hover:bg-brand-500/10 transition-colors"
+                        className="relative overflow-hidden rounded-xl p-[1px] shadow-[0_18px_45px_rgba(153,69,255,0.25)]"
                         whileHover={{ scale: 1.05 }}
+                        animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+                        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                        style={{
+                          backgroundSize: "200% 200%",
+                          backgroundImage: "linear-gradient(135deg, #6D28D9 0%, #8B5CF6 50%, #FF6B35 100%)",
+                        }}
                       >
-                        <p className="text-micro text-fg-muted uppercase tracking-wide mb-1">Supply APY</p>
-                        <AnimatedCounter 
-                          value={`${(market.supplyAPY * 100).toFixed(2)}%`} 
-                          className="text-h3 font-semibold text-brand-400 tabular-nums"
-                        />
+                        <div
+                          className="flex flex-col items-center gap-1 bg-bg-elev-2/95 px-4 py-3 text-center transition-colors duration-300 group-hover:bg-bg-elev-2/80"
+                          style={{ borderRadius: "calc(0.75rem - 2px)" }}
+                        >
+                          <p className="text-micro text-fg-muted uppercase tracking-wide">Supply APY</p>
+                          <AnimatedCounter 
+                            value={`${(market.supplyAPY * 100).toFixed(2)}%`} 
+                            className="text-h3 font-semibold text-fg-primary tabular-nums"
+                          />
+                        </div>
                       </motion.div>
                       <motion.div 
-                        className="text-center p-3 rounded-lg bg-brand-500/5 group-hover:bg-brand-500/10 transition-colors"
+                        className="relative overflow-hidden rounded-xl p-[1px] shadow-[0_18px_45px_rgba(153,69,255,0.25)]"
                         whileHover={{ scale: 1.05 }}
+                        animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+                        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
+                        style={{
+                          backgroundSize: "200% 200%",
+                          backgroundImage: "linear-gradient(135deg, #6D28D9 0%, #8B5CF6 50%, #FF6B35 100%)",
+                        }}
                       >
-                        <p className="text-micro text-fg-muted uppercase tracking-wide mb-1">TVL</p>
-                        <div className="text-h3 font-semibold text-fg-primary tabular-nums group-hover:text-brand-300 transition-colors">
-                          <span>$</span>
-                          <AnimatedCounter 
-                            value={market.tvl > 0 ? `${(market.tvl / 1e6).toFixed(1)}M` : '0.0M'} 
-                            className=""
-                          />
+                        <div
+                          className="flex flex-col items-center gap-1 bg-bg-elev-2/95 px-4 py-3 text-center transition-colors duration-300 group-hover:bg-bg-elev-2/80"
+                          style={{ borderRadius: "calc(0.75rem - 2px)" }}
+                        >
+                          <p className="text-micro text-fg-muted uppercase tracking-wide">TVL</p>
+                          <div className="text-h3 font-semibold text-fg-primary tabular-nums">
+                            <span className="mr-1 text-fg-muted">$</span>
+                            <AnimatedCounter 
+                              value={market.tvl > 0 ? `${(market.tvl / 1e6).toFixed(1)}M` : '0.0M'} 
+                              className=""
+                            />
+                          </div>
                         </div>
                       </motion.div>
                     </div>
@@ -874,7 +902,7 @@ const Index = () => {
                           className={`h-2 rounded-full ${
                             market.utilizationRate > 1 
                               ? 'bg-gradient-to-r from-amber-600 to-amber-400' 
-                              : 'bg-gradient-to-r from-brand-600 to-brand-400'
+                              : 'bg-gradient-to-r from-brand-600 via-brand-500 to-orange-500 bg-[length:200%_200%] animate-gradient-pan'
                           }`}
                           initial={{ width: 0 }}
                           whileInView={{ 
@@ -894,8 +922,8 @@ const Index = () => {
                     
                     <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                       <Button
-                        variant="outline"
-                        className="w-full group-hover:bg-brand-500/10 group-hover:border-brand-400/50 group-hover:text-brand-300 transition-all"
+                        variant="gradient"
+                        className="group w-full bg-[length:220%_220%] animate-gradient-pan shadow-[0_18px_45px_rgba(153,69,255,0.25)] transition-all duration-500 hover:shadow-[0_28px_60px_rgba(255,107,53,0.35)]"
                         onClick={() => window.location.href = ROUTES.DASHBOARD}
                       >
                         View Details
