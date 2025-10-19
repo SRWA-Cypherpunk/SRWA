@@ -6,6 +6,7 @@ import { KPICard } from "@/components/ui/kpi-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { HeroButton } from "@/components/ui/hero-button";
+import { LaunchCountdownButton } from "@/components/ui/launch-countdown-button";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, Legend } from "recharts";
 import { motion } from "framer-motion";
 import { ROUTES } from "@/lib/constants";
@@ -600,15 +601,24 @@ export default function Dashboard() {
                       Connect your wallet and start exploring institutional-grade RWA markets
                     </p>
                   </div>
-                  <div className="flex gap-3 flex-shrink-0">
-                    <HeroButton
-                      onClick={isConnected ? () => navigate(ROUTES.DASHBOARD) : connect}
-                      variant="brand"
-                      className="!px-6 !py-3 !text-sm"
-                      icon={<Wallet className="h-4 w-4" />}
-                    >
-                      {isConnected ? 'Launch App' : 'Connect Wallet'}
-                    </HeroButton>
+                  <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0 sm:items-center md:items-end">
+                    {isConnected ? (
+                      <LaunchCountdownButton
+                        className="w-full sm:w-auto items-center md:items-end text-center md:text-right"
+                        buttonClassName="!px-6 !py-3 !text-sm"
+                        icon={<ArrowRight className="h-4 w-4" />}
+                        onLaunch={() => navigate(ROUTES.DASHBOARD)}
+                      />
+                    ) : (
+                      <HeroButton
+                        onClick={connect}
+                        variant="brand"
+                        className="!px-6 !py-3 !text-sm"
+                        icon={<Wallet className="h-4 w-4" />}
+                      >
+                        Connect Wallet
+                      </HeroButton>
+                    )}
                     <HeroButton
                       onClick={() => navigate(ROUTES.DASHBOARD)}
                       variant="solana"

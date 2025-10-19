@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { MarketChart } from "@/components/ui/market-chart";
 import { HeroButton } from "@/components/ui/hero-button";
+import { LaunchCountdownButton } from "@/components/ui/launch-countdown-button";
 import { Globe as GlobeComponent } from "@/components/ui/globe";
 import { RoadmapSection } from "@/components/sections/RoadmapSection";
 import { FlowDiagram } from "@/components/FlowDiagram";
@@ -88,6 +89,10 @@ const Index = () => {
 
     return () => clearInterval(interval);
   }, [rotatingPhrases.length]);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
@@ -235,7 +240,7 @@ const Index = () => {
       </div>
 
       <div className="relative z-10">
-        <Header />
+        <Header disableDashboardLink onDashboardLinkClick={scrollToTop} />
       </div>
 
       {/* Enhanced Hero Section with Dynamic Gradients */}
@@ -351,14 +356,12 @@ const Index = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.8 }}
             >
-              <HeroButton
-                onClick={() => window.location.href = ROUTES.DASHBOARD}
-                variant="brand"
+              <LaunchCountdownButton
                 className="w-full sm:w-auto"
+                buttonClassName="w-full sm:w-auto"
                 icon={<ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />}
-              >
-                Launch App
-              </HeroButton>
+                onLaunch={scrollToTop}
+              />
             </motion.div>
 
           </motion.div>
@@ -924,7 +927,7 @@ const Index = () => {
                       <Button
                         variant="gradient"
                         className="group w-full bg-[length:220%_220%] animate-gradient-pan shadow-[0_18px_45px_rgba(153,69,255,0.25)] transition-all duration-500 hover:shadow-[0_28px_60px_rgba(255,107,53,0.35)]"
-                        onClick={() => window.location.href = ROUTES.DASHBOARD}
+                        onClick={scrollToTop}
                       >
                         View Details
                         <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -949,13 +952,11 @@ const Index = () => {
           transition={{ duration: 0.6, delay: 0.8 }}
           viewport={{ once: true }}
         >
-          <HeroButton
-            onClick={() => window.location.href = ROUTES.DASHBOARD}
-            variant="brand"
+          <LaunchCountdownButton
             icon={<ArrowRight className="h-5 w-5" />}
-          >
-            Launch App
-          </HeroButton>
+            onLaunch={scrollToTop}
+            className="w-full sm:w-auto mx-auto"
+          />
         </motion.div>
         </div>
       </section>
@@ -995,17 +996,26 @@ const Index = () => {
                     Connect your wallet and start exploring institutional-grade RWA markets
                   </p>
                 </div>
-                <div className="flex gap-3 flex-shrink-0">
+                <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0 sm:items-center md:items-end">
+                  {isConnected ? (
+                    <LaunchCountdownButton
+                      className="w-full sm:w-auto items-center md:items-end text-center md:text-right"
+                      buttonClassName="!px-6 !py-3 !text-sm"
+                      icon={<ArrowRight className="h-4 w-4" />}
+                      onLaunch={scrollToTop}
+                    />
+                  ) : (
+                    <HeroButton
+                      onClick={connect}
+                      variant="brand"
+                      className="!px-6 !py-3 !text-sm"
+                      icon={<Wallet className="h-4 w-4" />}
+                    >
+                      Connect Wallet
+                    </HeroButton>
+                  )}
                   <HeroButton
-                    onClick={isConnected ? () => window.location.href = ROUTES.DASHBOARD : connect}
-                    variant="brand"
-                    className="!px-6 !py-3 !text-sm"
-                    icon={<Wallet className="h-4 w-4" />}
-                  >
-                    {isConnected ? 'Launch App' : 'Connect Wallet'}
-                  </HeroButton>
-                  <HeroButton
-                    onClick={() => window.location.href = ROUTES.DASHBOARD}
+                    onClick={scrollToTop}
                     variant="solana"
                     className="!px-6 !py-3 !text-sm"
                     icon={<ArrowRight className="h-4 w-4" />}
@@ -1054,7 +1064,15 @@ const Index = () => {
                 ].map((link, index) => (
                   <li key={link.href}>
                     <motion.a
-                      href={link.href}
+                      href={link.href === ROUTES.DASHBOARD ? "#" : link.href}
+                      onClick={
+                        link.href === ROUTES.DASHBOARD
+                          ? (event) => {
+                              event.preventDefault();
+                              scrollToTop();
+                            }
+                          : undefined
+                      }
                       className="text-sm text-fg-secondary hover:text-purple-400 transition-all inline-flex items-center gap-2 group"
                       whileHover={{ x: 4 }}
                     >
