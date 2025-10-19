@@ -18,6 +18,24 @@
 */
 
 @layer base {
+  @font-face {
+    font-family: "Suisse Intl";
+    src: url("./assets/fonts/fonnts.com-Suisse_Intl_Regular.ttf") format("truetype");
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: "Suisse Intl";
+    src: url("./assets/fonts/SuisseIntl-Light.ttf") format("truetype");
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+  }
+}
+
+@layer base {
   @theme inline {
     --animate-orbit: orbit calc(var(--duration) * 1s) linear infinite;
 
