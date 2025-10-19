@@ -1025,13 +1025,61 @@ const Index = () => {
       {/* Roadmap Section */}
       <RoadmapSection />
 
-      {/* Professional Footer - Clean Black */}
+      {/* Professional Footer - Modern 2025 */}
       <footer className="relative py-16 sm:py-20">
         <div className="container mx-auto max-w-7xl px-4 sm:px-6">
-          {/* Footer Container - Clean */}
-          <div className="relative rounded-2xl border border-stroke-line overflow-hidden">
+          {/* Footer Container with Gradient */}
+          <div className="relative rounded-2xl border-2 border-purple-500/10 overflow-hidden"
+            style={{
+              background: 'linear-gradient(to bottom, #0d0b0e 0%, #110d14 50%, #0A0A0A 100%)',
+              borderImageSource: 'linear-gradient(to right, rgba(153,69,255,0.3), rgba(255,107,53,0.2))',
+              borderImageSlice: 1
+            }}
+          >
+            {/* Dot pattern overlay */}
+            <div className="absolute inset-0 opacity-[0.02] pointer-events-none" style={{
+              backgroundImage: 'radial-gradient(circle, rgba(153,69,255,0.6) 1.5px, transparent 1.5px)',
+              backgroundSize: '24px 24px'
+            }} />
 
-            <div className="relative z-10 px-6 sm:px-12 py-12 sm:py-16">
+            {/* CTA Section - Highlighted Box */}
+            <div className="relative z-10 mx-6 sm:mx-12 mt-8 sm:mt-12 mb-12 rounded-2xl border border-purple-500/20 bg-gradient-to-r from-purple-950/30 via-purple-900/20 to-orange-950/30 p-6 sm:p-8 backdrop-blur-sm overflow-hidden">
+              {/* Glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-500/5 via-transparent to-orange-500/5 pointer-events-none" />
+
+              <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="text-center md:text-left">
+                  <h3 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-purple-400 via-purple-300 to-orange-400 bg-clip-text text-transparent mb-2">
+                    Ready to Get Started?
+                  </h3>
+                  <p className="text-sm text-fg-secondary">
+                    Connect your wallet and start exploring institutional-grade RWA markets
+                  </p>
+                </div>
+                <div className="flex gap-3 flex-shrink-0">
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Button
+                      className="btn-primary px-6 py-3 relative overflow-hidden group"
+                      onClick={() => window.location.href = ROUTES.DASHBOARD}
+                    >
+                      <span className="relative z-10">Connect Wallet</span>
+                      <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-purple-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    </Button>
+                  </motion.div>
+                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                    <Button
+                      variant="outline"
+                      className="px-6 py-3 border-purple-500/30 hover:border-purple-400/50 hover:text-purple-300 transition-all"
+                      onClick={() => window.location.href = ROUTES.DASHBOARD}
+                    >
+                      View Dashboard
+                    </Button>
+                  </motion.div>
+                </div>
+              </div>
+            </div>
+
+            <div className="relative z-10 px-6 sm:px-12 pb-12 sm:pb-16">
           {/* Main Footer Content */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12 mb-12">
             {/* Brand Column */}
@@ -1059,7 +1107,7 @@ const Index = () => {
               transition={{ duration: 0.6, delay: 0.1 }}
               viewport={{ once: true }}
             >
-              <h4 className="text-sm font-semibold text-fg-primary uppercase tracking-wider">Product</h4>
+              <h4 className="text-sm font-semibold bg-gradient-to-r from-purple-400 to-purple-300 bg-clip-text text-transparent uppercase tracking-wider">Product</h4>
               <ul className="space-y-3">
                 {[
                   { href: ROUTES.DASHBOARD, label: "Dashboard" },
@@ -1070,10 +1118,10 @@ const Index = () => {
                   <li key={link.href}>
                     <motion.a
                       href={link.href}
-                      className="text-sm text-fg-secondary hover:text-brand-400 transition-colors inline-flex items-center gap-2 group"
+                      className="text-sm text-fg-secondary hover:text-purple-400 transition-all inline-flex items-center gap-2 group"
                       whileHover={{ x: 4 }}
                     >
-                      <ArrowRight className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <ArrowRight className="h-3 w-3 text-purple-500/60 opacity-0 group-hover:opacity-100 transition-opacity" />
                       <span>{link.label}</span>
                     </motion.a>
                   </li>
@@ -1089,7 +1137,7 @@ const Index = () => {
               transition={{ duration: 0.6, delay: 0.2 }}
               viewport={{ once: true }}
             >
-              <h4 className="text-sm font-semibold text-fg-primary uppercase tracking-wider">Resources</h4>
+              <h4 className="text-sm font-semibold bg-gradient-to-r from-orange-400 to-orange-300 bg-clip-text text-transparent uppercase tracking-wider">Resources</h4>
               <ul className="space-y-3">
                 {[
                   { href: ROUTES.DOCS, label: "Documentation", icon: BookOpen },
@@ -1101,10 +1149,10 @@ const Index = () => {
                       href={link.href}
                       target={link.href.startsWith('http') ? '_blank' : undefined}
                       rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                      className="text-sm text-fg-secondary hover:text-brand-400 transition-colors inline-flex items-center gap-2 group"
+                      className="text-sm text-fg-secondary hover:text-orange-400 transition-all inline-flex items-center gap-2 group"
                       whileHover={{ x: 4 }}
                     >
-                      <link.icon className="h-4 w-4 opacity-60 group-hover:opacity-100 transition-opacity" />
+                      <link.icon className="h-4 w-4 text-orange-500/60 group-hover:text-orange-400 opacity-60 group-hover:opacity-100 transition-all" />
                       <span>{link.label}</span>
                     </motion.a>
                   </li>
@@ -1121,7 +1169,7 @@ const Index = () => {
               viewport={{ once: true }}
             >
               <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-fg-primary uppercase tracking-wider">
+                <h4 className="text-sm font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent uppercase tracking-wider">
                   Join Our Community
                 </h4>
                 <p className="text-xs text-fg-secondary">
@@ -1139,9 +1187,9 @@ const Index = () => {
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className="relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-stroke-line bg-bg-elev-2 group-hover:border-brand-500/50 transition-all">
+                  <div className="relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-stroke-line bg-bg-elev-2 group-hover:border-purple-500/50 group-hover:shadow-[0_0_20px_rgba(153,69,255,0.3)] transition-all">
                     <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-brand-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-purple-600/10 opacity-0 group-hover:opacity-100 transition-opacity"
                     />
                     <motion.div
                       className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12"
@@ -1150,13 +1198,13 @@ const Index = () => {
                       transition={{ duration: 0.6 }}
                     />
                     <div className="relative flex items-center gap-2.5 flex-1">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500/10 group-hover:bg-brand-500/20 transition-colors">
-                        <Github className="h-4 w-4 text-fg-secondary group-hover:text-brand-400 transition-colors" />
+                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/10 group-hover:bg-purple-500/20 transition-colors">
+                        <Github className="h-4 w-4 text-fg-secondary group-hover:text-purple-400 transition-colors" />
                       </div>
-                      <span className="text-sm font-medium text-fg-primary group-hover:text-brand-300 transition-colors flex-1">
+                      <span className="text-sm font-medium text-fg-primary group-hover:text-purple-300 transition-colors flex-1">
                         GitHub
                       </span>
-                      <ArrowRight className="h-3.5 w-3.5 text-fg-muted group-hover:text-brand-400 group-hover:translate-x-1 transition-all" />
+                      <ArrowRight className="h-3.5 w-3.5 text-fg-muted group-hover:text-purple-400 group-hover:translate-x-1 transition-all" />
                     </div>
                   </div>
                 </motion.a>
@@ -1170,7 +1218,7 @@ const Index = () => {
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className="relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-stroke-line bg-bg-elev-2 group-hover:border-blue-500/50 transition-all">
+                  <div className="relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-stroke-line bg-bg-elev-2 group-hover:border-blue-500/50 group-hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all">
                     <motion.div
                       className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-brand-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
                     />
@@ -1201,7 +1249,7 @@ const Index = () => {
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className="relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-stroke-line bg-bg-elev-2 group-hover:border-[#5865F2]/50 transition-all">
+                  <div className="relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-stroke-line bg-bg-elev-2 group-hover:border-[#5865F2]/50 group-hover:shadow-[0_0_20px_rgba(88,101,242,0.3)] transition-all">
                     <motion.div
                       className="absolute inset-0 bg-gradient-to-r from-[#5865F2]/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
                     />
