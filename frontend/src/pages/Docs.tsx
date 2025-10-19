@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -26,13 +26,25 @@ import {
   ChevronRight,
   Code2,
   FileText,
-  Zap,
   Lock,
   Database,
   Settings,
   TrendingUp,
+  Users,
+  Layers,
+  BarChart3,
+  DollarSign,
+  Map,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import FlywheelDiagram from '@/assets/diagrams/ecossystem-flyweel.png';
+import StakeholdersDiagram from '@/assets/diagrams/stakeholders.png';
+import ArchitectureDiagram from '@/assets/diagrams/architecture.png';
+import ComplianceFlowDiagram from '@/assets/diagrams/compliance-interaction-flow.png';
+import OfferingDiagram from '@/assets/diagrams/principal-diagram.jpeg';
+import DataModelDiagram from '@/assets/diagrams/onchain-and-offchain-data-model.png';
+import DeFiDiagram from '@/assets/diagrams/dfi-integrations.png';
+import GovernanceDiagram from '@/assets/diagrams/governance.png';
 
 /**
  * Documentation section structure
@@ -95,225 +107,435 @@ function CodeBlock({ code, language = 'typescript' }: { code: string; language?:
 export default function Docs() {
   const [searchTerm, setSearchTerm] = useState('');
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeSection, setActiveSection] = useState('overview');
+  const [activeSection, setActiveSection] = useState('executive-summary');
 
   // Documentation sections organized by category
   const sections: DocSection[] = [
     {
-      id: 'overview',
-      title: 'Platform Overview',
+      id: 'executive-summary',
+      title: 'Executive Summary & Thesis',
       icon: BookOpen,
       category: 'Getting Started',
       content:
-        'SRWA Platform introduces institutional-grade Real-World Asset tokenization with built-in compliance. Built on Solana for high performance and low costs.',
+        'SRWA turns institutional real-world assets into programmable Solana instruments with compliance encoded into every token move. The platform compresses issuance time, lowers distribution cost, and unlocks DeFi-native liquidity while preserving regulatory guard rails.',
       features: [
-        'Token-first Compliance: Built-in compliance at the asset layer',
-        'Solana Performance: Sub-second finality, ultra-low fees',
-        'Institutional Grade: Designed for regulated financial institutions',
-        'Modular Architecture: Flexible compliance modules',
-        'DeFi Native: Seamless integration with Solana DeFi',
+        'Token-level compliance enforced by Solana Transfer Hooks',
+        'Capital formation through locked offerings with automated settlement',
+        'Hybrid valuation stack: custodian-signed NAV + guarded market data',
+        'One interface serving issuers, investors, integrators, and regulators',
       ],
-    },
-    {
-      id: 'quickstart',
-      title: 'Quick Start Guide',
-      icon: Zap,
-      category: 'Getting Started',
-      content: 'Get started with SRWA Platform in minutes. This guide covers installation, setup, and your first transaction.',
       subsections: [
         {
-          title: 'Installation',
-          content: 'Install the SRWA SDK using npm or yarn:',
-          code: `npm install @srwa/sdk\n# or\nyarn add @srwa/sdk`,
+          title: 'Investment Thesis in One Page',
+          content:
+            '• Issuers tap always-on USDC liquidity with programmable compliance.\n• Investors access curated credit, real estate, and receivable deals with controlled exits.\n• DeFi venues gain high-quality collateral with deterministic risk parameters.\n• Auditors and regulators receive a verifiable, tamper-evident event trail.',
         },
         {
-          title: 'Initialize SDK',
-          content: 'Configure and initialize the SDK with your credentials:',
-          code: `import { SRWA } from '@srwa/sdk';\n\nconst srwa = new SRWA({\n  network: 'mainnet',\n  apiKey: process.env.SRWA_API_KEY,\n});`,
+          title: 'North-Star Outcomes',
+          content:
+            'Issue in hours instead of weeks, achieve <1 compliance exception per 1,000 transfers, and maintain on-chain health metrics (oracle freshness, adapter utilization, governance response time) inside predefined thresholds.',
+        },
+      ],
+      image: OfferingDiagram,
+    },
+    {
+      id: 'stakeholder-playbooks',
+      title: 'Stakeholder Playbooks',
+      icon: Users,
+      category: 'Getting Started',
+      content:
+        'SRWA serves multiple desks. Each playbook summarises what success looks like for the audience and which tooling matters most.',
+      features: [
+        'Issuer wizard covers mint creation, compliance modules, and idle-yield policies',
+        'Investor UX connects KYC → subscription → secondary or collateral flows',
+        'Business and sales assets emphasise transparency, fees, and guard rails',
+        'Regulatory users receive attestation feeds, audit-ready exports, and timelock notices',
+      ],
+      subsections: [
+        {
+          title: 'Issuers & Originators',
+          content:
+            'Configure SRWA mints, offerings, allocation rules, lockups, and yield adapters in a guided flow. Governance policies (multisig + timelock) are baked in, and ready-made disclosures are hash-anchored on-chain.',
         },
         {
-          title: 'First Transaction',
-          content: 'Execute your first supply transaction:',
-          code: `const tx = await srwa.supply({\n  asset: 'SRWA-USDC',\n  amount: 1000,\n});\n\nconsole.log('Transaction:', tx.signature);`,
+          title: 'Investors & Treasury Teams',
+          content:
+            'Undergo reusable KYC/KYB, subscribe through capital-efficient offerings, monitor lock yield, receive SRWA with lock schedules, and optionally post tokens as collateral or exit through permissioned DEX pools.',
+        },
+        {
+          title: 'Developers & Integrators',
+          content:
+            'SDK surfaces offering state, compliance checks, valuation data, and DeFi endpoints. IDLs, type definitions, sandbox scripts, and Postman collections live in the Dev Portal.',
+        },
+        {
+          title: 'Auditors, Legal & Regulators',
+          content:
+            'Event streams, compliance violation logs, NAV attestations, and governance diffs are exportable. Timelock queues provide advance notice for parameter changes.',
+        },
+      ],
+      image: StakeholdersDiagram,
+    },
+    {
+      id: 'market-opportunity',
+      title: 'Market Problem & Opportunity',
+      icon: TrendingUp,
+      category: 'Core Concepts',
+      content:
+        'Traditional structured credit is slow, opaque, and geographically constrained; crypto markets are fast but lack enforceable compliance. SRWA closes the gap by codifying eligibility, valuation, and lifecycle rules directly in Solana programs.',
+      features: [
+        'Digitise FIDC/CRI/CRA processes end-to-end with deterministic state machines',
+        'Reduce intermediaries and reconcile events in near real-time',
+        'Give DeFi lenders and market makers clear risk primitives (LTV, haircuts, liquidity buffers)',
+      ],
+      subsections: [
+        {
+          title: 'Pain Points We Remove',
+          content:
+            'Slow fundraising, fragmented KYC/AML, manual allocation spreadsheets, outdated NAV reports, liquidity deserts, and expensive compliance attestations.',
+        },
+        {
+          title: 'Opportunity Flywheel',
+          content:
+            'More offerings → more high-quality collateral → deeper liquidity & yields → attracts more qualified investors → encourages more issuers. Compliance certainty keeps the loop regulated.',
         },
       ],
     },
     {
-      id: 'architecture',
-      title: 'System Architecture',
+      id: 'product-pillars',
+      title: 'Product Pillars',
+      icon: Layers,
+      category: 'Core Concepts',
+      content:
+        'Every release maps back to four pillars that keep the platform balanced across compliance, product velocity, and liquidity.',
+      features: [
+        'Compliant Tokenization: SPL-2022 mints with hooks, allowlists, and permanent delegates',
+        'Programmable Offering Engine: phases, caps, allocation rules, lock yield, automated settlement',
+        'Trusted Valuation: NAV publisher + Pyth guards + price floors/haircuts',
+        'DeFi Connectivity: certified integrations with marginfi, Solend, Raydium/Meteora/Orca',
+      ],
+      subsections: [
+        {
+          title: 'Configurable per Series',
+          content:
+            'Roles, required claims, module parameters, valuation guard rails, fee structures, and DeFi allowlists are stored in dedicated PDAs (e.g., SRWAConfig, OfferingState, Valuation).',
+        },
+        {
+          title: 'Observability by Default',
+          content:
+            'Every critical action emits structured events. Indexers pipe data into dashboards for compliance, operations, and risk teams.',
+        },
+      ],
+    },
+    {
+      id: 'architecture-overview',
+      title: 'Architecture Overview',
       icon: Database,
       category: 'Core Concepts',
       content:
-        'SRWA follows a token-first compliance architecture with core layers including Token Layer, Compliance Engine, Identity Registry, and DeFi Integration.',
-      image: '/docs/photo2Doc.png',
+        'A modular Solana stack keeps control and data planes separated. Each domain (token, compliance, offering, valuation, adapters) owns its PDAs and upgrade cadence.',
+      image: ArchitectureDiagram,
       subsections: [
         {
-          title: 'Core Layer',
+          title: 'Control Plane',
           content:
-            'SRWA Token: Solana SPL token with built-in compliance. Compliance Engine: Real-time compliance checks. Identity Registry: KYC/AML verification system.',
+            'SRWA Factory writes configuration PDAs, assigns multisig roles, and enables compliance modules. Timelocks protect upgrades and parameter shifts.',
         },
         {
-          title: 'Integration Layer',
+          title: 'Data Plane',
           content:
-            'Money Markets: Isolated lending pools for different RWA classes. DEX Integration: Seamless swaps and liquidity. Oracle Network: Hybrid pricing with NAV clamping.',
+            'SRWA Controller enforces compliance on each transfer, Offering Pool manages subscriptions and settlement, Valuation Oracle publishes guarded prices, and adapters interact with DeFi venues.',
         },
       ],
     },
     {
-      id: 'compliance',
-      title: 'Compliance Framework',
+      id: 'compliance-identity',
+      title: 'Compliance & Identity Framework',
       icon: Shield,
       category: 'Core Concepts',
       content:
-        'Comprehensive compliance framework ensuring regulatory adherence for institutional RWA trading.',
+        'Claims, modules, and hooks translate regulatory requirements into deterministic checks without leaking personal data on-chain.',
+      features: [
+        'Claims registry supports KYC, AML, KYB, Accreditation, Residency, Sanctions, PEP, MiFID categories, and audit attestations',
+        'Modules enforce jurisdiction, sanctions, lockups, caps, transfer windows, and per-investor limits',
+        'Transfer Hook short-circuits failures (paused, missing claim, jurisdiction blocked, sanctions hit, lockup active, not allowlisted)',
+      ],
       subsections: [
         {
-          title: 'KYC/AML Verification',
+          title: 'Identity Life Cycle',
           content:
-            'Multi-tier verification system with jurisdiction controls, sanctions screening, and accreditation requirements.',
+            'Trusted issuers push and revoke claims. Cache invalidation keeps hook checks fresh. All PII stays off-chain; only hashes and validity windows are recorded.',
         },
         {
-          title: 'Transfer Restrictions',
+          title: 'Compliance Pipeline',
           content:
-            'Time-based lockups, transfer windows, maximum holder limits, and jurisdiction-based allowlists.',
+            'Sanctions → Identity → Jurisdiction → Offering rules → Lockups/Caps → Allowlist → Oracle guard. Every rejection emits a machine-readable reason code.',
+        },
+      ],
+      image: ComplianceFlowDiagram,
+    },
+    {
+      id: 'offering-lifecycle',
+      title: 'Offering Lifecycle & Locked Funding',
+      icon: FileText,
+      category: 'Core Concepts',
+      content:
+        'Offerings progress through deterministic states: Draft → Pre-Offer → Open → Locked → Closed → Settlement/Refund. Idle funds earn yield through controlled adapters.',
+      image: FlywheelDiagram,
+      features: [
+        'Supports FCFS, Pro-Rata, and priority bucket allocations with deterministic refunds',
+        'Lock yield strategies integrate with marginfi/Solend under max allocation and withdrawal SLA policies',
+        'Settlement batches mint SRWA, distribute principal/fees/yield splits, and export full audit logs',
+      ],
+      subsections: [
+        {
+          title: 'State Machine',
+          content:
+            'Transitions require explicit instructions and time guards. Settlement only executes when soft cap is hit and adapters report zero outstanding balance.',
         },
         {
-          title: 'Audit Trail',
+          title: 'Operational Safeguards',
           content:
-            'Complete on-chain audit trail with structured events for every compliance decision and state change.',
+            'Grace modes tackle adapter outages, refunds follow snapshotted subscription PDAs, and dust accounts reconcile rounding differences.',
         },
       ],
     },
     {
-      id: 'lending-integration',
-      title: 'Lending Protocol Integration',
-      icon: TrendingUp,
+      id: 'valuation-oracles',
+      title: 'Valuation, NAV & Oracles',
+      icon: BarChart3,
+      category: 'Core Concepts',
+      content:
+        'Hybrid valuation marries auditor-signed NAV snapshots with Pyth FX/benchmark feeds. Guards clamp market data to secure envelopes.',
+      image: DataModelDiagram,
+      features: [
+        'NAV Published events carry attestation hashes, signer identities, and timestamps',
+        'Final price modes: NAV_ONLY, HYBRID (NAV + benchmarks), MARKET_GUARDED (TWAP subject to gap limits)',
+        'Haircuts, price floors, and heartbeat/confidence guards prevent stale or manipulated readings',
+      ],
+      subsections: [
+        {
+          title: 'Integration with Lenders',
+          content:
+            'marginfi and Solend consume FinalPrice with minted LTV/LT/liquidation bonus configs. Degraded mode freezes new borrows until feeds recover.',
+        },
+        {
+          title: 'Operational SLAs',
+          content:
+            'NAV frequency by asset class (monthly → real estate, weekly → credit, daily → short duration) and Pyth heartbeat ≤120s keep price hygiene intact.',
+        },
+      ],
+    },
+    {
+      id: 'defi-integrations',
+      title: 'DeFi Integrations & Connectivity',
+      icon: Settings,
       category: 'Integration',
       content:
-        'Integrate SRWA tokens with lending protocols for supply, borrow, and liquidation flows.',
+        'Certified adapters align idle-yield, collateralisation, and secondary liquidity with SRWA compliance rules.',
+      image: DeFiDiagram,
+      features: [
+        'marginfi/Solend banks configured with isolation mode, conservative LTVs, and automatic guard rail enforcement',
+        'Permissioned DEX pools (Raydium, Meteora, Orca) only accept allowlisted SRWA/USDC venues',
+        'Adapter orchestrator rebalances allocations, enforces utilization caps, and monitors withdrawal SLAs',
+      ],
       subsections: [
         {
-          title: 'Supply Assets',
-          content: 'Supply SRWA tokens as collateral with risk-adjusted parameters:',
-          code: `const supply = await srwa.lending.supply({\n  pool: 'SRWA-TBill',\n  amount: 10000,\n  onBehalfOf: wallet.publicKey,\n});`,
+          title: 'Collateral Workflow',
+          content:
+            'Deposits trigger hook checks (eligibility + allowlist). Health factors and liquidation behaviour follow pre-approved parameters stored in CollateralProfile PDAs.',
         },
         {
-          title: 'Borrow Against Collateral',
-          content: 'Borrow USDC against SRWA collateral:',
-          code: `const borrow = await srwa.lending.borrow({\n  pool: 'SRWA-TBill',\n  amount: 7500, // 75% LTV\n  to: wallet.publicKey,\n});`,
-        },
-        {
-          title: 'Health Factor Monitoring',
-          content: 'Monitor position health and avoid liquidation:',
-          code: `const position = await srwa.lending.getPosition(wallet.publicKey);\nconsole.log('Health Factor:', position.healthFactor);\n// HF > 1.5: Safe\n// HF < 1.2: At Risk\n// HF < 1.0: Liquidatable`,
+          title: 'Secondary Liquidity',
+          content:
+            'CLMM ranges sit around NAV, with pre-agreed depth targets. TWAP feeds inform the oracle but never override compliance gates.',
         },
       ],
     },
     {
-      id: 'oracle-system',
-      title: 'Oracle & Pricing',
+      id: 'developer-quickstart',
+      title: 'Developer Quick Start',
       icon: Code2,
       category: 'Integration',
       content:
-        'Hybrid oracle system combining on-chain TWAP with custodian-signed NAV for accurate RWA pricing.',
+        'Start building with the TypeScript SDK in minutes. The SDK mirrors Solana IDLs and exposes helpers for compliance checks, offerings, valuation, and DeFi endpoints.',
       subsections: [
         {
-          title: 'Price Calculation',
-          content:
-            'Effective price is clamped between NAV bands with haircut applied for conservative valuations.',
-          code: `// Pricing Formula\nP_spot = TWAP_Oracle\nNAV_net = NAV_custodian * (1 - haircut)\nBand_low = NAV_net * (1 - band)\nBand_high = NAV_net * (1 + band)\nEffective = clamp(P_spot, Band_low, Band_high)`,
+          title: 'Install & Bootstrap',
+          content: 'Add the SDK to your project and configure the client:',
+          code: `npm install @srwa/sdk\n# or\nyarn add @srwa/sdk\n\nimport { SRWAClient } from '@srwa/sdk';\n\nconst srwa = new SRWAClient({\n  connection: 'https://api.mainnet-beta.solana.com',\n  wallet, // Anchor-compatible wallet\n});`,
         },
         {
-          title: 'Degraded Mode',
+          title: 'Read Offering State',
+          content: 'Pull the live state of an offering (caps, phase, subscriptions):',
+          code: `const offering = await srwa.offerings.fetch({ mint: srwaMint });\nconsole.log(offering.phase, offering.raised.toString());`,
+        },
+        {
+          title: 'Compliance Check Before Transfer',
           content:
-            'System enters degraded mode when oracle data is stale, restricting new borrows and adjusting LTVs.',
+            'Validate whether two parties can transfer SRWA before submitting a transaction:',
+          code: `const canTransfer = await srwa.compliance.simulate({\n  mint: srwaMint,\n  from: investorA,\n  to: investorB,\n  amount: 1_000_000,\n});\n\nif (!canTransfer.ok) {\n  console.error(canTransfer.reason);\n}`,
         },
       ],
     },
     {
-      id: 'security',
-      title: 'Security Best Practices',
+      id: 'security-governance',
+      title: 'Security & Governance',
       icon: Lock,
       category: 'Advanced',
       content:
-        'Security considerations and best practices for building on SRWA Platform.',
+        'Security combines least-privilege roles, multisig + timelock governance, comprehensive logging, and rehearsed runbooks.',
+      image: GovernanceDiagram,
+      features: [
+        'Roles: issuer_admin, compliance_officer, transfer_agent, nav_feeder, emergency_council, governor',
+        'Timelocks (24–72h) wrap module changes, oracle updates, role rotations, and program upgrades',
+        'Emergency council can pause transfers, trigger clawbacks with evidence hashes, and coordinate backouts',
+      ],
       subsections: [
         {
-          title: 'Wallet Security',
+          title: 'Upgrade Process',
           content:
-            'Use hardware wallets for production, implement multisig for treasury operations, rotate API keys regularly.',
+            'Propose → queue in timelock → audit window → execute upgrade with hash validation. Rollback binaries and pause procedures are documented.',
         },
         {
-          title: 'Transaction Safety',
+          title: 'Incident Playbooks',
           content:
-            'Always set slippage limits, use deadline parameters, implement front-running protection.',
-          code: `const tx = await srwa.swap({\n  from: 'SRWA',\n  to: 'USDC',\n  amount: 1000,\n  slippage: 0.5, // 0.5% max slippage\n  deadline: Date.now() + 60000, // 60s\n});`,
-        },
-        {
-          title: 'Error Handling',
-          content:
-            'Implement proper error handling and retry logic for failed transactions.',
-          code: `try {\n  const tx = await srwa.supply({ ... });\n} catch (error) {\n  if (error.code === 'INSUFFICIENT_BALANCE') {\n    // Handle insufficient balance\n  } else if (error.code === 'COMPLIANCE_FAILED') {\n    // Handle compliance rejection\n  }\n}`,
+            'Oracle stale → switch to NAV_ONLY + freeze borrows. Adapter outage → grace mode + settlement pause. Compliance false positives → rollback params + notify investors.',
         },
       ],
     },
     {
-      id: 'api-reference',
-      title: 'API Reference',
-      icon: FileText,
-      category: 'Reference',
-      content: 'Complete API reference for SRWA SDK and smart contracts.',
+      id: 'economic-model',
+      title: 'Economic Model & Fees',
+      icon: DollarSign,
+      category: 'Advanced',
+      content:
+        'Transparent revenue levers align protocol sustainability with issuer success and investor protection.',
+      features: [
+        'Creation, offering, platform AUM, oracle service, adapter carry, and secondary liquidity fees are parameterised per series',
+        'Splits across protocol, issuer, and partners recorded in Treasury PDAs with event-level reconciliation',
+        'Performance fees tied to high-water marks and hurdles; no hidden take on investor principal',
+      ],
       subsections: [
         {
-          title: 'SDK Methods',
-          content: 'Core SDK methods for interacting with SRWA Protocol:',
-          code: `// Supply assets\nawait srwa.supply({ pool, amount })\n\n// Borrow assets\nawait srwa.borrow({ pool, amount })\n\n// Repay debt\nawait srwa.repay({ pool, amount })\n\n// Withdraw collateral\nawait srwa.withdraw({ pool, amount })\n\n// Get position\nawait srwa.getPosition(address)\n\n// Get pool info\nawait srwa.getPool(poolId)`,
+          title: 'Fee Controls',
+          content:
+            'All fee parameters sit behind governance. Reports reconcile treasury movements with event logs, enabling external audits.',
         },
         {
-          title: 'Error Codes',
-          content: 'Standard error codes returned by the protocol:',
-          code: `// Compliance Errors\n10: PAUSED\n11: FROZEN_FROM\n12: FROZEN_TO\n14: FROM_NOT_VERIFIED\n15: TO_NOT_VERIFIED\n\n// Transaction Errors\n30: NOT_AUTHORIZED\n31: INSUFFICIENT_BALANCE\n32: INSUFFICIENT_ALLOWANCE`,
+          title: 'Unit Economics Targets',
+          content:
+            'Aim for creation + offering fees to cover CAC, platform AUM to fund operations, and adapter carry to seed risk reserves.',
         },
       ],
     },
     {
-      id: 'risks',
-      title: 'Risk Assessment',
+      id: 'risk-management',
+      title: 'Risk Management & Stress Testing',
       icon: AlertTriangle,
       category: 'Reference',
       content:
-        'Comprehensive risk assessment matrix covering protocol risks and mitigations.',
+        'A risk library maps threats to controls, metrics, and replayable stress scenarios for price, liquidity, compliance, and operational incidents.',
       riskMatrix: [
         {
-          risk: 'R-1 Compliance Bypass',
-          vector: 'dApp calls transfer without compliance checks',
+          risk: 'Compliance bypass',
+          vector: 'Attempting transfers through non-approved programs or expired claims',
           mitigation:
-            'All balance-changing operations require compliance.canTransfer() approval with unit test coverage',
+            'Transfer Hook short-circuits, module parameters versioned, claims revocation invalidates caches, audits monitor violation logs',
         },
         {
-          risk: 'R-2 Oracle Failure',
-          vector: 'Custodian outage or feed lag',
+          risk: 'Oracle degradation',
+          vector: 'NAV publisher outage, stale FX, or manipulated DEX ranges',
           mitigation:
-            'Degraded mode with staleness guards, NAV haircuts, TWAP fallback, automated alerts',
+            'Heartbeat/confidence guards trigger NAV_ONLY mode, lenders freeze borrows, alerting escalates to operations',
         },
         {
-          risk: 'R-3 Liquidity Shock',
-          vector: 'Thin liquidity during liquidations',
+          risk: 'Liquidity crunch',
+          vector: 'Heavy redemptions or thin DEX depth during liquidation',
           mitigation:
-            'Partial liquidations with lot limits, pre-trade quotes, backstop configuration',
+            'Permissioned pools with depth commitments, partial liquidation engine, backstop market makers, utilisation caps',
         },
         {
-          risk: 'R-4 Smart Contract Risk',
-          vector: 'Contract vulnerabilities',
+          risk: 'Operational failure',
+          vector: 'Adapter withdraw timeout or governance key compromise',
           mitigation:
-            'Multiple audits, bug bounty program, formal verification, timelock upgrades',
+            'Grace windows, runbooks, risk reserves, multisig + timelock rotations, emergency council overrides',
+        },
+      ],
+    },
+    {
+      id: 'roadmap',
+      title: 'Roadmap & Milestones',
+      icon: Map,
+      category: 'Advanced',
+      content:
+        'Roadmap prioritises production-readiness (Fase 1) and structured securitisation (Fase 2). Each gate requires audits, partner sign-off, and dry-runs.',
+      features: [
+        'Phase 1: Token/compliance/valuation/offering stack live with devnet → testnet → mainnet progression',
+        'Phase 1.2: Listings with marginfi, Solend, and permissioned DEX pools; TA export and observability SLOs',
+        'Phase 2: Vaults, tranches, waterfalls, servicing oracle, DAO governance for FIDC-grade products',
+      ],
+      subsections: [
+        {
+          title: 'Gate Criteria',
+          content:
+            'Devnet → Testnet: IDLs frozen, test suite green, dashboards deployed. Testnet → Mainnet: external audit passed, governance live, KYC/TA partners active. Phase 2 launch: waterfall simulations validated, DAO quorums configured.',
+        },
+      ],
+    },
+    {
+      id: 'resource-hub',
+      title: 'Resource Hub',
+      icon: Info,
+      category: 'Reference',
+      content:
+        'Essential links, templates, and contacts to keep teams aligned across legal, product, risk, and engineering.',
+      features: [
+        'Dev Portal: IDLs, SDK docs, sample env configs, and testing harnesses',
+        'Compliance Center: claim schemas, module defaults, KYC/AML provider integrations',
+        'Operations Desk: runbooks, monitoring dashboards, incident communication templates',
+        'Business Enablement: investor decks, FAQs, fee calculator, case studies',
+      ],
+      subsections: [
+        {
+          title: 'Contact Channels',
+          content:
+            'Technical support: devrel@srwa.io. Compliance & legal: compliance@srwa.io. Partnership inquiries: growth@srwa.io.',
         },
       ],
     },
   ];
 
   // Group sections by category
-  const sectionsByCategory = sections.reduce((acc, section) => {
+  const searchValue = searchTerm.trim().toLowerCase();
+
+  const matchesSearch = (section: DocSection) => {
+    if (!searchValue) return true;
+
+    const haystack = [
+      section.title,
+      section.content,
+      ...(section.features ?? []),
+      ...(section.subsections?.flatMap((sub) => [sub.title, sub.content]) ?? []),
+      ...(section.riskMatrix?.flatMap((risk) => [risk.risk, risk.vector, risk.mitigation]) ??
+        []),
+    ]
+      .join(' ')
+      .toLowerCase();
+
+    return haystack.includes(searchValue);
+  };
+
+  const filteredSections = searchValue ? sections.filter(matchesSearch) : sections;
+  const sectionsForRender = filteredSections.length > 0 ? filteredSections : sections;
+  const noMatches = searchValue.length > 0 && filteredSections.length === 0;
+
+  useEffect(() => {
+    if (!sectionsForRender.some((section) => section.id === activeSection)) {
+      setActiveSection(sectionsForRender[0]?.id ?? sections[0].id);
+    }
+  }, [sectionsForRender, activeSection, sections]);
+
+  const sectionsByCategory = sectionsForRender.reduce((acc, section) => {
     if (!acc[section.category]) {
       acc[section.category] = [];
     }
@@ -329,19 +551,14 @@ export default function Docs() {
     'Reference',
   ] as const;
 
-  // Filter sections based on search
-  const filteredSections = sections.filter((section) => {
-    const searchLower = searchTerm.toLowerCase();
-    return (
-      section.title.toLowerCase().includes(searchLower) ||
-      section.content.toLowerCase().includes(searchLower)
-    );
-  });
-
-  const activeDoc = sections.find((s) => s.id === activeSection);
-  const activeIndex = sections.findIndex((s) => s.id === activeSection);
-  const prevDoc = activeIndex > 0 ? sections[activeIndex - 1] : null;
-  const nextDoc = activeIndex < sections.length - 1 ? sections[activeIndex + 1] : null;
+  const activeDoc =
+    sectionsForRender.find((section) => section.id === activeSection) ?? sections[0];
+  const activeIndex = sectionsForRender.findIndex((section) => section.id === activeSection);
+  const prevDoc = activeIndex > 0 ? sectionsForRender[activeIndex - 1] : null;
+  const nextDoc =
+    activeIndex >= 0 && activeIndex < sectionsForRender.length - 1
+      ? sectionsForRender[activeIndex + 1]
+      : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -390,7 +607,7 @@ export default function Docs() {
                                   className={cn(
                                     'flex items-center gap-2 w-full px-3 py-2 rounded-lg text-sm transition-colors',
                                     activeSection === section.id
-                                      ? 'bg-brand-500/10 text-brand-400 font-medium'
+                                      ? 'bg-gradient-to-r from-brand-600 via-brand-500 to-orange-500 text-white font-medium shadow-[0_12px_30px_rgba(153,69,255,0.25)]'
                                       : 'text-fg-secondary hover:bg-bg-elev-1 hover:text-fg-primary'
                                   )}
                                 >
@@ -457,6 +674,20 @@ export default function Docs() {
 
             {activeDoc && (
               <article className="space-y-8">
+                {noMatches && (
+                  <Card className="card-institutional border-amber-500/40 bg-amber-500/5">
+                    <div className="p-6 space-y-2">
+                      <h2 className="text-h3 font-semibold text-amber-300">
+                        No direct matches for “{searchTerm.trim()}”
+                      </h2>
+                      <p className="text-body-2 text-amber-100/80">
+                        Showing the full knowledge base so you can continue browsing. Try
+                        searching for product pillar names, stakeholder roles, or integration
+                        keywords.
+                      </p>
+                    </div>
+                  </Card>
+                )}
                 {/* Header */}
                 <div className="space-y-4">
                   <div className="flex items-center gap-2 text-sm text-fg-muted">
@@ -466,7 +697,9 @@ export default function Docs() {
                   </div>
 
                   <div className="flex items-center gap-4">
-                    <activeDoc.icon className="h-10 w-10 text-brand-400" />
+                    <div className="h-12 w-12 rounded-full bg-gradient-to-r from-brand-600 via-brand-500 to-orange-500 shadow-[0_18px_40px_rgba(153,69,255,0.35)] flex items-center justify-center">
+                      <activeDoc.icon className="h-6 w-6 text-white" />
+                    </div>
                     <div>
                       <h1 className="text-h1 font-semibold text-fg-primary">
                         {activeDoc.title}
@@ -510,8 +743,8 @@ export default function Docs() {
                               key={idx}
                               className="flex items-start gap-3 text-body-2 text-fg-secondary"
                             >
-                              <div className="w-5 h-5 rounded-full bg-brand-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                <Check className="h-3 w-3 text-brand-400" />
+                              <div className="w-5 h-5 rounded-full bg-gradient-to-r from-brand-600 via-brand-500 to-orange-500 flex items-center justify-center flex-shrink-0 mt-0.5 shadow-[0_10px_22px_rgba(153,69,255,0.35)]">
+                                <Check className="h-3 w-3 text-white" />
                               </div>
                               <span>{feature}</span>
                             </li>
