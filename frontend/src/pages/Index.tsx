@@ -530,7 +530,7 @@ const Index = () => {
         </motion.div>
 
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 justify-items-center max-w-5xl mx-auto"
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, staggerChildren: 0.1 }}
@@ -541,16 +541,16 @@ const Index = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0 }}
             whileHover={{ y: -6 }}
-            className="group relative"
+            className="group"
           >
-            <div className="absolute inset-0 bg-brand-500 rounded-xl blur-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
             <KPICard
               title="Total Value Locked"
               value={isLoading ? "Loading..." : marketStats.totalValueLocked}
               icon={DollarSign}
               trend="up"
               trendValue="Live"
-              className="relative border-brand-500/20 hover:border-brand-400/40 transition-colors"
+              variant="gradient"
+              wrapperClassName="mx-auto"
             />
           </motion.div>
           <motion.div
@@ -558,15 +558,15 @@ const Index = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
             whileHover={{ y: -6 }}
-            className="group relative"
+            className="group"
           >
-            <div className="absolute inset-0 bg-green-500 rounded-xl blur-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
             <KPICard
               title="Tokenized Assets"
               value={isLoading ? "-" : marketStats.tokenizedAssets.toString()}
               icon={Coins}
               subtitle="RWA Markets"
-              className="relative border-green-500/20 hover:border-green-400/40 transition-colors"
+              variant="gradient"
+              wrapperClassName="mx-auto"
             />
           </motion.div>
           <motion.div
@@ -574,16 +574,16 @@ const Index = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             whileHover={{ y: -6 }}
-            className="group relative"
+            className="group"
           >
-            <div className="absolute inset-0 bg-orange-500 rounded-xl blur-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
             <KPICard
               title="Total Yield Distributed"
               value={isLoading ? "-" : marketStats.totalYieldDistributed}
               icon={PiggyBank}
               trend="up"
               trendValue="Active"
-              className="relative border-orange-500/20 hover:border-orange-400/40 transition-colors"
+              variant="gradient"
+              wrapperClassName="mx-auto"
             />
           </motion.div>
         </motion.div>
