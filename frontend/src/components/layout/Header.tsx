@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type MouseEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { SolanaWalletButton } from "@/components/wallet/SolanaWalletButton";
@@ -6,7 +6,12 @@ import { ROUTES } from "@/lib/constants";
 import Logo from "@/assets/logo.png";
 import SRWALetters from "@/assets/srwa_letters.png";
 
-export function Header() {
+interface HeaderProps {
+  disableDashboardLink?: boolean;
+  onDashboardLinkClick?: () => void;
+}
+
+export function Header({ disableDashboardLink = false, onDashboardLinkClick }: HeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -33,6 +38,15 @@ export function Header() {
     return () => window.removeEventListener('scroll', controlNavbar);
   }, [lastScrollY]);
 
+  const handleDashboardLink = (event: MouseEvent<HTMLAnchorElement>) => {
+    if (disableDashboardLink) {
+      event.preventDefault();
+      onDashboardLinkClick?.();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setMobileMenuOpen(false);
+    }
+  };
+
   return (
     <header className={`sticky top-0 z-50 w-full border-b border-stroke-line bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-transform duration-300 ${
       isVisible ? 'translate-y-0' : '-translate-y-full'
@@ -54,7 +68,11 @@ export function Header() {
               Home
               <span className="absolute bottom-0 left-0 w-0 h-px bg-brand-400 group-hover:w-full transition-all duration-300" />
             </a>
-            <a href={ROUTES.DASHBOARD} className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group font-medium">
+            <a
+              href={disableDashboardLink ? "#" : ROUTES.DASHBOARD}
+              onClick={handleDashboardLink}
+              className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group font-medium"
+            >
               Dashboard
               <span className="absolute bottom-0 left-0 w-0 h-px bg-brand-400 group-hover:w-full transition-all duration-300" />
             </a>
@@ -88,7 +106,11 @@ export function Header() {
             <a href={ROUTES.HOME} className="block py-2 text-sm sm:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors">
               Home
             </a>
-            <a href={ROUTES.DASHBOARD} className="block py-2 text-sm sm:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors font-medium">
+            <a
+              href={disableDashboardLink ? "#" : ROUTES.DASHBOARD}
+              onClick={handleDashboardLink}
+              className="block py-2 text-sm sm:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors font-medium"
+            >
               Dashboard
             </a>
             <a href={ROUTES.DOCS} className="block py-2 text-sm sm:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors">

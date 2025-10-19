@@ -25,11 +25,11 @@ const steps: FlowStep[] = [
       'Returns Before Credit Distribution',
       'Asset Origination & Custody'
     ],
-    color: 'green',
-    accentColor: '#14F195',
-    borderColor: 'border-green-500/20',
-    bgGradient: 'from-green-950/20',
-    glowColor: 'rgba(20,241,149,0.3)'
+    color: 'orange',
+    accentColor: '#FF6B35',
+    borderColor: 'border-orange-500/20',
+    bgGradient: 'from-orange-950/20',
+    glowColor: 'rgba(255,107,53,0.3)'
   },
   {
     id: 'tokenization',

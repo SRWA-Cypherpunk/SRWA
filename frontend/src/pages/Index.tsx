@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { MarketChart } from "@/components/ui/market-chart";
 import { HeroButton } from "@/components/ui/hero-button";
+import { LaunchCountdownButton } from "@/components/ui/launch-countdown-button";
 import { Globe as GlobeComponent } from "@/components/ui/globe";
 import { RoadmapSection } from "@/components/sections/RoadmapSection";
 import { FlowDiagram } from "@/components/FlowDiagram";
@@ -88,6 +89,10 @@ const Index = () => {
 
     return () => clearInterval(interval);
   }, [rotatingPhrases.length]);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
@@ -235,7 +240,7 @@ const Index = () => {
       </div>
 
       <div className="relative z-10">
-        <Header />
+        <Header disableDashboardLink onDashboardLinkClick={scrollToTop} />
       </div>
 
       {/* Enhanced Hero Section with Dynamic Gradients */}
@@ -351,14 +356,12 @@ const Index = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.8 }}
             >
-              <HeroButton
-                onClick={() => window.location.href = ROUTES.DASHBOARD}
-                variant="brand"
+              <LaunchCountdownButton
                 className="w-full sm:w-auto"
+                buttonClassName="w-full sm:w-auto"
                 icon={<ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />}
-              >
-                Launch App
-              </HeroButton>
+                onLaunch={scrollToTop}
+              />
             </motion.div>
 
           </motion.div>
@@ -530,7 +533,7 @@ const Index = () => {
         </motion.div>
 
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 justify-items-center max-w-5xl mx-auto"
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, staggerChildren: 0.1 }}
@@ -541,16 +544,16 @@ const Index = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0 }}
             whileHover={{ y: -6 }}
-            className="group relative"
+            className="group"
           >
-            <div className="absolute inset-0 bg-brand-500 rounded-xl blur-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
             <KPICard
               title="Total Value Locked"
               value={isLoading ? "Loading..." : marketStats.totalValueLocked}
               icon={DollarSign}
               trend="up"
               trendValue="Live"
-              className="relative border-brand-500/20 hover:border-brand-400/40 transition-colors"
+              variant="gradient"
+              wrapperClassName="mx-auto"
             />
           </motion.div>
           <motion.div
@@ -558,15 +561,15 @@ const Index = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
             whileHover={{ y: -6 }}
-            className="group relative"
+            className="group"
           >
-            <div className="absolute inset-0 bg-green-500 rounded-xl blur-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
             <KPICard
               title="Tokenized Assets"
               value={isLoading ? "-" : marketStats.tokenizedAssets.toString()}
               icon={Coins}
               subtitle="RWA Markets"
-              className="relative border-green-500/20 hover:border-green-400/40 transition-colors"
+              variant="gradient"
+              wrapperClassName="mx-auto"
             />
           </motion.div>
           <motion.div
@@ -574,16 +577,16 @@ const Index = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             whileHover={{ y: -6 }}
-            className="group relative"
+            className="group"
           >
-            <div className="absolute inset-0 bg-orange-500 rounded-xl blur-2xl opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
             <KPICard
               title="Total Yield Distributed"
               value={isLoading ? "-" : marketStats.totalYieldDistributed}
               icon={PiggyBank}
               trend="up"
               trendValue="Active"
-              className="relative border-orange-500/20 hover:border-orange-400/40 transition-colors"
+              variant="gradient"
+              wrapperClassName="mx-auto"
             />
           </motion.div>
         </motion.div>
@@ -814,7 +817,10 @@ const Index = () => {
                   <div className="space-y-6 relative z-10">
                     <div className="flex items-center justify-between">
                       <motion.div whileHover={{ scale: 1.1 }}>
-                        <Badge variant="outline" className="text-micro border-brand-500/40 text-brand-300">
+                        <Badge
+                          variant="gradient"
+                          className="text-micro px-3 py-1 bg-[length:200%_200%] animate-gradient-pan shadow-[0_12px_32px_rgba(153,69,255,0.25)]"
+                        >
                           {market.name.slice(0, 4).toUpperCase()}
                         </Badge>
                       </motion.div>
@@ -829,32 +835,57 @@ const Index = () => {
                         {market.name}
                       </h3>
                       <p className="text-body-2 text-fg-muted group-hover:text-fg-secondary transition-colors">
-                        Class: <span className="text-brand-400 font-medium">{market.class}</span>
+                        Class:{" "}
+                        <span className="bg-gradient-to-r from-brand-500 via-brand-400 to-orange-400 bg-clip-text text-transparent bg-[length:200%_200%] animate-gradient-pan font-medium">
+                          {market.class}
+                        </span>
                       </p>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-6">
                       <motion.div 
-                        className="text-center p-3 rounded-lg bg-brand-500/5 group-hover:bg-brand-500/10 transition-colors"
+                        className="relative overflow-hidden rounded-xl p-[1px] shadow-[0_18px_45px_rgba(153,69,255,0.25)]"
                         whileHover={{ scale: 1.05 }}
+                        animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+                        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                        style={{
+                          backgroundSize: "200% 200%",
+                          backgroundImage: "linear-gradient(135deg, #6D28D9 0%, #8B5CF6 50%, #FF6B35 100%)",
+                        }}
                       >
-                        <p className="text-micro text-fg-muted uppercase tracking-wide mb-1">Supply APY</p>
-                        <AnimatedCounter 
-                          value={`${(market.supplyAPY * 100).toFixed(2)}%`} 
-                          className="text-h3 font-semibold text-brand-400 tabular-nums"
-                        />
+                        <div
+                          className="flex flex-col items-center gap-1 bg-bg-elev-2/95 px-4 py-3 text-center transition-colors duration-300 group-hover:bg-bg-elev-2/80"
+                          style={{ borderRadius: "calc(0.75rem - 2px)" }}
+                        >
+                          <p className="text-micro text-fg-muted uppercase tracking-wide">Supply APY</p>
+                          <AnimatedCounter 
+                            value={`${(market.supplyAPY * 100).toFixed(2)}%`} 
+                            className="text-h3 font-semibold text-fg-primary tabular-nums"
+                          />
+                        </div>
                       </motion.div>
                       <motion.div 
-                        className="text-center p-3 rounded-lg bg-brand-500/5 group-hover:bg-brand-500/10 transition-colors"
+                        className="relative overflow-hidden rounded-xl p-[1px] shadow-[0_18px_45px_rgba(153,69,255,0.25)]"
                         whileHover={{ scale: 1.05 }}
+                        animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+                        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
+                        style={{
+                          backgroundSize: "200% 200%",
+                          backgroundImage: "linear-gradient(135deg, #6D28D9 0%, #8B5CF6 50%, #FF6B35 100%)",
+                        }}
                       >
-                        <p className="text-micro text-fg-muted uppercase tracking-wide mb-1">TVL</p>
-                        <div className="text-h3 font-semibold text-fg-primary tabular-nums group-hover:text-brand-300 transition-colors">
-                          <span>$</span>
-                          <AnimatedCounter 
-                            value={market.tvl > 0 ? `${(market.tvl / 1e6).toFixed(1)}M` : '0.0M'} 
-                            className=""
-                          />
+                        <div
+                          className="flex flex-col items-center gap-1 bg-bg-elev-2/95 px-4 py-3 text-center transition-colors duration-300 group-hover:bg-bg-elev-2/80"
+                          style={{ borderRadius: "calc(0.75rem - 2px)" }}
+                        >
+                          <p className="text-micro text-fg-muted uppercase tracking-wide">TVL</p>
+                          <div className="text-h3 font-semibold text-fg-primary tabular-nums">
+                            <span className="mr-1 text-fg-muted">$</span>
+                            <AnimatedCounter 
+                              value={market.tvl > 0 ? `${(market.tvl / 1e6).toFixed(1)}M` : '0.0M'} 
+                              className=""
+                            />
+                          </div>
                         </div>
                       </motion.div>
                     </div>
@@ -874,7 +905,7 @@ const Index = () => {
                           className={`h-2 rounded-full ${
                             market.utilizationRate > 1 
                               ? 'bg-gradient-to-r from-amber-600 to-amber-400' 
-                              : 'bg-gradient-to-r from-brand-600 to-brand-400'
+                              : 'bg-gradient-to-r from-brand-600 via-brand-500 to-orange-500 bg-[length:200%_200%] animate-gradient-pan'
                           }`}
                           initial={{ width: 0 }}
                           whileInView={{ 
@@ -894,9 +925,9 @@ const Index = () => {
                     
                     <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                       <Button
-                        variant="outline"
-                        className="w-full group-hover:bg-brand-500/10 group-hover:border-brand-400/50 group-hover:text-brand-300 transition-all"
-                        onClick={() => window.location.href = ROUTES.DASHBOARD}
+                        variant="gradient"
+                        className="group w-full bg-[length:220%_220%] animate-gradient-pan shadow-[0_18px_45px_rgba(153,69,255,0.25)] transition-all duration-500 hover:shadow-[0_28px_60px_rgba(255,107,53,0.35)]"
+                        onClick={scrollToTop}
                       >
                         View Details
                         <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -921,13 +952,11 @@ const Index = () => {
           transition={{ duration: 0.6, delay: 0.8 }}
           viewport={{ once: true }}
         >
-          <HeroButton
-            onClick={() => window.location.href = ROUTES.DASHBOARD}
-            variant="brand"
+          <LaunchCountdownButton
             icon={<ArrowRight className="h-5 w-5" />}
-          >
-            Launch App
-          </HeroButton>
+            onLaunch={scrollToTop}
+            className="w-full sm:w-auto mx-auto"
+          />
         </motion.div>
         </div>
       </section>
@@ -967,17 +996,26 @@ const Index = () => {
                     Connect your wallet and start exploring institutional-grade RWA markets
                   </p>
                 </div>
-                <div className="flex gap-3 flex-shrink-0">
+                <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0 sm:items-center md:items-end">
+                  {isConnected ? (
+                    <LaunchCountdownButton
+                      className="w-full sm:w-auto items-center md:items-end text-center md:text-right"
+                      buttonClassName="!px-6 !py-3 !text-sm"
+                      icon={<ArrowRight className="h-4 w-4" />}
+                      onLaunch={scrollToTop}
+                    />
+                  ) : (
+                    <HeroButton
+                      onClick={connect}
+                      variant="brand"
+                      className="!px-6 !py-3 !text-sm"
+                      icon={<Wallet className="h-4 w-4" />}
+                    >
+                      Connect Wallet
+                    </HeroButton>
+                  )}
                   <HeroButton
-                    onClick={isConnected ? () => window.location.href = ROUTES.DASHBOARD : connect}
-                    variant="brand"
-                    className="!px-6 !py-3 !text-sm"
-                    icon={<Wallet className="h-4 w-4" />}
-                  >
-                    {isConnected ? 'Launch App' : 'Connect Wallet'}
-                  </HeroButton>
-                  <HeroButton
-                    onClick={() => window.location.href = ROUTES.DASHBOARD}
+                    onClick={scrollToTop}
                     variant="solana"
                     className="!px-6 !py-3 !text-sm"
                     icon={<ArrowRight className="h-4 w-4" />}
@@ -1026,7 +1064,15 @@ const Index = () => {
                 ].map((link, index) => (
                   <li key={link.href}>
                     <motion.a
-                      href={link.href}
+                      href={link.href === ROUTES.DASHBOARD ? "#" : link.href}
+                      onClick={
+                        link.href === ROUTES.DASHBOARD
+                          ? (event) => {
+                              event.preventDefault();
+                              scrollToTop();
+                            }
+                          : undefined
+                      }
                       className="text-sm text-fg-secondary hover:text-purple-400 transition-all inline-flex items-center gap-2 group"
                       whileHover={{ x: 4 }}
                     >

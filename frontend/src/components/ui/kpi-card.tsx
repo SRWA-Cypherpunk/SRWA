@@ -10,6 +10,8 @@ interface KPICardProps {
   trend?: "up" | "down" | "neutral";
   trendValue?: string;
   className?: string;
+  variant?: "default" | "gradient";
+  wrapperClassName?: string;
 }
 
 export function KPICard({ 
@@ -19,7 +21,9 @@ export function KPICard({
   icon: Icon, 
   trend, 
   trendValue,
-  className 
+  className,
+  variant = "default",
+  wrapperClassName,
 }: KPICardProps) {
   const trendColors = {
     up: "text-green-400",
@@ -27,8 +31,15 @@ export function KPICard({
     neutral: "text-fg-muted"
   };
 
-  return (
-    <Card className={cn("card-institutional hover-lift p-4 sm:p-6 h-32 sm:h-36", className)}>
+  const cardBody = (
+    <Card
+      className={cn(
+        "card-institutional hover-lift p-4 sm:p-6",
+        variant === "gradient" ? "h-28 sm:h-32" : "h-32 sm:h-36",
+        variant === "gradient" && "bg-bg-elev-2/95 border border-transparent rounded-[1.4rem]",
+        className,
+      )}
+    >
       <div className="flex flex-col h-full justify-between">
         <div className="flex items-start justify-between">
           <div className="space-y-2 flex-1 min-w-0">
@@ -60,4 +71,19 @@ export function KPICard({
       </div>
     </Card>
   );
+
+  if (variant === "gradient") {
+    return (
+      <div
+        className={cn(
+          "relative w-full max-w-[18rem] sm:max-w-xs rounded-2xl bg-gradient-to-r from-brand-600 via-brand-500 to-orange-500 p-[1px] shadow-[0_20px_45px_rgba(153,69,255,0.3)] backdrop-blur-sm overflow-hidden",
+          wrapperClassName,
+        )}
+      >
+        {cardBody}
+      </div>
+    );
+  }
+
+  return cardBody;
 }
