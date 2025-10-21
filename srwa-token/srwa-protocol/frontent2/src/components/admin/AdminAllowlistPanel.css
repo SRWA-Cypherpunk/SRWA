@@ -1,0 +1,157 @@
+.admin-allowlist-panel {
+  padding: 0;
+}
+
+.admin-allowlist-panel h2 {
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.admin-allowlist-panel h3 {
+  margin-bottom: 1rem;
+  color: #555;
+  font-size: 1.1rem;
+}
+
+/* Message Alerts */
+.admin-allowlist-panel .p-4 {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 4px;
+}
+
+.admin-allowlist-panel .bg-green-100 {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+}
+
+.admin-allowlist-panel .text-green-700 {
+  color: #155724;
+}
+
+.admin-allowlist-panel .bg-red-100 {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+}
+
+.admin-allowlist-panel .text-red-700 {
+  color: #721c24;
+}
+
+.admin-allowlist-panel .bg-yellow-50 {
+  background-color: #fff3cd;
+  border: 1px solid #ffeeba;
+}
+
+/* Super Admin Section */
+.admin-allowlist-panel .bg-gray-50 {
+  background-color: #f8f9fa;
+  padding: 1rem;
+  border-radius: 4px;
+  margin-bottom: 1.5rem;
+}
+
+/* Add Admin Form */
+.admin-allowlist-panel .flex.gap-2 {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.admin-allowlist-panel .flex-1 {
+  flex: 1;
+}
+
+.admin-allowlist-panel input[type="text"] {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.admin-allowlist-panel button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.admin-allowlist-panel .bg-blue-500 {
+  background-color: #007bff;
+  color: white;
+}
+
+.admin-allowlist-panel .bg-blue-500:hover {
+  background-color: #0056b3;
+}
+
+.admin-allowlist-panel .bg-green-500 {
+  background-color: #28a745;
+  color: white;
+}
+
+.admin-allowlist-panel .bg-green-500:hover {
+  background-color: #218838;
+}
+
+.admin-allowlist-panel .bg-red-500 {
+  background-color: #dc3545;
+  color: white;
+}
+
+.admin-allowlist-panel .bg-red-500:hover {
+  background-color: #c82333;
+}
+
+.admin-allowlist-panel button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Admin List */
+.admin-allowlist-panel .space-y-2 > * + * {
+  margin-top: 0.5rem;
+}
+
+.admin-allowlist-panel .bg-white {
+  background-color: white;
+}
+
+.admin-allowlist-panel .border {
+  border: 1px solid #dee2e6;
+}
+
+.admin-allowlist-panel .rounded {
+  border-radius: 4px;
+}
+
+.admin-allowlist-panel .p-3 {
+  padding: 0.75rem;
+}
+
+.admin-allowlist-panel .flex.items-center.justify-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-allowlist-panel .font-mono {
+  font-family: 'Courier New', monospace;
+  font-size: 0.9rem;
+}
+
+.admin-allowlist-panel .text-sm {
+  font-size: 0.875rem;
+}
+
+.admin-allowlist-panel .px-3 {
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+}
+
+.admin-allowlist-panel .py-1 {
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+}

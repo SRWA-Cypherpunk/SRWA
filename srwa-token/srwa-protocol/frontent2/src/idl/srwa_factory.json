@@ -1,0 +1,1769 @@
+{
+  "address": "G2TVaEY5pxLZbdBUq28Q7ZPGxQaxTxZzaSRTAEMh3z2A",
+  "metadata": {
+    "name": "srwa_factory",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "create_srwa",
+      "docs": [
+        "Creates a new SRWA token with Token-2022 extensions"
+      ],
+      "discriminator": [
+        203,
+        107,
+        49,
+        216,
+        149,
+        107,
+        248,
+        97
+      ],
+      "accounts": [
+        {
+          "name": "issuer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint",
+          "writable": true
+        },
+        {
+          "name": "srwa_config",
+          "docs": [
+            "SRWA Configuration PDA"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  114,
+                  119,
+                  97,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "offering_state",
+          "docs": [
+            "Offering State PDA"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  111,
+                  102,
+                  102,
+                  101,
+                  114,
+                  105,
+                  110,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "valuation_data",
+          "docs": [
+            "Valuation Data PDA"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  108,
+                  117,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "config_init",
+          "type": {
+            "defined": {
+              "name": "SRWAConfigInit"
+            }
+          }
+        },
+        {
+          "name": "offering_init",
+          "type": {
+            "defined": {
+              "name": "OfferingInit"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "disable_module",
+      "docs": [
+        "Disable a compliance module"
+      ],
+      "discriminator": [
+        116,
+        116,
+        84,
+        243,
+        209,
+        1,
+        202,
+        58
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "srwa_config"
+          ]
+        },
+        {
+          "name": "srwa_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  114,
+                  119,
+                  97,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "module_id",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "enable_module",
+      "docs": [
+        "Enable a compliance module"
+      ],
+      "discriminator": [
+        54,
+        246,
+        14,
+        64,
+        244,
+        163,
+        195,
+        166
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "srwa_config"
+          ]
+        },
+        {
+          "name": "srwa_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  114,
+                  119,
+                  97,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "module_id",
+          "type": "u8"
+        },
+        {
+          "name": "params",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "rotate_role",
+      "docs": [
+        "Rotate a role"
+      ],
+      "discriminator": [
+        140,
+        30,
+        251,
+        28,
+        138,
+        169,
+        142,
+        215
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "srwa_config"
+          ]
+        },
+        {
+          "name": "srwa_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  114,
+                  119,
+                  97,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "role",
+          "type": {
+            "defined": {
+              "name": "RoleType"
+            }
+          }
+        },
+        {
+          "name": "new_pubkey",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "set_oracle_cfg",
+      "docs": [
+        "Set oracle configuration"
+      ],
+      "discriminator": [
+        244,
+        236,
+        212,
+        56,
+        188,
+        46,
+        38,
+        175
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "srwa_config"
+          ]
+        },
+        {
+          "name": "srwa_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  114,
+                  119,
+                  97,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "pyth_feeds",
+          "type": {
+            "vec": "pubkey"
+          }
+        },
+        {
+          "name": "heartbeat",
+          "type": "u32"
+        },
+        {
+          "name": "max_dev_bps",
+          "type": "u32"
+        },
+        {
+          "name": "nav_feeder",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "update_trusted_issuer",
+      "docs": [
+        "Update trusted issuer for a specific topic"
+      ],
+      "discriminator": [
+        8,
+        126,
+        55,
+        70,
+        187,
+        50,
+        166,
+        183
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "srwa_config"
+          ]
+        },
+        {
+          "name": "srwa_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  114,
+                  119,
+                  97,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "topic",
+          "type": "u32"
+        },
+        {
+          "name": "issuer",
+          "type": "pubkey"
+        },
+        {
+          "name": "add",
+          "type": "bool"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "OfferingState",
+      "discriminator": [
+        232,
+        27,
+        7,
+        145,
+        97,
+        42,
+        93,
+        187
+      ]
+    },
+    {
+      "name": "SRWAConfig",
+      "discriminator": [
+        194,
+        199,
+        237,
+        20,
+        148,
+        94,
+        25,
+        11
+      ]
+    },
+    {
+      "name": "ValuationData",
+      "discriminator": [
+        112,
+        28,
+        13,
+        74,
+        123,
+        207,
+        215,
+        222
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "ModuleUpdated",
+      "discriminator": [
+        182,
+        144,
+        186,
+        145,
+        85,
+        210,
+        194,
+        139
+      ]
+    },
+    {
+      "name": "OfferingLocked",
+      "discriminator": [
+        237,
+        72,
+        113,
+        129,
+        63,
+        73,
+        77,
+        53
+      ]
+    },
+    {
+      "name": "OfferingOpened",
+      "discriminator": [
+        222,
+        216,
+        13,
+        22,
+        140,
+        43,
+        9,
+        226
+      ]
+    },
+    {
+      "name": "OracleConfigUpdated",
+      "discriminator": [
+        130,
+        6,
+        5,
+        137,
+        29,
+        155,
+        34,
+        68
+      ]
+    },
+    {
+      "name": "RoleRotated",
+      "discriminator": [
+        133,
+        153,
+        246,
+        25,
+        93,
+        231,
+        156,
+        124
+      ]
+    },
+    {
+      "name": "TokenCreated",
+      "discriminator": [
+        236,
+        19,
+        41,
+        255,
+        130,
+        78,
+        147,
+        172
+      ]
+    },
+    {
+      "name": "TrustedIssuerUpdated",
+      "discriminator": [
+        95,
+        152,
+        179,
+        21,
+        1,
+        194,
+        94,
+        147
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "Unauthorized",
+      "msg": "Unauthorized access"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidPhase",
+      "msg": "Invalid phase for this operation"
+    },
+    {
+      "code": 6002,
+      "name": "SoftCapNotReached",
+      "msg": "Soft cap not reached"
+    },
+    {
+      "code": 6003,
+      "name": "OverSubscription",
+      "msg": "Over subscription limit"
+    },
+    {
+      "code": 6004,
+      "name": "KycMissing",
+      "msg": "KYC verification missing"
+    },
+    {
+      "code": 6005,
+      "name": "AccreditationRequired",
+      "msg": "Accreditation required"
+    },
+    {
+      "code": 6006,
+      "name": "JurisdictionDenied",
+      "msg": "Jurisdiction denied"
+    },
+    {
+      "code": 6007,
+      "name": "Sanctioned",
+      "msg": "Address is sanctioned"
+    },
+    {
+      "code": 6008,
+      "name": "LockupActive",
+      "msg": "Lockup period active"
+    },
+    {
+      "code": 6009,
+      "name": "CapExceeded",
+      "msg": "Cap exceeded"
+    },
+    {
+      "code": 6010,
+      "name": "WindowClosed",
+      "msg": "Transfer window closed"
+    },
+    {
+      "code": 6011,
+      "name": "NotAllowlisted",
+      "msg": "Program or account not allowlisted"
+    },
+    {
+      "code": 6012,
+      "name": "OracleStale",
+      "msg": "Oracle price is stale"
+    },
+    {
+      "code": 6013,
+      "name": "ConfidenceTooHigh",
+      "msg": "Oracle confidence too high"
+    },
+    {
+      "code": 6014,
+      "name": "InvalidModule",
+      "msg": "Invalid module ID"
+    },
+    {
+      "code": 6015,
+      "name": "ModuleAlreadyEnabled",
+      "msg": "Module already enabled"
+    },
+    {
+      "code": 6016,
+      "name": "ModuleNotEnabled",
+      "msg": "Module not enabled"
+    },
+    {
+      "code": 6017,
+      "name": "InvalidTimestamp",
+      "msg": "Invalid timestamp"
+    },
+    {
+      "code": 6018,
+      "name": "InvalidAmount",
+      "msg": "Invalid amount"
+    },
+    {
+      "code": 6019,
+      "name": "MaxCapacityReached",
+      "msg": "Maximum capacity reached"
+    },
+    {
+      "code": 6020,
+      "name": "MinTicketNotMet",
+      "msg": "Minimum ticket not met"
+    },
+    {
+      "code": 6021,
+      "name": "PerInvestorCapExceeded",
+      "msg": "Per investor cap exceeded"
+    }
+  ],
+  "types": [
+    {
+      "name": "Currency",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "USD"
+          },
+          {
+            "name": "BRL"
+          },
+          {
+            "name": "EUR"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Distribution",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "oversub_policy",
+            "type": {
+              "defined": {
+                "name": "OversubPolicy"
+              }
+            }
+          },
+          {
+            "name": "lockups_data",
+            "type": "bytes"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Eligibility",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "jurisdictions_allow",
+            "type": {
+              "vec": "u16"
+            }
+          },
+          {
+            "name": "investor_types",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "InvestorType"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Fees",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "origination_bps",
+            "type": "u16"
+          },
+          {
+            "name": "platform_bps",
+            "type": "u16"
+          },
+          {
+            "name": "success_bps",
+            "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Funding",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "raised",
+            "type": "u64"
+          },
+          {
+            "name": "investors",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "IdleStrategy",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "None"
+          },
+          {
+            "name": "Marginfi"
+          },
+          {
+            "name": "Solend"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InvestorType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "RetailQualified"
+          },
+          {
+            "name": "Accredited"
+          },
+          {
+            "name": "Institutional"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ModuleId",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Jurisdiction"
+          },
+          {
+            "name": "Sanctions"
+          },
+          {
+            "name": "Accredited"
+          },
+          {
+            "name": "Lockup"
+          },
+          {
+            "name": "MaxHolders"
+          },
+          {
+            "name": "VolumeCaps"
+          },
+          {
+            "name": "TransferWindow"
+          },
+          {
+            "name": "ProgramAllowlist"
+          },
+          {
+            "name": "AccountAllowlist"
+          },
+          {
+            "name": "OfferingRules"
+          },
+          {
+            "name": "InvestorLimits"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ModuleUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "module_id",
+            "type": "u8"
+          },
+          {
+            "name": "enabled",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "NAVData",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "total",
+            "type": "u128"
+          },
+          {
+            "name": "per_token",
+            "type": "u64"
+          },
+          {
+            "name": "ccy",
+            "type": {
+              "defined": {
+                "name": "Currency"
+              }
+            }
+          },
+          {
+            "name": "ts",
+            "type": "i64"
+          },
+          {
+            "name": "signer",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OfferingInit",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "window",
+            "type": {
+              "defined": {
+                "name": "TimeWindow"
+              }
+            }
+          },
+          {
+            "name": "target",
+            "type": {
+              "defined": {
+                "name": "Target"
+              }
+            }
+          },
+          {
+            "name": "pricing",
+            "type": {
+              "defined": {
+                "name": "Pricing"
+              }
+            }
+          },
+          {
+            "name": "rules",
+            "type": {
+              "defined": {
+                "name": "OfferingRules"
+              }
+            }
+          },
+          {
+            "name": "oversub_policy",
+            "type": {
+              "defined": {
+                "name": "OversubPolicy"
+              }
+            }
+          },
+          {
+            "name": "fees_bps",
+            "type": {
+              "defined": {
+                "name": "Fees"
+              }
+            }
+          },
+          {
+            "name": "issuer_treasury",
+            "type": "pubkey"
+          },
+          {
+            "name": "fee_treasury",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OfferingLocked",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "raised",
+            "type": "u64"
+          },
+          {
+            "name": "investors",
+            "type": "u32"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OfferingOpened",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "start_ts",
+            "type": "i64"
+          },
+          {
+            "name": "end_ts",
+            "type": "i64"
+          },
+          {
+            "name": "soft_cap",
+            "type": "u64"
+          },
+          {
+            "name": "hard_cap",
+            "type": "u64"
+          },
+          {
+            "name": "min_ticket",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OfferingPhase",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Draft"
+          },
+          {
+            "name": "PreOffer"
+          },
+          {
+            "name": "OfferOpen"
+          },
+          {
+            "name": "OfferLocked"
+          },
+          {
+            "name": "OfferClosed"
+          },
+          {
+            "name": "Settlement"
+          },
+          {
+            "name": "Refund"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OfferingRules",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "min_ticket",
+            "type": "u64"
+          },
+          {
+            "name": "per_investor_cap",
+            "type": "u64"
+          },
+          {
+            "name": "max_investors",
+            "type": "u32"
+          },
+          {
+            "name": "eligibility",
+            "type": {
+              "defined": {
+                "name": "Eligibility"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "OfferingState",
+      "docs": [
+        "Offering state PDA"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "phase",
+            "type": {
+              "defined": {
+                "name": "OfferingPhase"
+              }
+            }
+          },
+          {
+            "name": "window",
+            "type": {
+              "defined": {
+                "name": "TimeWindow"
+              }
+            }
+          },
+          {
+            "name": "target",
+            "type": {
+              "defined": {
+                "name": "Target"
+              }
+            }
+          },
+          {
+            "name": "pricing",
+            "type": {
+              "defined": {
+                "name": "Pricing"
+              }
+            }
+          },
+          {
+            "name": "rules",
+            "type": {
+              "defined": {
+                "name": "OfferingRules"
+              }
+            }
+          },
+          {
+            "name": "distribution",
+            "type": {
+              "defined": {
+                "name": "Distribution"
+              }
+            }
+          },
+          {
+            "name": "funding",
+            "type": {
+              "defined": {
+                "name": "Funding"
+              }
+            }
+          },
+          {
+            "name": "pool_vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "idle_strategy",
+            "type": {
+              "defined": {
+                "name": "IdleStrategy"
+              }
+            }
+          },
+          {
+            "name": "fees_bps",
+            "type": {
+              "defined": {
+                "name": "Fees"
+              }
+            }
+          },
+          {
+            "name": "settlement",
+            "type": {
+              "defined": {
+                "name": "Settlement"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OracleConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pyth_feeds",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "heartbeat",
+            "type": "u32"
+          },
+          {
+            "name": "max_dev_bps",
+            "type": "u32"
+          },
+          {
+            "name": "nav_feeder",
+            "type": "pubkey"
+          },
+          {
+            "name": "base_ccy",
+            "type": {
+              "defined": {
+                "name": "Currency"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "OracleConfigUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "nav_feeder",
+            "type": "pubkey"
+          },
+          {
+            "name": "num_pyth_feeds",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OversubPolicy",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "ProRata"
+          },
+          {
+            "name": "FCFS"
+          },
+          {
+            "name": "PriorityBuckets"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PriceData",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "usd",
+            "type": "u64"
+          },
+          {
+            "name": "conf_bps",
+            "type": "u32"
+          },
+          {
+            "name": "ts",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PriceGuards",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "heartbeat",
+            "type": "u32"
+          },
+          {
+            "name": "max_dev_bps",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Pricing",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "model",
+            "type": {
+              "defined": {
+                "name": "PricingModel"
+              }
+            }
+          },
+          {
+            "name": "unit_price",
+            "type": "u64"
+          },
+          {
+            "name": "currency",
+            "type": {
+              "defined": {
+                "name": "Currency"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "PricingModel",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Fixed"
+          },
+          {
+            "name": "NAV"
+          },
+          {
+            "name": "Hybrid"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RoleRotated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "role_type",
+            "type": "string"
+          },
+          {
+            "name": "old_pubkey",
+            "type": "pubkey"
+          },
+          {
+            "name": "new_pubkey",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RoleType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "IssuerAdmin"
+          },
+          {
+            "name": "ComplianceOfficer"
+          },
+          {
+            "name": "TransferAgent"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Roles",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "issuer_admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "compliance_officer",
+            "type": "pubkey"
+          },
+          {
+            "name": "transfer_agent",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SRWAConfig",
+      "docs": [
+        "Main configuration for an SRWA token"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "roles",
+            "type": {
+              "defined": {
+                "name": "Roles"
+              }
+            }
+          },
+          {
+            "name": "required_topics",
+            "type": {
+              "vec": "u32"
+            }
+          },
+          {
+            "name": "trusted_issuers_data",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "TrustedIssuerEntry"
+                }
+              }
+            }
+          },
+          {
+            "name": "modules_enabled",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "ModuleId"
+                }
+              }
+            }
+          },
+          {
+            "name": "params_by_module",
+            "type": "bytes"
+          },
+          {
+            "name": "token_controls",
+            "type": {
+              "defined": {
+                "name": "TokenControls"
+              }
+            }
+          },
+          {
+            "name": "oracle_cfg",
+            "type": {
+              "defined": {
+                "name": "OracleConfig"
+              }
+            }
+          },
+          {
+            "name": "compliance_version",
+            "type": "u16"
+          },
+          {
+            "name": "metadata_uri",
+            "type": "string"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SRWAConfigInit",
+      "docs": [
+        "Initialization parameters for SRWA creation"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "roles",
+            "type": {
+              "defined": {
+                "name": "Roles"
+              }
+            }
+          },
+          {
+            "name": "required_topics",
+            "type": {
+              "vec": "u32"
+            }
+          },
+          {
+            "name": "metadata_uri",
+            "type": "string"
+          },
+          {
+            "name": "default_frozen",
+            "type": "bool"
+          },
+          {
+            "name": "permanent_delegate",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Settlement",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "issuer_treasury",
+            "type": "pubkey"
+          },
+          {
+            "name": "fee_treasury",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Target",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "soft_cap",
+            "type": "u64"
+          },
+          {
+            "name": "hard_cap",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TimeWindow",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "start_ts",
+            "type": "i64"
+          },
+          {
+            "name": "end_ts",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenControls",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "default_frozen",
+            "type": "bool"
+          },
+          {
+            "name": "permanent_delegate",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "issuer_admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "compliance_officer",
+            "type": "pubkey"
+          },
+          {
+            "name": "transfer_agent",
+            "type": "pubkey"
+          },
+          {
+            "name": "metadata_uri",
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TrustedIssuerEntry",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "topic",
+            "type": "u32"
+          },
+          {
+            "name": "issuer",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TrustedIssuerUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "topic",
+            "type": "u32"
+          },
+          {
+            "name": "issuer",
+            "type": "pubkey"
+          },
+          {
+            "name": "added",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ValuationData",
+      "docs": [
+        "Valuation PDA"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "last_nav",
+            "type": {
+              "defined": {
+                "name": "NAVData"
+              }
+            }
+          },
+          {
+            "name": "pyth_refs",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "final_price",
+            "type": {
+              "defined": {
+                "name": "PriceData"
+              }
+            }
+          },
+          {
+            "name": "guards",
+            "type": {
+              "defined": {
+                "name": "PriceGuards"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}

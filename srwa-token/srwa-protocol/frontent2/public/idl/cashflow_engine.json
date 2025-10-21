@@ -1,0 +1,176 @@
+{
+  "address": "85UaZex7aRX647Dn3N8kYNxZNbZcHxB97nwGnkfD5JfQ",
+  "metadata": {
+    "name": "cashflow_engine",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "distribute",
+      "discriminator": [
+        191,
+        44,
+        223,
+        207,
+        164,
+        236,
+        126,
+        61
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "record_payment",
+      "discriminator": [
+        226,
+        154,
+        10,
+        27,
+        9,
+        14,
+        148,
+        137
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "currency",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "schedule_coupon",
+      "discriminator": [
+        248,
+        236,
+        254,
+        43,
+        251,
+        57,
+        72,
+        157
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "schedule",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  117,
+                  112,
+                  111,
+                  110,
+                  95,
+                  115,
+                  99,
+                  104,
+                  101,
+                  100,
+                  117,
+                  108,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "rate_bps",
+          "type": "u16"
+        },
+        {
+          "name": "frequency",
+          "type": "u8"
+        },
+        {
+          "name": "tenor_years",
+          "type": "u8"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "CouponSchedule",
+      "discriminator": [
+        57,
+        230,
+        102,
+        123,
+        248,
+        158,
+        155,
+        11
+      ]
+    }
+  ],
+  "types": [
+    {
+      "name": "CouponSchedule",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "rate_bps",
+            "type": "u16"
+          },
+          {
+            "name": "frequency",
+            "type": "u8"
+          },
+          {
+            "name": "tenor_years",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}
