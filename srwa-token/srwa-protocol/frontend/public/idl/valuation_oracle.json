@@ -1,0 +1,142 @@
+{
+  "address": "B9vVuDnzj5RE7HpSJ9am7Ld1iP2D8V7eVgzsej7kppPz",
+  "metadata": {
+    "name": "valuation_oracle",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "compute_final_price",
+      "discriminator": [
+        180,
+        22,
+        11,
+        135,
+        100,
+        139,
+        53,
+        139
+      ],
+      "accounts": [
+        {
+          "name": "valuation_data"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "publish_nav",
+      "discriminator": [
+        45,
+        146,
+        87,
+        144,
+        84,
+        228,
+        177,
+        59
+      ],
+      "accounts": [
+        {
+          "name": "nav_feeder",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "valuation_data",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  108,
+                  117,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "total",
+          "type": "u128"
+        },
+        {
+          "name": "per_token",
+          "type": "u64"
+        },
+        {
+          "name": "currency",
+          "type": "u8"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "ValuationData",
+      "discriminator": [
+        112,
+        28,
+        13,
+        74,
+        123,
+        207,
+        215,
+        222
+      ]
+    }
+  ],
+  "types": [
+    {
+      "name": "ValuationData",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "total_nav",
+            "type": "u128"
+          },
+          {
+            "name": "nav_per_token",
+            "type": "u64"
+          },
+          {
+            "name": "currency",
+            "type": "u8"
+          },
+          {
+            "name": "last_update",
+            "type": "i64"
+          },
+          {
+            "name": "signer",
+            "type": "pubkey"
+          }
+        ]
+      }
+    }
+  ]
+}
