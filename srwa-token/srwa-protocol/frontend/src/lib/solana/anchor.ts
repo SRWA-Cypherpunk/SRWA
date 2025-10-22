@@ -14,7 +14,7 @@ export const PROGRAM_IDS = {
   cashflowEngine: "85UaZex7aRX647Dn3N8kYNxZNbZcHxB97nwGnkfD5JfQ",
 };
 
-export const RPC_ENDPOINT = 'http://127.0.0.1:8899';
+export const RPC_ENDPOINT = import.meta.env.VITE_SOLANA_RPC_URL || 'http://127.0.0.1:8899';
 
 const LOCAL_IDL_BASE_PATH = "/idl";
 
@@ -34,7 +34,7 @@ export class SRWAClient {
   private walletFundingPromise: Promise<void> | null;
 
   constructor() {
-    this.connection = new Connection("http://127.0.0.1:8899", "confirmed");
+    this.connection = new Connection(RPC_ENDPOINT, "confirmed");
     this.provider = null;
     this.programs = null;
     this.walletFundingPromise = null;
@@ -221,7 +221,7 @@ export const srwaClient = new SRWAClient();
 export const connection = srwaClient.connection;
 
 export function getProvider(wallet: any) {
-  const connection = new Connection("http://127.0.0.1:8899", "confirmed");
+  const connection = new Connection(RPC_ENDPOINT, "confirmed");
 
   // O wallet do @solana/wallet-adapter-react precisa ser encapsulado corretamente
   // para que o Anchor reconheça a propriedade publicKey
@@ -236,7 +236,8 @@ export function getProvider(wallet: any) {
   console.log("🔧 Creating provider with wallet:", {
     publicKey: walletWrapper.publicKey?.toString(),
     hasPublicKey: !!walletWrapper.publicKey,
-    publicKeyType: typeof walletWrapper.publicKey
+    publicKeyType: typeof walletWrapper.publicKey,
+    rpcEndpoint: RPC_ENDPOINT
   });
 
   return new anchor.AnchorProvider(connection, walletWrapper as any, {

@@ -254,3 +254,25 @@ export interface TokenCreationForm {
   enable_blend_integration: boolean;
   enable_soroswap_integration: boolean;
 }
+
+// User Role Type - Define o tipo de usuário na plataforma
+export enum UserRole {
+  Issuer = "Issuer",
+  Investor = "Investor",
+  Admin = "Admin",
+}
+
+// User Registry - Registro de usuário na plataforma
+export interface UserRegistry {
+  user: Address;
+  role: UserRole;
+  registered_at: number;
+  kyc_completed: boolean;
+  is_active: boolean;
+  bump: number;
+}
+
+// User Registration Form
+export interface UserRegistrationForm {
+  role: UserRole;
+}

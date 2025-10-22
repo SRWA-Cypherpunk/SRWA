@@ -165,4 +165,26 @@ pub mod srwa_factory {
     ) -> Result<bool> {
         instructions::verify_investor_kyc::handler(ctx, mint)
     }
+
+    /// Register a new user with a specific role (Issuer, Investor, or Admin)
+    pub fn register_user(
+        ctx: Context<RegisterUser>,
+        role: UserRole,
+    ) -> Result<()> {
+        instructions::register_user::handler(ctx, role)
+    }
+
+    /// Get user registry information
+    pub fn get_user_registry(
+        ctx: Context<GetUserRegistry>,
+    ) -> Result<UserRole> {
+        instructions::get_user_registry::handler(ctx)
+    }
+
+    /// Complete KYC for a user
+    pub fn complete_kyc(
+        ctx: Context<CompleteKYC>,
+    ) -> Result<()> {
+        instructions::complete_kyc::handler(ctx)
+    }
 }

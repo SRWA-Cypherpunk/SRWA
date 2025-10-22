@@ -108,17 +108,19 @@ export function AdminPanel() {
   }
 
   const RequestCard = ({ request, status }: { request: any; status: RequestStatus }) => {
+    const [showDetails, setShowDetails] = useState(false);
+    const [showRejectDialog, setShowRejectDialog] = useState(false);
     const yieldProtocol = mapProtocol(request.account.yieldConfig?.protocol);
     const targetApy = Number(request.account.yieldConfig?.targetApyBps ?? 0) / 100;
     const config = request.account.config;
     const offering = request.account.offering;
 
     return (
-      <div>
+      <>
         <Card className="card-institutional hover-lift">
           <CardHeader>
             <div className="flex items-start justify-between">
-              <div>
+              <div className="flex-1">
                 <CardTitle className="text-h3">{request.account.name}</CardTitle>
                 <CardDescription className="font-mono text-xs">
                   {request.account.symbol} • {request.account.issuer?.toBase58?.()?.slice(0, 8)}...
@@ -149,7 +151,7 @@ export function AdminPanel() {
             <div className="grid grid-cols-2 gap-4 text-body-2">
               <div>
                 <p className="text-fg-muted text-micro">Mint</p>
-                <p className="font-mono text-xs text-fg-primary">{request.account.mint.toBase58().slice(0, 16)}...</p>
+                <p className="font-mono text-xs text-fg-primary break-all">{request.account.mint.toBase58()}</p>
               </div>
               <div>
                 <p className="text-fg-muted text-micro">Decimals</p>
@@ -157,44 +159,244 @@ export function AdminPanel() {
               </div>
             </div>
 
-            {/* KYC Requirements */}
-            {config?.requiredTopics && config.requiredTopics.length > 0 && (
-              <div className="space-y-2">
-                <p className="text-body-2 font-semibold text-fg-primary flex items-center">
-                  <Shield className="h-4 w-4 mr-2 text-brand-400" />
-                  KYC Requirements
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  {config.requiredTopics.map((topic: number) => (
+            {/* Metadata URI */}
+            {config?.metadataUri && (
+              <div>
+                <p className="text-fg-muted text-micro mb-1">Metadata URI</p>
+                <a
+                  href={config.metadataUri}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-brand-400 hover:underline break-all"
+                >
+                  {config.metadataUri}
+                </a>
+              </div>
+            )}
+
+            {/* View Full Details Button */}
+            <Dialog open={showDetails} onOpenChange={setShowDetails}>
+              <DialogTrigger asChild>
+                <Button variant="outline" className="w-full">
+                  <FileText className="mr-2 h-4 w-4" />
+                  Ver Todos os Detalhes
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="text-2xl">{request.account.name} ({request.account.symbol})</DialogTitle>
+                  <DialogDescription>Informações completas do token</DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-6">
+                  {/* Issuer Info */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3 flex items-center">
+                      <Users className="h-5 w-5 mr-2 text-brand-400" />
+                      Informações do Issuer
+                    </h3>
+                    <div className="grid grid-cols-2 gap-4 bg-muted/30 p-4 rounded-lg">
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Issuer Address</p>
+                        <p className="text-sm font-mono break-all">{request.account.issuer?.toBase58?.()}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Request ID</p>
+                        <p className="text-sm">{request.account.requestId?.toString()}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Token Configuration */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">Configuração do Token</h3>
+                    <div className="grid grid-cols-2 gap-4 bg-muted/30 p-4 rounded-lg">
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Nome</p>
+                        <p className="text-sm font-semibold">{request.account.name}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Símbolo</p>
+                        <p className="text-sm font-semibold">{request.account.symbol}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Decimals</p>
+                        <p className="text-sm">{request.account.decimals}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">Default Frozen</p>
+                        <p className="text-sm">{config?.defaultFrozen ? 'Yes' : 'No'}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <p className="text-xs text-muted-foreground mb-1">Metadata URI</p>
+                        <a
+                          href={config?.metadataUri}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-brand-400 hover:underline break-all"
+                        >
+                          {config?.metadataUri}
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* KYC Requirements */}
+                  {config?.requiredTopics && config.requiredTopics.length > 0 && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3 flex items-center">
+                        <Shield className="h-5 w-5 mr-2 text-brand-400" />
+                        Requisitos KYC
+                      </h3>
+                      <div className="flex flex-wrap gap-2 bg-muted/30 p-4 rounded-lg">
+                        {config.requiredTopics.map((topic: number) => (
+                          <Badge key={topic} variant="secondary">
+                            {topicNames[topic] || `Topic ${topic}`}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Offering Details */}
+                  {offering && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">Detalhes da Oferta</h3>
+                      <div className="grid grid-cols-2 gap-4 bg-muted/30 p-4 rounded-lg">
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Soft Cap</p>
+                          <p className="text-sm font-semibold">{offering.target?.softCap?.toString?.()} USDC</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Hard Cap</p>
+                          <p className="text-sm font-semibold">{offering.target?.hardCap?.toString?.()} USDC</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Min Ticket</p>
+                          <p className="text-sm">{offering.rules?.minTicket?.toString?.()} USDC</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Max Per Investor</p>
+                          <p className="text-sm">{offering.rules?.perInvestorCap?.toString?.()} USDC</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Max Investors</p>
+                          <p className="text-sm">{offering.rules?.maxInvestors}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Unit Price</p>
+                          <p className="text-sm">{offering.pricing?.unitPrice?.toString?.()} {offering.pricing?.currency && JSON.stringify(offering.pricing.currency)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Start Time</p>
+                          <p className="text-sm">{offering.window?.startTs ? new Date(offering.window.startTs.toNumber() * 1000).toLocaleString() : '—'}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">End Time</p>
+                          <p className="text-sm">{offering.window?.endTs ? new Date(offering.window.endTs.toNumber() * 1000).toLocaleString() : '—'}</p>
+                        </div>
+                      </div>
+
+                      <div className="mt-3 bg-muted/30 p-4 rounded-lg">
+                        <p className="text-xs text-muted-foreground mb-2">Fees</p>
+                        <div className="grid grid-cols-3 gap-4 text-sm">
+                          <div>
+                            <span className="text-muted-foreground">Origination:</span> {offering.feesBps?.originationBps / 100}%
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Platform:</span> {offering.feesBps?.platformBps / 100}%
+                          </div>
+                          <div>
+                            <span className="text-muted-foreground">Success:</span> {offering.feesBps?.successBps / 100}%
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Yield Strategy */}
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3 flex items-center">
+                      <TrendingUp className="h-5 w-5 mr-2 text-brand-400" />
+                      Estratégia de Yield
+                    </h3>
+                    <div className="bg-muted/30 p-4 rounded-lg">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Protocolo</p>
+                          <p className="text-sm font-semibold capitalize">{yieldProtocol}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Target APY</p>
+                          <p className="text-sm font-semibold">{targetApy}%</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Roles */}
+                  {config?.roles && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-3">Roles</h3>
+                      <div className="space-y-2 bg-muted/30 p-4 rounded-lg text-xs font-mono">
+                        <div>
+                          <span className="text-muted-foreground">Issuer Admin:</span> {config.roles.issuerAdmin?.toBase58?.()}
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Compliance Officer:</span> {config.roles.complianceOfficer?.toBase58?.()}
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Transfer Agent:</span> {config.roles.transferAgent?.toBase58?.()}
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Permanent Delegate:</span> {config.permanentDelegate?.toBase58?.()}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Timestamps */}
+                  <div className="grid grid-cols-2 gap-4 text-sm bg-muted/30 p-4 rounded-lg">
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Created At</p>
+                      <p>{new Date(request.account.createdAt.toNumber() * 1000).toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Updated At</p>
+                      <p>{new Date(request.account.updatedAt.toNumber() * 1000).toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
+
+            {/* Quick Summary */}
+            <div className="space-y-2">
+              {/* KYC Requirements */}
+              {config?.requiredTopics && config.requiredTopics.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  <span className="text-xs text-muted-foreground">KYC:</span>
+                  {config.requiredTopics.slice(0, 3).map((topic: number) => (
                     <Badge key={topic} variant="outline" className="text-xs">
                       {topicNames[topic] || `Topic ${topic}`}
                     </Badge>
                   ))}
+                  {config.requiredTopics.length > 3 && (
+                    <span className="text-xs text-muted-foreground">+{config.requiredTopics.length - 3} more</span>
+                  )}
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Offering Details */}
-            {offering && (
-              <div className="grid grid-cols-2 gap-3 text-body-2">
-                <div>
-                  <p className="text-fg-muted text-micro">Hard Cap</p>
-                  <p className="text-fg-primary font-semibold">{offering.target?.hardCap?.toString?.()} USDC</p>
+              {/* Offering Summary */}
+              {offering && (
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  <span>Cap: {offering.target?.hardCap?.toString?.()} USDC</span>
+                  <span>•</span>
+                  <span>Min: {offering.rules?.minTicket?.toString?.()} USDC</span>
+                  <span>•</span>
+                  <span>Yield: {yieldProtocol} {targetApy}%</span>
                 </div>
-                <div>
-                  <p className="text-fg-muted text-micro">Min Ticket</p>
-                  <p className="text-fg-primary">{offering.rules?.minTicket?.toString?.()} USDC</p>
-                </div>
-              </div>
-            )}
-
-            {/* Yield Strategy */}
-            <div className="flex items-center space-x-4 p-3 bg-bg-elev-2 rounded-lg">
-              <TrendingUp className="h-5 w-5 text-brand-400" />
-              <div>
-                <p className="text-micro text-fg-muted">Yield Strategy</p>
-                <p className="text-body-2 text-fg-primary font-semibold">{yieldProtocol} ({targetApy}% APY)</p>
-              </div>
+              )}
             </div>
 
             {/* Actions */}
@@ -215,53 +417,17 @@ export function AdminPanel() {
                   )}
                 </Button>
 
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="destructive"
-                      className="flex-1"
-                      onClick={() => setSelectedRequest(request)}
-                    >
-                      <XCircle className="mr-2 h-4 w-4" />
-                      Reject
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Reject Request</DialogTitle>
-                      <DialogDescription>
-                        Provide a reason for rejecting this token request
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Rejection Reason</Label>
-                        <Input
-                          placeholder="e.g., Incomplete documentation"
-                          value={rejectReason}
-                          onChange={(e) => setRejectReason(e.target.value)}
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <Button variant="outline" className="flex-1" onClick={() => setSelectedRequest(null)}>
-                          Cancel
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          className="flex-1"
-                          onClick={handleReject}
-                          disabled={loading || !rejectReason}
-                        >
-                          {loading ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            'Confirm Rejection'
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                <Button
+                  variant="destructive"
+                  className="flex-1"
+                  onClick={() => {
+                    setSelectedRequest(request);
+                    setShowRejectDialog(true);
+                  }}
+                >
+                  <XCircle className="mr-2 h-4 w-4" />
+                  Reject
+                </Button>
               </div>
             )}
 
@@ -290,7 +456,53 @@ export function AdminPanel() {
             )}
           </CardContent>
         </Card>
-      </div>
+
+        {/* Reject Dialog - Separado do Card para evitar conflitos com Dialog de detalhes */}
+        <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Reject Request</DialogTitle>
+              <DialogDescription>
+                Provide a reason for rejecting this token request
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Rejection Reason</Label>
+                <Input
+                  placeholder="e.g., Incomplete documentation"
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setShowRejectDialog(false);
+                    setSelectedRequest(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="flex-1"
+                  onClick={handleReject}
+                  disabled={loading || !rejectReason}
+                >
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    'Confirm Rejection'
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </>
     );
   };
 

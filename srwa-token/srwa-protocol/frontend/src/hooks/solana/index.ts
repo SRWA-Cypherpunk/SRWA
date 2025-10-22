@@ -21,3 +21,4 @@ export type {
 } from './useIssuanceRequests';
 export { useDeployedTokens } from './useDeployedTokens';
 export type { DeployedToken } from './useDeployedTokens';
+export { useUserRegistry } from './useUserRegistry';

@@ -300,6 +300,60 @@
       "args": []
     },
     {
+      "name": "complete_kyc",
+      "docs": [
+        "Complete KYC for a user"
+      ],
+      "discriminator": [
+        22,
+        87,
+        130,
+        145,
+        74,
+        20,
+        205,
+        6
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "user_registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "configure_issuer_kyc",
       "docs": [
         "Configure issuer KYC requirements"
@@ -667,6 +721,63 @@
       ]
     },
     {
+      "name": "get_user_registry",
+      "docs": [
+        "Get user registry information"
+      ],
+      "discriminator": [
+        215,
+        36,
+        79,
+        148,
+        72,
+        2,
+        82,
+        241
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "signer": true
+        },
+        {
+          "name": "user_registry",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [],
+      "returns": {
+        "defined": {
+          "name": "UserRole"
+        }
+      }
+    },
+    {
       "name": "initialize_admin_registry",
       "docs": [
         "Initialize the platform admin registry"
@@ -832,6 +943,73 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "register_user",
+      "docs": [
+        "Register a new user with a specific role (Issuer, Investor, or Admin)"
+      ],
+      "discriminator": [
+        2,
+        241,
+        150,
+        223,
+        99,
+        214,
+        116,
+        97
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "user_registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "role",
+          "type": {
+            "defined": {
+              "name": "UserRole"
+            }
+          }
+        }
+      ]
     },
     {
       "name": "reject_srwa",
@@ -1420,6 +1598,19 @@
       ]
     },
     {
+      "name": "UserRegistry",
+      "discriminator": [
+        37,
+        84,
+        98,
+        14,
+        130,
+        63,
+        210,
+        138
+      ]
+    },
+    {
       "name": "ValuationData",
       "discriminator": [
         112,
@@ -1530,182 +1721,7 @@
     {
       "code": 6000,
       "name": "Unauthorized",
-      "msg": "Unauthorized access"
-    },
-    {
-      "code": 6001,
-      "name": "InvalidPhase",
-      "msg": "Invalid phase for this operation"
-    },
-    {
-      "code": 6002,
-      "name": "SoftCapNotReached",
-      "msg": "Soft cap not reached"
-    },
-    {
-      "code": 6003,
-      "name": "OverSubscription",
-      "msg": "Over subscription limit"
-    },
-    {
-      "code": 6004,
-      "name": "KycMissing",
-      "msg": "KYC verification missing"
-    },
-    {
-      "code": 6005,
-      "name": "AccreditationRequired",
-      "msg": "Accreditation required"
-    },
-    {
-      "code": 6006,
-      "name": "JurisdictionDenied",
-      "msg": "Jurisdiction denied"
-    },
-    {
-      "code": 6007,
-      "name": "Sanctioned",
-      "msg": "Address is sanctioned"
-    },
-    {
-      "code": 6008,
-      "name": "LockupActive",
-      "msg": "Lockup period active"
-    },
-    {
-      "code": 6009,
-      "name": "CapExceeded",
-      "msg": "Cap exceeded"
-    },
-    {
-      "code": 6010,
-      "name": "WindowClosed",
-      "msg": "Transfer window closed"
-    },
-    {
-      "code": 6011,
-      "name": "NotAllowlisted",
-      "msg": "Program or account not allowlisted"
-    },
-    {
-      "code": 6012,
-      "name": "OracleStale",
-      "msg": "Oracle price is stale"
-    },
-    {
-      "code": 6013,
-      "name": "ConfidenceTooHigh",
-      "msg": "Oracle confidence too high"
-    },
-    {
-      "code": 6014,
-      "name": "InvalidModule",
-      "msg": "Invalid module ID"
-    },
-    {
-      "code": 6015,
-      "name": "ModuleAlreadyEnabled",
-      "msg": "Module already enabled"
-    },
-    {
-      "code": 6016,
-      "name": "ModuleNotEnabled",
-      "msg": "Module not enabled"
-    },
-    {
-      "code": 6017,
-      "name": "InvalidTimestamp",
-      "msg": "Invalid timestamp"
-    },
-    {
-      "code": 6018,
-      "name": "InvalidAmount",
-      "msg": "Invalid amount"
-    },
-    {
-      "code": 6019,
-      "name": "MaxCapacityReached",
-      "msg": "Maximum capacity reached"
-    },
-    {
-      "code": 6020,
-      "name": "MinTicketNotMet",
-      "msg": "Minimum ticket not met"
-    },
-    {
-      "code": 6021,
-      "name": "PerInvestorCapExceeded",
-      "msg": "Per investor cap exceeded"
-    },
-    {
-      "code": 6022,
-      "name": "RequestNotPending",
-      "msg": "Request is not in pending state"
-    },
-    {
-      "code": 6023,
-      "name": "MintMismatch",
-      "msg": "Mint provided does not match the stored request mint"
-    },
-    {
-      "code": 6024,
-      "name": "RejectReasonTooLong",
-      "msg": "Reject reason exceeds maximum length"
-    },
-    {
-      "code": 6025,
-      "name": "AccountBumpMissing",
-      "msg": "Expected PDA bump is missing"
-    },
-    {
-      "code": 6026,
-      "name": "TokenNameTooLong",
-      "msg": "Token name is too long"
-    },
-    {
-      "code": 6027,
-      "name": "TokenSymbolTooLong",
-      "msg": "Token symbol is too long"
-    },
-    {
-      "code": 6028,
-      "name": "AdminAlreadyExists",
-      "msg": "Admin already exists in the allowlist"
-    },
-    {
-      "code": 6029,
-      "name": "CannotRemoveSuperAdmin",
-      "msg": "Cannot remove the super admin"
-    },
-    {
-      "code": 6030,
-      "name": "AdminNotInAllowlist",
-      "msg": "Admin is not in the allowlist"
-    },
-    {
-      "code": 6031,
-      "name": "KYCProviderNotFound",
-      "msg": "KYC provider not found"
-    },
-    {
-      "code": 6032,
-      "name": "KYCProviderAlreadyExists",
-      "msg": "KYC provider already exists"
-    },
-    {
-      "code": 6033,
-      "name": "InvalidKYCProvider",
-      "msg": "Invalid KYC provider"
-    },
-    {
-      "code": 6034,
-      "name": "MissingKYCClaims",
-      "msg": "Investor does not have required KYC claims"
-    },
-    {
-      "code": 6035,
-      "name": "KYCProviderNotApproved",
-      "msg": "KYC provider is not approved for this token"
+      "msg": "Unauthorized: You can only update your own KYC status"
     }
   ],
   "types": [
@@ -2935,6 +2951,65 @@
           {
             "name": "added",
             "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserRegistry",
+      "docs": [
+        "User Registry - PDA individual para cada usuário"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "role",
+            "type": {
+              "defined": {
+                "name": "UserRole"
+              }
+            }
+          },
+          {
+            "name": "registered_at",
+            "type": "i64"
+          },
+          {
+            "name": "kyc_completed",
+            "type": "bool"
+          },
+          {
+            "name": "is_active",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserRole",
+      "docs": [
+        "User Role Type - Define o tipo de usuário na plataforma"
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Issuer"
+          },
+          {
+            "name": "Investor"
+          },
+          {
+            "name": "Admin"
           }
         ]
       }

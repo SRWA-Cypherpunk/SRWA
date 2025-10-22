@@ -29,22 +29,34 @@ interface WalletProviderProps {
 
 export function WalletProvider({ children }: WalletProviderProps) {
   // Get network from environment
-  const network = (import.meta.env.VITE_SOLANA_NETWORK || 'devnet') as
+  const network = (import.meta.env.VITE_SOLANA_NETWORK || 'localnet') as
     | 'devnet'
     | 'testnet'
-    | 'mainnet-beta';
+    | 'mainnet-beta'
+    | 'localnet';
 
-  // Get RPC endpoint from environment or fallback to public endpoints
+  // Get RPC endpoint from environment or fallback to appropriate endpoints
   const endpoint = useMemo(() => {
-    const envKey = `VITE_SOLANA_RPC_URL_${network.toUpperCase().replace('-', '_')}`;
-    const envUrl = import.meta.env[envKey];
-
+    // First, try to get from environment
+    const envUrl = import.meta.env.VITE_SOLANA_RPC_URL;
     if (envUrl) {
       return envUrl;
     }
 
-    // Fallback to Solana public RPC endpoints
-    return clusterApiUrl(network);
+    // Try network-specific environment variable
+    const envKey = `VITE_SOLANA_RPC_URL_${network.toUpperCase().replace('-', '_')}`;
+    const networkEnvUrl = import.meta.env[envKey];
+    if (networkEnvUrl) {
+      return networkEnvUrl;
+    }
+
+    // Default to localnet for development
+    if (network === 'localnet' || import.meta.env.DEV) {
+      return 'http://127.0.0.1:8899';
+    }
+
+    // Fallback to Solana public RPC endpoints for other networks
+    return clusterApiUrl(network as 'devnet' | 'testnet' | 'mainnet-beta');
   }, [network]);
 
   // Configure supported wallets (web wallets only - no hardware wallets)
@@ -57,6 +69,13 @@ export function WalletProvider({ children }: WalletProviderProps) {
     ],
     []
   );
+
+  // Log connection info
+  console.log('[WalletProvider] Configuration:', {
+    network,
+    endpoint,
+    isDev: import.meta.env.DEV,
+  });
 
   return (
     <ConnectionProvider endpoint={endpoint}>

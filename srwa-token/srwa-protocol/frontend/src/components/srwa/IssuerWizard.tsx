@@ -60,11 +60,18 @@ export function IssuerWizard() {
   const [loading, setLoading] = useState(false);
   const [lastSubmission, setLastSubmission] = useState<{ name: string; symbol: string; status: RequestStatus } | null>(null);
 
-  const [tokenConfig, setTokenConfig] = useState<SRWAConfigInput>({
+  const [tokenConfig, setTokenConfig] = useState<SRWAConfigInput & {
+    cnpj?: string;
+    collateral?: string;
+    collateralDocs?: File[];
+  }>({
     name: '',
     symbol: '',
     uri: '',
     decimals: 6,
+    cnpj: '',
+    collateral: '',
+    collateralDocs: [],
   });
 
   const [offeringConfig, setOfferingConfig] = useState<OfferingConfigInput>({
@@ -250,6 +257,66 @@ export function IssuerWizard() {
                     max={9}
                   />
                   <p className="text-micro text-fg-muted">Token precision (typically 6-9)</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>CNPJ (Opcional)</Label>
+                  <Input
+                    placeholder="00.000.000/0000-00"
+                    value={tokenConfig.cnpj}
+                    onChange={(e) => setTokenConfig({ ...tokenConfig, cnpj: e.target.value })}
+                    maxLength={18}
+                  />
+                  <p className="text-micro text-fg-muted">CNPJ da empresa emissora (para issuers brasileiros)</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Garantia (Opcional)</Label>
+                  <Textarea
+                    placeholder="Descreva a garantia do token (ex: Apólice de imóvel, CRI, etc.)"
+                    value={tokenConfig.collateral}
+                    onChange={(e) => setTokenConfig({ ...tokenConfig, collateral: e.target.value })}
+                    rows={4}
+                  />
+                  <p className="text-micro text-fg-muted">Descrição da garantia ou lastro do token</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Documentos de Garantia (Opcional)</Label>
+                  <div className="border-2 border-dashed border-muted rounded-lg p-4">
+                    <input
+                      type="file"
+                      accept="application/pdf,image/*"
+                      multiple
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        setTokenConfig({ ...tokenConfig, collateralDocs: files });
+                      }}
+                      className="hidden"
+                      id="collateralDocs"
+                    />
+                    <label
+                      htmlFor="collateralDocs"
+                      className="flex flex-col items-center cursor-pointer"
+                    >
+                      <FileText className="h-8 w-8 text-muted-foreground mb-2" />
+                      <p className="text-sm text-fg-secondary text-center">
+                        {tokenConfig.collateralDocs && tokenConfig.collateralDocs.length > 0
+                          ? `${tokenConfig.collateralDocs.length} arquivo(s) selecionado(s)`
+                          : 'Clique para enviar documentos (PDF, imagens)'}
+                      </p>
+                    </label>
+                  </div>
+                  {tokenConfig.collateralDocs && tokenConfig.collateralDocs.length > 0 && (
+                    <div className="space-y-1">
+                      {tokenConfig.collateralDocs.map((file, idx) => (
+                        <div key={idx} className="text-xs text-muted-foreground flex items-center gap-2">
+                          <CheckCircle className="h-3 w-3 text-green-500" />
+                          {file.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
 

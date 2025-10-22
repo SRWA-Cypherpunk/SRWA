@@ -15,6 +15,9 @@ pub mod initialize_kyc_registry;
 pub mod add_kyc_provider;
 pub mod configure_issuer_kyc;
 pub mod verify_investor_kyc;
+pub mod register_user;
+pub mod get_user_registry;
+pub mod complete_kyc;
 
 pub use create_srwa::*;
 pub use update_trusted_issuer::*;
@@ -33,3 +36,6 @@ pub use initialize_kyc_registry::*;
 pub use add_kyc_provider::*;
 pub use configure_issuer_kyc::*;
 pub use verify_investor_kyc::*;
+pub use register_user::*;
+pub use get_user_registry::*;
+pub use complete_kyc::*;

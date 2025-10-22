@@ -357,3 +357,23 @@ pub struct IssuerKYCConfig {
     pub require_kyc: bool,
     pub bump: u8,
 }
+
+/// User Role Type - Define o tipo de usuário na plataforma
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, InitSpace, Debug)]
+pub enum UserRole {
+    Issuer,
+    Investor,
+    Admin,
+}
+
+/// User Registry - PDA individual para cada usuário
+#[account]
+#[derive(InitSpace)]
+pub struct UserRegistry {
+    pub user: Pubkey,
+    pub role: UserRole,
+    pub registered_at: i64,
+    pub kyc_completed: bool,
+    pub is_active: bool,
+    pub bump: u8,
+}
