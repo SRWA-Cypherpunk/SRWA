@@ -1,4 +1,4 @@
-import { useProgramsSafe } from '../contexts/ProgramContext';
+import { useProgramsSafe } from '@/contexts/ProgramContext';
 import { useAnchorWallet } from '@solana/wallet-adapter-react';
 import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { BN } from '@coral-xyz/anchor';

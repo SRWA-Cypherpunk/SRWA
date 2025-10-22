@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { MarketsDashboard } from '@/components/markets/MarketsDashboard';
+import { DeployedTokensGrid } from '@/components/srwa/DeployedTokensGrid';
 import { useBlendPools } from '@/hooks/markets/useBlendPools';
 import { useEnhancedPoolData } from '@/hooks/markets/useDefIndexData';
 import { useSRWAMarkets } from '@/hooks/markets/useSRWAMarkets';
@@ -114,6 +115,9 @@ export default function Markets() {
             onSupply={handleSupply}
             onBorrow={handleBorrow}
           />
+
+          {/* Deployed SRWA Tokens */}
+          <DeployedTokensGrid />
         </main>
       </div>
     </ErrorBoundary>

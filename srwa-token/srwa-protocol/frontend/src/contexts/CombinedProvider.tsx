@@ -2,6 +2,7 @@ import React, { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { WalletProvider } from './wallet/WalletContext';
+import { ProgramProvider } from './ProgramContext';
 
 /**
  * CombinedProvider - Aggregates all context providers
@@ -31,7 +32,9 @@ export function CombinedProvider({ children }: CombinedProviderProps) {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <WalletProvider>
-          {children}
+          <ProgramProvider>
+            {children}
+          </ProgramProvider>
         </WalletProvider>
       </TooltipProvider>
     </QueryClientProvider>

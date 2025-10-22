@@ -1,7 +1,7 @@
 import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import { useAnchorWallet } from '@solana/wallet-adapter-react';
-import { getProvider, loadPrograms } from '../lib/anchor';
-import type { Programs } from '../lib/anchor';
+import { getProvider, loadPrograms } from '@/lib/solana/anchor';
+import type { Programs } from '@/lib/solana/anchor';
 
 interface ProgramContextType {
   programs: Programs | null;

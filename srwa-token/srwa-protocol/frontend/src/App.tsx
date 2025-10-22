@@ -22,6 +22,7 @@ import PoolDetail from "./pages/PoolDetail";
 import Optimizer from "./pages/Optimizer";
 import Dashboards from "./pages/Dashboards";
 import Dashboard from "./pages/Dashboard";
+import Investor from "./pages/Investor";
 
 const App = () => (
   <CombinedProvider>
@@ -32,6 +33,7 @@ const App = () => (
         <Route path="/" element={<Index />} />
         <Route path="/home" element={<Home />} />
         <Route path="/srwa-issuance" element={<SRWAIssuance />} />
+        <Route path="/investor" element={<Investor />} />
         <Route path="/srwa-demo" element={<SRWADemo />} />
         <Route path="/srwa-test" element={<SRWATestForm />} />
         <Route path="/kyc-eligibility" element={<KYCEligibility />} />

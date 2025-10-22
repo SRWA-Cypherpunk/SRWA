@@ -74,14 +74,12 @@ export class AdminAllowlistServiceImpl implements AdminAllowlistService {
     );
 
     try {
-      // Use provider.connection to fetch account data directly
       const accountInfo = await this.provider.connection.getAccountInfo(adminRegistry);
 
       if (!accountInfo) {
         return null;
       }
 
-      // Try to decode using program.account if available
       if (this.program.account?.platformAdminRegistry) {
         try {
           const account = await this.program.account.platformAdminRegistry.fetch(adminRegistry);
@@ -91,7 +89,6 @@ export class AdminAllowlistServiceImpl implements AdminAllowlistService {
         }
       }
 
-      // Manual decode as fallback
       try {
         const account = this.program.coder.accounts.decode(
           "PlatformAdminRegistry",
@@ -99,24 +96,17 @@ export class AdminAllowlistServiceImpl implements AdminAllowlistService {
         );
         return account;
       } catch (decodeError) {
-        // If decode fails, manually parse the account data
-        // Account structure: discriminator (8 bytes) + super_admin (32 bytes) + authorized_admins vec + timestamps + bump
         const data = accountInfo.data;
-
-        // Skip discriminator (first 8 bytes)
         let offset = 8;
 
-        // Read super_admin pubkey (32 bytes)
         const superAdminBytes = data.slice(offset, offset + 32);
         const superAdmin = new PublicKey(superAdminBytes);
         offset += 32;
 
-        // Read authorized_admins vec length (4 bytes)
         const adminCountBytes = data.slice(offset, offset + 4);
         const adminCount = new DataView(adminCountBytes.buffer).getUint32(0, true);
         offset += 4;
 
-        // Read authorized_admins pubkeys
         const authorizedAdmins = [];
         for (let i = 0; i < adminCount; i++) {
           const adminBytes = data.slice(offset, offset + 32);

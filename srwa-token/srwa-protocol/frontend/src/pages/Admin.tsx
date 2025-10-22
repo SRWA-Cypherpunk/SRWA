@@ -1,6 +1,9 @@
 import { Header } from "@/components/layout/Header";
+import { AdminPanel } from "@/components/srwa/AdminPanel";
+import { AdminAllowlistPanel } from "@/components/srwa/AdminAllowlistPanel";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, Legend } from "recharts";
 
 const lineData = [
@@ -37,10 +40,29 @@ export default function Admin() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="space-y-2">
-            <h1 className="text-h1 font-semibold text-fg-primary">RWA Dashboard</h1>
-            <p className="text-body-1 text-fg-secondary">Tokenized Treasuries overview and market metrics.</p>
+            <h1 className="text-h1 font-semibold text-fg-primary">Admin Panel</h1>
+            <p className="text-body-1 text-fg-secondary">Manage token requests and view market metrics.</p>
           </div>
         </div>
+
+        {/* Tabs */}
+        <Tabs defaultValue="requests" className="space-y-6">
+          <TabsList>
+            <TabsTrigger value="requests">Token Requests</TabsTrigger>
+            <TabsTrigger value="allowlist">Admin Allowlist</TabsTrigger>
+            <TabsTrigger value="analytics">Market Analytics</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="requests">
+            <AdminPanel />
+          </TabsContent>
+
+          <TabsContent value="allowlist">
+            <AdminAllowlistPanel />
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <div className="space-y-8">
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -119,6 +141,9 @@ export default function Admin() {
             </div>
           </Card>
         </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </main>
     </div>
   );

@@ -23,7 +23,7 @@ import { useUserBlendPositions, formatPositionValue } from '@/hooks/markets/useU
 import { useWalletTransactions } from '@/hooks/wallet/useWalletTransactions';
 import { MarketsDashboard } from '@/components/markets/MarketsDashboard';
 import { mockUserPositions, type UserPosition } from "@/lib/mock-data";
-import RWATokensGrid from '@/components/dashboard/RWATokensGrid';
+import { DeployedTokensGrid } from '@/components/srwa/DeployedTokensGrid';
 import { RWALendingPools } from '@/components/rwa/RWALendingPools';
 
 // Icons
@@ -438,9 +438,9 @@ export default function Dashboard() {
                     </div>
 
 
-                    {/* 🚀 USER CREATED RWA TOKENS SECTION */}
+                    {/* 🚀 DEPLOYED SRWA TOKENS SECTION */}
                     <div className="space-y-6">
-                      <RWATokensGrid />
+                      <DeployedTokensGrid />
                     </div>
                   </div>
                 )}

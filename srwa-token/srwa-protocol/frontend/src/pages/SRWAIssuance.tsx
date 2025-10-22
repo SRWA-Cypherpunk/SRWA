@@ -1,11 +1,11 @@
 import { Header } from '@/components/layout/Header';
-import TokenWizard from '@/components/srwa/TokenWizard';
+import { IssuerWizard } from '@/components/srwa/IssuerWizard';
 
 export default function SRWAIssuance() {
 	return (
-		<div>
+		<div className="min-h-screen bg-background">
 			<Header />
-			<TokenWizard />
+			<IssuerWizard />
 		</div>
 	);
 }

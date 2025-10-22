@@ -29,7 +29,23 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      buffer: "buffer",
     },
+  },
+  define: {
+    'global': 'globalThis',
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      define: {
+        global: 'globalThis',
+      },
+    },
+    include: [
+      '@coral-xyz/anchor',
+      '@solana/web3.js',
+      'buffer',
+    ],
   },
   build: {
     target: 'es2020',
@@ -40,8 +56,9 @@ export default defineConfig(({ mode }) => ({
         manualChunks: {
           // React core
           'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          // Solana wallet adapters
+          // Solana wallet adapters and Anchor
           'solana-vendor': [
+            '@coral-xyz/anchor',
             '@solana/web3.js',
             '@solana/wallet-adapter-react',
             '@solana/wallet-adapter-react-ui',

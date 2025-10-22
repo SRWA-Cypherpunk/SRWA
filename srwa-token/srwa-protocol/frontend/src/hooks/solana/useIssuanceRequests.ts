@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { BN } from '@coral-xyz/anchor';
 import { PublicKey, SystemProgram } from '@solana/web3.js';
-import { useProgramsSafe } from '../contexts/ProgramContext';
+import { useProgramsSafe } from '@/contexts/ProgramContext';
 import { useAnchorWallet } from '@solana/wallet-adapter-react';
 
 export type RequestStatus = 'pending' | 'rejected' | 'deployed';
