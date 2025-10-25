@@ -19,6 +19,12 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@srwa_platform" />
     <meta name="twitter:image" content="/src/assets/logo.png" />
+
+    <!-- Polyfills globais para compatibilidade com Solana -->
+    <script>
+      window.global = window;
+      window.process = { env: {} };
+    </script>
   </head>
 
   <body>
