@@ -1,25 +1,26 @@
 # Cloudflare Pages - Guia de Deploy
 
-## Problema Resolvido
+## Problema
 
-O erro no Cloudflare Pages foi causado por conflito entre `yarn.lock` na raiz (para smart contracts Solana) e `package-lock.json` no frontend (React app).
+Cloudflare Pages estava auto-detectando Yarn (disponível no ambiente) e tentando usá-lo, causando conflitos com o frontend que usa npm.
 
-## Solução Implementada
+## Solução Final
 
-Convertemos o projeto para **Yarn Workspaces** (monorepo), que é a melhor prática para projetos com múltiplos pacotes.
+Projeto separado em duas partes independentes:
+- **Raiz**: Smart contracts Solana (pode usar yarn localmente, não commitado)
+- **Frontend**: React app (usa npm, package-lock.json commitado)
 
 ### Mudanças Realizadas
 
-1. ✅ `package.json` da raiz atualizado com workspace
-2. ✅ `package-lock.json` do frontend removido
-3. ✅ `.gitignore` atualizado
+1. ✅ Removido todos vestígios de Yarn da raiz (yarn.lock, .yarnrc.yml, .yarn/)
+2. ✅ Removido `packageManager` field do package.json raiz
+3. ✅ Frontend configurado com `.npmrc` (engine-strict=true) e engines field
 4. ✅ `.nvmrc` criado no frontend (Node 22)
-5. ✅ Link do Dashboard habilitado no menu
-6. ✅ Feature flag para controlar visibilidade do Dashboard
+5. ✅ Feature flag para controlar visibilidade do Dashboard
 
 ## Configuração no Cloudflare Pages Dashboard
 
-### ⚠️ IMPORTANTE: Configure Manualmente no Dashboard
+### ⚠️ IMPORTANTE: Configure EXATAMENTE como abaixo
 
 O Cloudflare Pages v2 **não usa wrangler.toml**. Configure no Dashboard:
 
@@ -33,8 +34,9 @@ O Cloudflare Pages v2 **não usa wrangler.toml**. Configure no Dashboard:
 
    - **Build command**:
      ```
-     yarn workspace solana-rwa-frontend build
+     npm ci && npm run build
      ```
+     ⚠️ **IMPORTANTE**: Use `npm ci` explicitamente para forçar npm ao invés da auto-detecção
 
    - **Build output directory**:
      ```
