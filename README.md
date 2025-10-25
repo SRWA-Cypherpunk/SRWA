@@ -1,326 +1,255 @@
-# SRWA - Solana Real-World Asset Platform
+# SRWA Protocol - Security Token on Solana
 
-A comprehensive platform for tokenizing real-world assets (RWA) on the Solana blockchain with on-chain compliance and institutional-grade security.
+## 🎯 Visão Geral
 
-## 🎯 The Problem
+Sistema completo de **Security Token (SRWA)** implementado em Rust + Solana + Anchor, baseado no padrão SPL Token-2022 com compliance on-chain, offering pools, yield adapters e integração nativa com DeFi (marginfi/Solend).
 
-Traditional real-world asset tokenization faces critical challenges:
-- **Fragmented Compliance**: Manual KYC/AML processes that don't scale
-- **Liquidity Barriers**: Isolated markets with poor price discovery
-- **Technical Complexity**: High barriers to entry for asset originators
-- **Trust Deficit**: Opaque verification and settlement processes
+## 📦 Arquitetura de Programas
 
-## 💡 The Solution
+### 1. **srwa_factory**
+Fábrica de tokens SRWA com SPL Token-2022 + Transfer Hook
+- Cria mint com extensões (frozen, permanent delegate, metadata)
+- Inicializa PDAs de configuração (SRWAConfig, OfferingState, ValuationData)
+- Define roles (issuer_admin, compliance_officer, transfer_agent)
+- Gerencia trusted issuers e módulos de compliance
 
-SRWA provides an end-to-end platform for RWA tokenization on Solana:
+**Instruções principais:**
+- `create_srwa()` - Cria novo SRWA token
+- `update_trusted_issuer()` - Adiciona/remove issuers de KYC
+- `enable_module()` / `disable_module()` - Ativa módulos de compliance
+- `set_oracle_cfg()` - Configura oráculos (Pyth + NAV feeder)
+- `rotate_role()` - Rotaciona permissões (multisig)
 
-- **On-Chain Compliance**: Automated KYC/AML verification with jurisdictional controls
-- **Unified Marketplace**: Integrated trading, lending, and liquidity pools
-- **Token Factory**: No-code wizard for creating compliant security tokens
-- **Real-Time Settlement**: Instant finality with Solana's 400ms block times
-- **Oracle Integration**: Live pricing via Pyth Network for accurate valuations
+### 2. **identity_claims**
+Gerenciamento de identidade e claims (KYC/AML/Accredited)
+- PDAs por usuário (IdentityAccount) e por claim (ClaimAccount)
+- Claims assinadas por trusted issuers
+- Suporte para revogação e expiração
 
-Built for asset managers, fund operators, and institutional investors who need speed, compliance, and transparency.
+**Instruções principais:**
+- `register_identity()` - Registra nova identidade
+- `add_claim()` - Adiciona claim (KYC, AML, Accredited, etc)
+- `revoke_claim()` - Revoga claim
+- `is_verified()` - Verifica se usuário possui todas claims necessárias
 
-## 🏗️ Architecture
+### 3. **compliance_modules**
+Módulos configuráveis de compliance
+- Jurisdiction (allow/deny por país ISO)
+- Sanctions (lista de endereços bloqueados)
+- Accredited (requerimento de investidor qualificado)
+- Lockup (períodos de lock por usuário)
+- Volume Caps (limites diários/mensais/por tx)
+- Transfer Window (janelas de tempo permitidas)
+- Program/Account Allowlist (DEX/lending permitidos)
 
-### Tech Stack
+**Instruções principais:**
+- `configure_jurisdiction()` - Configura países permitidos/bloqueados
+- `set_sanctions()` - Define lista de sanções
+- `set_lockup()` - Define período de lockup para usuário
+- `set_volume_caps()` - Caps globais de volume
+- `set_transfer_window()` - Janelas permitidas de transferência
+- `set_program_allowlist()` - Allowlist de programas DeFi
+- `set_account_allowlist()` - Allowlist de vaults/pools
 
-**Frontend**
-- React 18 + TypeScript - Type-safe component architecture
-- Vite 5 - Lightning-fast builds and HMR
-- Tailwind CSS - Utility-first styling with custom design system
-- Framer Motion - Smooth animations and transitions
-- Solana Wallet Adapter - Multi-wallet support (Phantom, Backpack, Solflare, etc.)
-- React Query - Server state management with caching
-- Zustand - Client state management
-- Recharts - Interactive data visualizations
+### 4. **srwa_controller** (Transfer Hook)
+Hook executado em **todas** as transferências do token
+- Integra-se com Token-2022 Transfer Hook extension
+- Pipeline de verificação:
+  1. Pause/freeze checks
+  2. Identity verification (KYC/AML via CPI)
+  3. Offering rules (fase, caps, elegibilidade)
+  4. Investor limits
+  5. Lockup verification
+  6. Transfer window validation
+  7. Allowlist checks
 
-**Blockchain**
-- Solana Web3.js - Blockchain interactions
-- Anchor Framework (planned) - Smart contract development
-- Pyth Network - Decentralized price oracles
+**Instruções principais:**
+- `on_transfer()` - Hook automático em transferências
+- `transfer_checked()` - Transferência com compliance
 
-### Architecture Patterns
+### 5. **offering_pool**
+Pool de captação com lock period e settlement
+- Gerencia subscriptions de investidores
+- Lock period com yield farming (idle strategy)
+- Settlement: distribui tokens + transfere capital ao emissor
+- Refund em caso de falha (< soft_cap)
 
-Following best practices from [agarIoCryptoStacksChain](https://github.com/pedro-gattai/agarIoCryptoStacksChain):
+**Instruções principais:**
+- `open()` - Abre oferta para subscrições
+- `subscribe()` - Investidor subscreve com USDC
+- `lock()` - Encerra subscrições e lock de capital
+- `settle()` - Distribui tokens (pro-rata) e capital ao emissor
+- `refund()` - Reembolsa investidor (se < soft_cap)
 
-```
-frontend/
-├── src/
-│   ├── contexts/          # React Context providers
-│   │   ├── wallet/        # Wallet connection & state
-│   │   └── CombinedProvider.tsx  # Aggregated providers
-│   │
-│   ├── services/          # Business logic layer
-│   │   ├── solanaService.ts
-│   │   ├── lendingService.ts
-│   │   └── rwaTokenService.ts
-│   │
-│   ├── components/        # Feature-based organization
-│   │   ├── wallet/
-│   │   ├── rwa/
-│   │   ├── markets/
-│   │   └── sections/
-│   │
-│   ├── hooks/             # Domain-organized custom hooks
-│   │   ├── ui/
-│   │   ├── wallet/
-│   │   ├── markets/
-│   │   └── rwa/
-│   │
-│   ├── styles/            # CSS architecture
-│   │   ├── base/          # Variables, reset, typography
-│   │   ├── components/    # Reusable component styles
-│   │   └── features/      # Feature-specific styles
-│   │
-│   ├── pages/             # Route components
-│   ├── lib/               # Utilities and helpers
-│   └── config.ts          # Centralized configuration
-│
-└── public/
-    ├── _headers           # Security headers for Cloudflare
-    └── _redirects         # SPA routing configuration
-```
+### 6. **yield_adapter**
+Adaptadores para protocolos de yield (marginfi/Solend)
+- Deposita USDC do pool em protocolos de lending durante lock
+- Retira yield ao final do período
+- Abstrai CPIs para diferentes protocolos
 
-**Key Architectural Decisions:**
+**Instruções principais:**
+- `deposit_marginfi()` / `withdraw_marginfi()`
+- `deposit_solend()` / `withdraw_solend()`
+- `skim_yield()` - Coleta yield acumulado
 
-- **Contexts Layer**: Aggregated providers for wallet, settings, and global state
-- **Services Layer**: Business logic abstracted from components for testability
-- **Feature-Based Organization**: Components and hooks grouped by domain, not type
-- **CSS Architecture**: Layered approach (Variables → Components → Features)
-- **Centralized Config**: All environment variables accessed via `config.ts`
-- **Chunk Splitting**: Optimized vendor bundles (react, solana, ui, state)
+### 7. **valuation_oracle**
+Oráculos de valuation (NAV + Pyth)
+- NAV assinado por feeder institucional
+- Integração com Pyth para FX rates
+- Guards (heartbeat, max deviation)
 
-## 🚀 Getting Started
+**Instruções principais:**
+- `publish_nav()` - Publica NAV total e per-token
+- `compute_final_price()` - Compõe preço final (NAV + FX)
 
-### Prerequisites
+### 8. **cashflow_engine** (Fase 2 - FIDC completo)
+Engine de cashflow com waterfall
+- Schedule de cupons/pagamentos
+- Waterfall distribution: fees → senior → mezz → equity
 
+**Instruções principais:**
+- `schedule_coupon()` - Agenda cupom recorrente
+- `record_payment()` - Registra pagamento
+- `distribute()` - Executa waterfall
+
+## 🚀 Build & Deploy
+
+### Requisitos
+- Rust 1.75+
+- Solana CLI 1.18+
+- Anchor 0.31.1+
 - Node.js 18+
-- npm 9+
-- Cloudflare account (for production deployment)
 
-### Installation & Development
-
+### Build
 ```bash
-# Clone the repository
-git clone https://github.com/SRWA-Cypherpunk/SRWA.git
-cd SRWA
-
-# Install dependencies
-cd frontend
-npm install
-
-# Configure environment variables
-cp ../.env.example .env.local
-# Edit .env.local with your configuration
-
-# Start development server
-npm run dev
+cd srwa-protocol
+anchor build
 ```
 
-Access the app at: http://localhost:8080
-
-### Build for Production
-
+### Testes
 ```bash
-cd frontend
-npm run build
-
-# Preview production build locally
-npm run preview
+anchor test
 ```
 
-The production build will be optimized with:
-- Code splitting by vendor (react, solana, ui, state)
-- Asset compression and minification
-- Tree-shaking for minimal bundle size
-
-## 🌐 Deployment
-
-### Cloudflare Pages (Recommended)
-
-SRWA is optimized for deployment on Cloudflare Pages with built-in security headers, caching, and SPA routing.
-
-**Configuration Steps:**
-
-1. **Connect Repository**
-   - Go to Cloudflare Pages dashboard
-   - Click "Create a project" → "Connect to Git"
-   - Select your SRWA repository
-
-2. **Configure Build Settings**
-   ```
-   Root directory:       frontend
-   Build command:        npm run build
-   Build output:         dist
-   ```
-
-3. **Environment Variables**
-
-   Add these in Cloudflare Pages → Settings → Environment variables:
-
-   ```bash
-   # Node.js version
-   NODE_VERSION=20
-
-   # Solana Network (devnet for staging, mainnet-beta for production)
-   VITE_SOLANA_NETWORK=devnet
-   VITE_SOLANA_RPC_URL_DEVNET=https://api.devnet.solana.com
-   VITE_SOLANA_RPC_URL_MAINNET_BETA=https://your-private-rpc.com
-
-   # Feature flags
-   VITE_ENABLE_LENDING=true
-   VITE_ENABLE_MARKETPLACE=true
-   VITE_ENABLE_KYC=false
-   VITE_ENABLE_COMPLIANCE=false
-
-   # Smart contract program IDs (add when deployed)
-   # VITE_RWA_TOKEN_PROGRAM_ID=
-   # VITE_COMPLIANCE_PROGRAM_ID=
-   # VITE_LENDING_PROGRAM_ID=
-   ```
-
-4. **Deploy**
-   - Click "Save and Deploy"
-   - Cloudflare will automatically build and deploy
-   - Future commits to `main` will auto-deploy
-
-**Production Checklist:**
-
-- [ ] Use private RPC endpoint (Helius, QuickNode, or Alchemy)
-- [ ] Set `VITE_SOLANA_NETWORK=mainnet-beta`
-- [ ] Configure program IDs after smart contract deployment
-- [ ] Enable KYC/Compliance features when ready
-- [ ] Test all features on staging environment first
-
-**Security Features:**
-
-The `frontend/public/_headers` file configures:
-- X-Frame-Options, X-Content-Type-Options, X-XSS-Protection
-- Content Security Policy (CSP) for script and style sources
-- Permissions Policy (restricting camera, geolocation, etc.)
-- Cache-Control headers (immutable assets, no-cache HTML)
-
-## ⚙️ Configuration
-
-### Environment Variables
-
-See `.env.example` for all available configuration options.
-
-**Essential Variables:**
-
+### Deploy (Devnet)
 ```bash
-# Network selection
-VITE_SOLANA_NETWORK=devnet  # devnet | testnet | mainnet-beta
-
-# RPC endpoints (use private for production)
-VITE_SOLANA_RPC_URL_DEVNET=https://api.devnet.solana.com
-VITE_SOLANA_RPC_URL_MAINNET_BETA=https://api.mainnet-beta.solana.com
-
-# Feature flags
-VITE_ENABLE_LENDING=true
-VITE_ENABLE_MARKETPLACE=true
-VITE_ENABLE_KYC=false
+anchor deploy --provider.cluster devnet
 ```
 
-**Advanced Configuration:**
+## 📊 Fluxos E2E
 
-```bash
-# API endpoints
-VITE_BACKEND_URL=http://localhost:3000
-VITE_PYTH_URL=https://hermes.pyth.network
-VITE_JUPITER_URL=https://quote-api.jup.ag/v6
-
-# Compliance settings
-VITE_REQUIRE_KYC=false
-VITE_ALLOWED_JURISDICTIONS=US,EU,UK,BR
-VITE_RESTRICTED_COUNTRIES=
-
-# Smart contract program IDs
-VITE_RWA_TOKEN_PROGRAM_ID=
-VITE_COMPLIANCE_PROGRAM_ID=
-VITE_LENDING_PROGRAM_ID=
-VITE_TOKEN_FACTORY_PROGRAM_ID=
+### 1. **Emissão de SRWA Token**
+```
+Issuer → srwa_factory::create_srwa()
+  ↓
+Cria Mint Token-2022 + PDAs (Config, Offering, Valuation)
+  ↓
+Configura Transfer Hook → srwa_controller
+  ↓
+Define trusted issuers, módulos, oracles
 ```
 
-All environment variables are centralized in `frontend/src/config.ts` for type-safe access.
-
-## 📦 Features
-
-### Implemented ✅
-
-- **Landing Page**: Interactive roadmap with project timeline
-- **Wallet Integration**: Multi-wallet support (Phantom, Backpack, Solflare, Coinbase, etc.)
-- **RWA Dashboard**: Token overview with real-time metrics
-- **Token Factory**: Step-by-step wizard for creating RWA tokens
-- **Markets**: Trading interface with order books and charts
-- **Lending**: Collateralized lending with liquidation protection
-- **Portfolio**: Holdings tracker with performance analytics
-- **Responsive Design**: Optimized for mobile, tablet, and desktop
-
-### In Development 🚧
-
-- **KYC System**: Identity verification with accreditation checks
-- **On-Chain Compliance**: Jurisdictional controls and transfer restrictions
-- **Smart Contracts**: Anchor programs for token issuance and trading
-- **Oracle Integration**: Pyth Network price feeds for accurate valuations
-- **Liquidity Pools**: Automated market making with yield generation
-
-## 🧪 Development
-
-### Code Quality
-
-```bash
-# Linting
-npm run lint
-
-# Type checking
-npm run build  # TypeScript errors will fail the build
-
-# Production build test
-npm run build && npm run preview
+### 2. **KYC de Investidor**
+```
+Trusted Issuer → identity_claims::add_claim(user, KYC)
+                                          ↓
+                            identity_claims::add_claim(user, AML)
+                                          ↓
+                            identity_claims::add_claim(user, Accredited)
 ```
 
-### Project Standards
+### 3. **Oferta & Captação**
+```
+Issuer → offering_pool::open()
+  ↓
+Investidor → offering_pool::subscribe(1000 USDC)
+  ↓
+Issuer → offering_pool::lock() [capital rende em marginfi]
+  ↓
+Issuer → offering_pool::settle()
+  ↓
+  - Investidor recebe SRWA tokens (pro-rata)
+  - Emissor recebe USDC (hard_cap - fees)
+  - Yield distribuído
+```
 
-- **TypeScript**: Strict mode enabled, no implicit `any`
-- **Component Architecture**: Functional components with hooks
-- **State Management**: React Query for server state, Zustand for client state
-- **Styling**: Tailwind with custom CSS for complex layouts
-- **Code Organization**: Feature-based folders, barrel exports via `index.ts`
+### 4. **Transferência com Compliance**
+```
+User A → transfer(SRWA, User B)
+  ↓
+srwa_controller::on_transfer() [Transfer Hook automático]
+  ↓
+Pipeline de verificação:
+  1. ✓ Pause/freeze
+  2. ✓ KYC/AML (CPI → identity_claims)
+  3. ✓ Offering rules
+  4. ✓ Investor limits
+  5. ✓ Lockup
+  6. ✓ Transfer window
+  7. ✓ Allowlist
+  ↓
+Transfer aprovada ✅
+```
 
-## 🤝 Contributing
+## 🔐 Segurança & Governança
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+- **Roles multi-sig**: issuer_admin, compliance_officer, transfer_agent
+- **Timelock**: mudanças críticas com delay
+- **Pause/Freeze**: emergency circuit-breaker
+- **Events**: todos os contratos emitem logs estruturados
+- **Auditable**: cap table e compliance trail on-chain
 
-**Coding Guidelines:**
-- Follow the existing architecture patterns (contexts, services, feature-based)
-- Use TypeScript strictly (no `any` types)
-- Write descriptive commit messages
-- Test on both desktop and mobile viewports
-- Ensure production build succeeds before submitting PR
+## 📚 PDAs Principais
 
-## 📄 License
+```
+SRWAConfig: [b"srwa_config", mint]
+OfferingState: [b"offering", mint]
+ValuationData: [b"valuation", mint]
+PoolVault: [b"pool_vault", mint]
 
-This project is private and proprietary.
+IdentityAccount: [b"identity", user]
+ClaimAccount: [b"claim", user, topic]
 
-## 🔗 Links
+JurisdictionConfig: [b"jurisdiction", mint]
+SanctionsList: [b"sanctions", mint]
+LockupAccount: [b"lockup", mint, user]
+Subscription: [b"subscription", mint, user]
+```
 
-- **Website**: [https://srwa.pages.dev](https://srwa.pages.dev) (coming soon)
-- **Documentation**: [https://docs.srwa.io](https://docs.srwa.io) (in development)
-- **GitHub**: [https://github.com/SRWA-Cypherpunk/SRWA](https://github.com/SRWA-Cypherpunk/SRWA)
+## 🎯 Casos de Uso
 
-## 👥 Team
+- **CRI/CRA** (Certificados de Recebíveis Imobiliários/Agro)
+- **FIDC** (Fundos de Investimento em Direitos Creditórios)
+- **Debêntures** tokenizadas
+- **Real Estate** fracionado
+- **Crédito Privado** on-chain
 
-Developed by SRWA Cypherpunk Team
+## 🌐 Integrações DeFi
+
+- **marginfi**: Lending/borrowing com SRWA como colateral
+- **Solend**: Reserve pools para SRWA
+- **Raydium/Meteora/Orca**: Pools de liquidez (allowlisted)
+- **Pyth**: Price feeds FX/benchmark
+
+## 📝 Próximos Passos
+
+- [ ] Implementar lógica completa de Transfer Hook com CPIs
+- [ ] Integrar Pyth oracles
+- [ ] Adicionar testes de integração
+- [ ] Deploy em devnet
+- [ ] Auditoria de segurança
+- [ ] Frontend (Next.js + wallet-adapter)
+- [ ] Indexer/analytics (Helius)
+- [ ] Governança (Squads/Realms)
+
+## 📄 Licença
+
+MIT
+
+## 👥 Contato
+
+Para dúvidas ou colaborações, abra uma issue no repositório.
 
 ---
 
-**Last Updated**: 2025-10-18
-**Version**: 1.0.0
-**Status**: 🚀 Active Development
+**Built with Anchor ⚓ on Solana ☀️**
