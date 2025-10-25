@@ -39,6 +39,15 @@ VITE_SOLEND_USE_MOCK
 Set `VITE_SOLEND_USE_MOCK=true` to simulate pool creation locally without sending
 transactions. The UI will generate placeholder public keys and signatures so you
 can validate the flow without requiring real Solend accounts or balances.
+Integration with Solend lending protocol for SRWA tokens.
+
+## Coming Soon
+
+This integration will provide:
+- Supply SRWA tokens as collateral
+- Borrow against SRWA collateral
+- Monitor positions and health factor
+- Automated liquidation protection
 
 ## Resources
 

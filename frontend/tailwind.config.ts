@@ -159,7 +159,7 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         orbit: "orbit calc(var(--duration)*1s) linear infinite",
         shimmer: "shimmer 2s ease-in-out infinite",
-        "gradient-pan": "gradient-pan 6s ease-in-out infinite",
+        "gradient-pan": "gradient-pan 5s ease-in-out infinite",
       },
     },
   },

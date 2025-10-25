@@ -3,6 +3,12 @@ node_modules/
 /.pnp
 .pnp.js
 
+# Package manager lock files
+# Frontend uses npm, root uses yarn (regenerated locally as needed)
+frontend/package-lock.json
+package-lock.json
+yarn.lock
+
 # Testing
 /coverage
 *.lcov

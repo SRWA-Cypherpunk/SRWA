@@ -15,6 +15,7 @@ import { useEnhancedPoolData } from "@/hooks/markets/useDefIndexData";
 import { useWallet } from "@/contexts/wallet/WalletContext";
 import { mockMarketStats, mockMarkets, mockMarketCharts } from "@/lib/mock-data";
 import { ROUTES, COLORS, PARTNERS } from "@/lib/constants";
+import { FEATURES } from "@/lib/constants/features";
 import Logo from "@/assets/logo.png";
 import SRWALetters from "@/assets/srwa_letters.png";
 
@@ -23,6 +24,7 @@ import { COLORS as BG_COLORS } from "@/lib/constants/backgrounds";
 
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRef, useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Shield,
   BarChart3,
@@ -48,15 +50,28 @@ import {
 } from "lucide-react";
 
 const Index = () => {
+  const navigate = useNavigate();
+
   // Fetch real pool data
   const { pools: blendPools, loading: poolsLoading } = useBlendPools();
   const { enhancedPools, loading: analyticsLoading } = useEnhancedPoolData(blendPools);
-  
+
   // Wallet connection
   const { isConnected, isConnecting, connect } = useWallet();
-  
+
   const topMarkets = enhancedPools.slice(0, 3);
   const isLoading = poolsLoading || analyticsLoading;
+
+  // Detect mobile to disable heavy animations
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   
   // Calculate real market stats from enhanced pools
   const marketStats = enhancedPools.length > 0 ? {
@@ -240,7 +255,7 @@ const Index = () => {
       </div>
 
       <div className="relative z-10">
-        <Header disableDashboardLink onDashboardLinkClick={scrollToTop} />
+        <Header />
       </div>
 
       {/* Enhanced Hero Section with Dynamic Gradients */}
@@ -303,7 +318,7 @@ const Index = () => {
             className="text-center space-y-8"
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
+            transition={{ duration: isMobile ? 0 : 0.8, ease: "easeOut" }}
           >
             {/* Animated Hero Heading */}
             <div className="space-y-6 sm:space-y-8">
@@ -311,7 +326,7 @@ const Index = () => {
                 className="space-y-3 sm:space-y-4"
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
+                transition={{ duration: isMobile ? 0 : 0.8, delay: isMobile ? 0 : 0.2 }}
               >
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-fg-primary leading-tight px-4">
                   Real World Assets
@@ -343,7 +358,7 @@ const Index = () => {
                   className="text-base sm:text-lg md:text-xl lg:text-2xl text-fg-secondary max-w-4xl mx-auto leading-relaxed px-4"
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: 0.6 }}
+                  transition={{ duration: isMobile ? 0 : 0.6, delay: isMobile ? 0 : 0.6 }}
                 >
                   Bringing institutional-grade assets and compliance to decentralized finance, enabling real yield backed by tangible value.
                 </motion.p>
@@ -521,8 +536,8 @@ const Index = () => {
           className="text-center space-y-4 mb-12"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
+          transition={{ duration: isMobile ? 0 : 0.8 }}
+          viewport={{ once: true, margin: isMobile ? "-20px" : "-100px" }}
         >
           <h2 className="text-2xl sm:text-3xl lg:text-h1 font-bold text-white">
             Our Numbers
@@ -533,18 +548,18 @@ const Index = () => {
         </motion.div>
 
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 justify-items-center max-w-5xl mx-auto"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch max-w-[280px] sm:max-w-5xl mx-auto"
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, staggerChildren: 0.1 }}
-          viewport={{ once: true }}
+          transition={{ duration: isMobile ? 0 : 0.8, staggerChildren: isMobile ? 0 : 0.1 }}
+          viewport={{ once: true, margin: isMobile ? "-20px" : "-100px" }}
         >
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0 }}
-            whileHover={{ y: -6 }}
-            className="group"
+            transition={{ duration: isMobile ? 0 : 0.6, delay: isMobile ? 0 : 0 }}
+            whileHover={isMobile ? {} : { y: -6 }}
+            className="group w-full"
           >
             <KPICard
               title="Total Value Locked"
@@ -553,31 +568,30 @@ const Index = () => {
               trend="up"
               trendValue="Live"
               variant="gradient"
-              wrapperClassName="mx-auto"
             />
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}
-            whileHover={{ y: -6 }}
-            className="group"
+            transition={{ duration: isMobile ? 0 : 0.6, delay: isMobile ? 0 : 0.1 }}
+            whileHover={isMobile ? {} : { y: -6 }}
+            className="group w-full"
           >
             <KPICard
               title="Tokenized Assets"
               value={isLoading ? "-" : marketStats.tokenizedAssets.toString()}
               icon={Coins}
-              subtitle="RWA Markets"
+              trend="neutral"
+              trendValue="Markets"
               variant="gradient"
-              wrapperClassName="mx-auto"
             />
           </motion.div>
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            whileHover={{ y: -6 }}
-            className="group"
+            transition={{ duration: isMobile ? 0 : 0.6, delay: isMobile ? 0 : 0.2 }}
+            whileHover={isMobile ? {} : { y: -6 }}
+            className="group w-full"
           >
             <KPICard
               title="Total Yield Distributed"
@@ -586,7 +600,6 @@ const Index = () => {
               trend="up"
               trendValue="Active"
               variant="gradient"
-              wrapperClassName="mx-auto"
             />
           </motion.div>
         </motion.div>
@@ -642,8 +655,8 @@ const Index = () => {
           className="text-center space-y-4 mb-16"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
+          transition={{ duration: isMobile ? 0 : 0.8 }}
+          viewport={{ once: true, margin: isMobile ? "-20px" : "-100px" }}
         >
           <h2 className="text-2xl sm:text-3xl lg:text-h1 font-bold text-white">
             How SRWA Protocol Works
@@ -739,25 +752,15 @@ const Index = () => {
           className="text-center space-y-6 mb-16"
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
+          transition={{ duration: isMobile ? 0 : 0.8 }}
+          viewport={{ once: true, margin: isMobile ? "-20px" : "-100px" }}
         >
-          <motion.h2
-            className="text-2xl sm:text-3xl lg:text-h1 font-bold text-white px-4"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-          >
+          <h2 className="text-2xl sm:text-3xl lg:text-h1 font-bold text-white px-4">
             Active Markets
-          </motion.h2>
-          <motion.p
-            className="text-sm sm:text-body-1 text-fg-secondary max-w-2xl mx-auto px-4"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.4 }}
-          >
+          </h2>
+          <p className="text-sm sm:text-body-1 text-fg-secondary max-w-2xl mx-auto px-4">
             Institutional-grade Real-World Asset markets with regulated access and competitive yields.
-          </motion.p>
+          </p>
         </motion.div>
 
         <motion.div 
@@ -804,11 +807,12 @@ const Index = () => {
             topMarkets.map((market, index) => (
               <motion.div
                 key={market.address}
-                initial={{ opacity: 0, y: 60, rotateX: 45 }}
-                animate={isMarketsInView ? { opacity: 1, y: 0, rotateX: 0 } : { opacity: 0, y: 60, rotateX: 45 }}
-                transition={{ duration: 0.8, delay: index * 0.15 }}
-                whileHover={{ y: -12, scale: 1.03 }}
-                className="group perspective-1000"
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: isMobile ? 0 : 0.6, delay: isMobile ? 0 : index * 0.1 }}
+                viewport={{ once: true, margin: isMobile ? "-20px" : "-100px" }}
+                whileHover={isMobile ? {} : { y: -8, scale: 1.02 }}
+                className="group"
               >
                 <Card className="card-institutional hover-lift h-full relative overflow-hidden border-brand-500/30 group-hover:border-brand-400/50 transition-all duration-300">
                   {/* Subtle brand gradient on hover */}
@@ -819,13 +823,17 @@ const Index = () => {
                       <motion.div whileHover={{ scale: 1.1 }}>
                         <Badge
                           variant="gradient"
-                          className="text-micro px-3 py-1 bg-[length:200%_200%] animate-gradient-pan shadow-[0_12px_32px_rgba(153,69,255,0.25)]"
+                          className="text-micro px-3 py-1 shadow-[0_12px_32px_rgba(153,69,255,0.25)]"
                         >
-                          {market.name.slice(0, 4).toUpperCase()}
+                          {market.name.replace(/\s+/g, '').slice(0, 4).toUpperCase()}
                         </Badge>
                       </motion.div>
                       <Badge variant="secondary" className="text-micro bg-green-500/10 text-green-400 border-green-500/20">
-                        <div className="w-2 h-2 bg-green-400 rounded-full mr-1 animate-pulse" />
+                        <motion.div
+                          className="w-2 h-2 bg-green-400 rounded-full mr-1"
+                          animate={{ opacity: [0.6, 1, 0.6] }}
+                          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                        />
                         {market.status}
                       </Badge>
                     </div>
@@ -836,18 +844,18 @@ const Index = () => {
                       </h3>
                       <p className="text-body-2 text-fg-muted group-hover:text-fg-secondary transition-colors">
                         Class:{" "}
-                        <span className="bg-gradient-to-r from-brand-500 via-brand-400 to-orange-400 bg-clip-text text-transparent bg-[length:200%_200%] animate-gradient-pan font-medium">
+                        <span className="bg-gradient-to-r from-brand-500 via-brand-400 to-orange-400 bg-clip-text text-transparent font-medium">
                           {market.class}
                         </span>
                       </p>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-6">
-                      <motion.div 
+                      <motion.div
                         className="relative overflow-hidden rounded-xl p-[1px] shadow-[0_18px_45px_rgba(153,69,255,0.25)]"
-                        whileHover={{ scale: 1.05 }}
+                        whileHover={{ scale: 1.02 }}
                         animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
-                        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+                        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
                         style={{
                           backgroundSize: "200% 200%",
                           backgroundImage: "linear-gradient(135deg, #6D28D9 0%, #8B5CF6 50%, #FF6B35 100%)",
@@ -864,11 +872,11 @@ const Index = () => {
                           />
                         </div>
                       </motion.div>
-                      <motion.div 
+                      <motion.div
                         className="relative overflow-hidden rounded-xl p-[1px] shadow-[0_18px_45px_rgba(153,69,255,0.25)]"
-                        whileHover={{ scale: 1.05 }}
+                        whileHover={{ scale: 1.02 }}
                         animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
-                        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
+                        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
                         style={{
                           backgroundSize: "200% 200%",
                           backgroundImage: "linear-gradient(135deg, #6D28D9 0%, #8B5CF6 50%, #FF6B35 100%)",
@@ -901,15 +909,15 @@ const Index = () => {
                         </span>
                       </div>
                       <div className="w-full bg-bg-elev-2 rounded-full h-2 overflow-hidden">
-                        <motion.div 
+                        <motion.div
                           className={`h-2 rounded-full ${
-                            market.utilizationRate > 1 
-                              ? 'bg-gradient-to-r from-amber-600 to-amber-400' 
-                              : 'bg-gradient-to-r from-brand-600 via-brand-500 to-orange-500 bg-[length:200%_200%] animate-gradient-pan'
+                            market.utilizationRate > 1
+                              ? 'bg-gradient-to-r from-amber-600 to-amber-400'
+                              : 'bg-gradient-to-r from-brand-600 via-brand-500 to-orange-500'
                           }`}
                           initial={{ width: 0 }}
-                          whileInView={{ 
-                            width: `${Math.min(market.utilizationRate * 100, 100)}%` 
+                          whileInView={{
+                            width: `${Math.min(market.utilizationRate * 100, 100)}%`
                           }}
                           transition={{ duration: 1.5, delay: index * 0.2 }}
                         />
@@ -926,7 +934,7 @@ const Index = () => {
                     <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                       <Button
                         variant="gradient"
-                        className="group w-full bg-[length:220%_220%] animate-gradient-pan shadow-[0_18px_45px_rgba(153,69,255,0.25)] transition-all duration-500 hover:shadow-[0_28px_60px_rgba(255,107,53,0.35)]"
+                        className="group w-full shadow-[0_18px_45px_rgba(153,69,255,0.25)] transition-all duration-500 hover:shadow-[0_28px_60px_rgba(255,107,53,0.35)]"
                         onClick={scrollToTop}
                       >
                         View Details
@@ -1014,14 +1022,16 @@ const Index = () => {
                       Connect Wallet
                     </HeroButton>
                   )}
-                  <HeroButton
-                    onClick={scrollToTop}
-                    variant="solana"
-                    className="!px-6 !py-3 !text-sm"
-                    icon={<ArrowRight className="h-4 w-4" />}
-                  >
-                    View Dashboard
-                  </HeroButton>
+                  {FEATURES.DASHBOARD && (
+                    <HeroButton
+                      onClick={() => navigate(ROUTES.DASHBOARD)}
+                      variant="solana"
+                      className="!px-6 !py-3 !text-sm"
+                      icon={<ArrowRight className="h-4 w-4" />}
+                    >
+                      View Dashboard
+                    </HeroButton>
+                  )}
                 </div>
               </div>
             </div>
@@ -1057,22 +1067,14 @@ const Index = () => {
               <h4 className="text-sm font-semibold bg-gradient-to-r from-purple-400 to-purple-300 bg-clip-text text-transparent uppercase tracking-wider">Product</h4>
               <ul className="space-y-3">
                 {[
-                  { href: ROUTES.DASHBOARD, label: "Dashboard" },
+                  FEATURES.DASHBOARD && { href: ROUTES.DASHBOARD, label: "Dashboard" },
                   { href: ROUTES.MARKETS, label: "Markets" },
                   { href: ROUTES.PORTFOLIO, label: "Portfolio" },
                   { href: ROUTES.KYC, label: "KYC Portal" }
-                ].map((link, index) => (
+                ].filter(Boolean).map((link, index) => (
                   <li key={link.href}>
                     <motion.a
-                      href={link.href === ROUTES.DASHBOARD ? "#" : link.href}
-                      onClick={
-                        link.href === ROUTES.DASHBOARD
-                          ? (event) => {
-                              event.preventDefault();
-                              scrollToTop();
-                            }
-                          : undefined
-                      }
+                      href={link.href}
                       className="text-sm text-fg-secondary hover:text-purple-400 transition-all inline-flex items-center gap-2 group"
                       whileHover={{ x: 4 }}
                     >
