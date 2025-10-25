@@ -1,5 +1,5 @@
 import { useAnchorWallet } from '@solana/wallet-adapter-react';
-import { Keypair } from '@solana/web3.js';
+import { PublicKey } from '@solana/web3.js';
 import { BN } from '@coral-xyz/anchor';
 import { useIssuanceRequests } from './useIssuanceRequests';
 
@@ -43,7 +43,10 @@ export function useIssuer() {
     }
 
     const requestId = Date.now();
-    const mint = Keypair.generate().publicKey;
+
+    const zeroMint = new PublicKey(new Uint8Array(32));
+    const mintPublicKey = zeroMint;
+    const effectiveDecimals = token.decimals;
 
     const configInit = {
       roles: {
@@ -93,16 +96,16 @@ export function useIssuer() {
 
     await issuance.requestSrwa({
       requestId,
-      mint,
+      mint: mintPublicKey,
       name: token.name,
       symbol: token.symbol,
-      decimals: token.decimals,
+      decimals: effectiveDecimals,
       config: configInit,
       offering: offeringInit,
       yieldConfig: yieldStrategy,
     });
 
-    return { requestId, mint, kycConfig };
+    return { requestId, mint: mintPublicKey, kycConfig };
   };
 
   return {
