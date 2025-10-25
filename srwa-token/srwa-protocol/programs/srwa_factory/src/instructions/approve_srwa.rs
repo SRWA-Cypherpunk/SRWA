@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_spl::token::spl_token;
 
 use crate::{errors::*, events::*, state::*};
 
@@ -21,15 +22,15 @@ pub struct ApproveSrwa<'info> {
     )]
     pub request: Account<'info, SRWARequest>,
 
-    /// CHECK: Mint address tracked in the request; not mutated here.
-    #[account(constraint = mint.key() == request.mint @ SRWAError::MintMismatch)]
+    /// CHECK: SPL mint. If the request did not specify a mint, the admin-provided mint will be recorded.
+    #[account(mut)]
     pub mint: UncheckedAccount<'info>,
 
     #[account(
         init,
         payer = admin,
         space = 8 + SRWAConfig::INIT_SPACE,
-        seeds = [b"srwa_config", request.mint.as_ref()],
+        seeds = [b"srwa_config", mint.key().as_ref()],
         bump
     )]
     pub srwa_config: Account<'info, SRWAConfig>,
@@ -38,7 +39,7 @@ pub struct ApproveSrwa<'info> {
         init,
         payer = admin,
         space = 8 + OfferingState::INIT_SPACE,
-        seeds = [b"offering", request.mint.as_ref()],
+        seeds = [b"offering", mint.key().as_ref()],
         bump
     )]
     pub offering_state: Account<'info, OfferingState>,
@@ -47,7 +48,7 @@ pub struct ApproveSrwa<'info> {
         init,
         payer = admin,
         space = 8 + ValuationData::INIT_SPACE,
-        seeds = [b"valuation", request.mint.as_ref()],
+        seeds = [b"valuation", mint.key().as_ref()],
         bump
     )]
     pub valuation_data: Account<'info, ValuationData>,
@@ -61,6 +62,7 @@ pub fn handler(ctx: Context<ApproveSrwa>) -> Result<()> {
     let srwa_config = &mut ctx.accounts.srwa_config;
     let offering_state = &mut ctx.accounts.offering_state;
     let valuation_data = &mut ctx.accounts.valuation_data;
+    let mint_account = &ctx.accounts.mint;
     let clock = Clock::get()?;
 
     // Verifica se o admin está autorizado
@@ -68,12 +70,22 @@ pub fn handler(ctx: Context<ApproveSrwa>) -> Result<()> {
         return Err(SRWAError::AdminNotInAllowlist.into());
     }
 
+    if mint_account.owner != &spl_token::id() {
+        return Err(SRWAError::MintInvalidOwner.into());
+    }
+
+    let mint_key = mint_account.key();
+    if request.mint != Pubkey::default() && request.mint != mint_key {
+        return Err(SRWAError::MintMismatch.into());
+    }
+    request.mint = mint_key;
+
     let config_init = request.config.clone();
     let offering_init = request.offering.clone();
 
     // Initialize SRWA Config using data from the request
     srwa_config.version = 1;
-    srwa_config.mint = request.mint;
+    srwa_config.mint = mint_key;
     srwa_config.roles = config_init.roles.clone();
     srwa_config.required_topics = config_init.required_topics.clone();
     srwa_config.trusted_issuers_data = vec![];
@@ -95,7 +107,7 @@ pub fn handler(ctx: Context<ApproveSrwa>) -> Result<()> {
     srwa_config.bump = ctx.bumps.srwa_config;
 
     // Offering state
-    offering_state.mint = request.mint;
+    offering_state.mint = mint_key;
     offering_state.phase = OfferingPhase::Draft;
     offering_state.window = offering_init.window.clone();
     offering_state.target = offering_init.target.clone();
@@ -119,7 +131,7 @@ pub fn handler(ctx: Context<ApproveSrwa>) -> Result<()> {
     offering_state.bump = ctx.bumps.offering_state;
 
     // Valuation data
-    valuation_data.mint = request.mint;
+    valuation_data.mint = mint_key;
     valuation_data.last_nav = NAVData {
         total: 0,
         per_token: 0,
@@ -140,7 +152,7 @@ pub fn handler(ctx: Context<ApproveSrwa>) -> Result<()> {
     valuation_data.bump = ctx.bumps.valuation_data;
 
     emit!(TokenCreated {
-        mint: request.mint,
+        mint: mint_key,
         issuer_admin: config_init.roles.issuer_admin,
         compliance_officer: config_init.roles.compliance_officer,
         transfer_agent: config_init.roles.transfer_agent,
@@ -149,7 +161,7 @@ pub fn handler(ctx: Context<ApproveSrwa>) -> Result<()> {
     });
 
     emit!(OfferingOpened {
-        mint: request.mint,
+        mint: mint_key,
         start_ts: offering_init.window.start_ts,
         end_ts: offering_init.window.end_ts,
         soft_cap: offering_init.target.soft_cap,
