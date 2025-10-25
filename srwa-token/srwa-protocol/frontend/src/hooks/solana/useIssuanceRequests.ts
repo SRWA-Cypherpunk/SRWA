@@ -319,7 +319,88 @@ export function useIssuanceRequests() {
 
     await sendWithWallet(new Transaction().add(ix), { preflightCommitment: 'confirmed' });
 
-    console.log('[useIssuanceRequests.approveSrwa] SRWA approved successfully. Admin retains mint authority and will mint tokens as needed for investors.');
+    console.log('[useIssuanceRequests.approveSrwa] SRWA approved successfully. Now minting initial supply to admin wallet.');
+
+    // Mint initial supply to the ADMIN wallet (not issuer)
+    try {
+      const mintAccountInfo = await connection.getAccountInfo(mint);
+      if (!mintAccountInfo) {
+        console.warn('[useIssuanceRequests.approveSrwa] Mint account not found on-chain, skipping initial mint');
+      } else {
+        const mintInfo = await getMint(connection, mint);
+        if (!mintInfo.mintAuthority || !mintInfo.mintAuthority.equals(wallet.publicKey)) {
+          console.warn('[useIssuanceRequests.approveSrwa] Admin wallet is not mint authority, skipping initial mint', {
+            mint: mint.toBase58(),
+            expectedAuthority: wallet.publicKey.toBase58(),
+            onChainAuthority: mintInfo.mintAuthority?.toBase58() ?? null,
+          });
+          return;
+        }
+
+        const adminAta = await getAssociatedTokenAddress(mint, wallet.publicKey);
+        const instructions: TransactionInstruction[] = [];
+
+        const adminAtaInfo = await connection.getAccountInfo(adminAta);
+        if (!adminAtaInfo) {
+          instructions.push(
+            createAssociatedTokenAccountInstruction(
+              wallet.publicKey,
+              adminAta,
+              wallet.publicKey,
+              mint
+            )
+          );
+        }
+
+        const decimals = request.account.decimals ?? 0;
+        const hardCap = request.account.offering?.target?.hardCap;
+        let base = 1n;
+        if (hardCap?.toString) {
+          try {
+            const parsed = BigInt(hardCap.toString());
+            if (parsed > 0n) {
+              base = parsed;
+            }
+          } catch (err) {
+            console.warn('[useIssuanceRequests.approveSrwa] Failed to parse hardCap, defaulting to 1', err);
+          }
+        }
+
+        const magnitude = 10n ** BigInt(decimals);
+        const mintAmount = base * magnitude;
+        const maxU64 = (1n << 64n) - 1n;
+        if (mintAmount > maxU64) {
+          console.warn('[useIssuanceRequests.approveSrwa] Computed mint amount exceeds u64 range', {
+            base: base.toString(),
+            decimals,
+            mintAmount: mintAmount.toString(),
+          });
+          throw new Error('Mint amount exceeds supported range');
+        }
+        instructions.push(
+          createMintToInstruction(
+            mint,
+            adminAta,
+            wallet.publicKey,
+            mintAmount
+          )
+        );
+
+        const tx = new Transaction().add(...instructions);
+        const signature = await sendWithWallet(tx, { preflightCommitment: 'confirmed' });
+        console.log('[useIssuanceRequests.approveSrwa] Minted initial supply to ADMIN ATA', {
+          admin: wallet.publicKey.toBase58(),
+          adminAta: adminAta.toBase58(),
+          amount: mintAmount.toString(),
+          signature,
+        });
+      }
+    } catch (mintError) {
+      console.error('[useIssuanceRequests.approveSrwa] Failed to mint initial supply to admin wallet', mintError);
+      if ((mintError as any)?.logs) {
+        console.error('[useIssuanceRequests.approveSrwa] Mint transaction logs', (mintError as any).logs);
+      }
+    }
 
     await refresh();
   }, [wallet?.publicKey, programs?.srwaFactory, refresh, walletAdapter, getEffectiveMintKey, connection, sendWithWallet]);
@@ -488,10 +569,10 @@ export function useIssuanceRequests() {
   }, [wallet?.publicKey, connection, walletAdapter, wallet, getEffectiveMintKey, sendWithWallet]);
 
   /**
-   * Minta tokens direto para o investidor (admin como mint authority)
-   * Usado para processar compras: investidor pagou SOL, recebe tokens
+   * Transfere tokens do ADMIN para o investidor
+   * Usado para processar compras: investidor pagou SOL, recebe tokens do supply do admin
    */
-  const mintTokensToInvestor = useCallback(async (
+  const transferFromAdminToInvestor = useCallback(async (
     mint: PublicKey,
     investor: PublicKey,
     amount: number,
@@ -501,7 +582,7 @@ export function useIssuanceRequests() {
       throw new Error('Wallet not connected');
     }
 
-    console.log('[useIssuanceRequests.mintTokensToInvestor] Minting tokens', {
+    console.log('[useIssuanceRequests.transferFromAdminToInvestor] Transferring tokens', {
       mint: mint.toBase58(),
       investor: investor.toBase58(),
       amount,
@@ -509,18 +590,20 @@ export function useIssuanceRequests() {
       admin: wallet.publicKey.toBase58(),
     });
 
-    // Verificar se admin é mint authority
-    const mintInfo = await getMint(connection, mint);
-    if (!mintInfo.mintAuthority || !mintInfo.mintAuthority.equals(wallet.publicKey)) {
-      throw new Error(
-        `Admin wallet is not mint authority. Cannot mint tokens. Mint authority: ${
-          mintInfo.mintAuthority?.toBase58() ?? 'None'
-        }`
-      );
-    }
-
+    const adminAta = await getAssociatedTokenAddress(mint, wallet.publicKey);
     const investorAta = await getAssociatedTokenAddress(mint, investor);
     const instructions: TransactionInstruction[] = [];
+
+    // Verificar saldo do admin
+    let adminAccount;
+    try {
+      adminAccount = await getAccount(connection, adminAta);
+    } catch (err: any) {
+      if (err instanceof TokenAccountNotFoundError || err instanceof TokenInvalidAccountOwnerError) {
+        throw new Error('Admin token account not found. Make sure tokens were minted to admin when approving the SRWA request.');
+      }
+      throw err;
+    }
 
     // Criar ATA do investidor se não existir
     const investorAtaInfo = await connection.getAccountInfo(investorAta);
@@ -533,33 +616,42 @@ export function useIssuanceRequests() {
           mint
         )
       );
-      console.log('[useIssuanceRequests.mintTokensToInvestor] Creating investor ATA:', investorAta.toBase58());
+      console.log('[useIssuanceRequests.transferFromAdminToInvestor] Creating investor ATA:', investorAta.toBase58());
     }
 
     // Calcular quantidade de tokens
-    const mintAmount = BigInt(Math.floor(amount * 10 ** decimals));
+    const transferAmount = BigInt(Math.floor(amount * 10 ** decimals));
     const maxU64 = (1n << 64n) - 1n;
-    if (mintAmount > maxU64) {
-      throw new Error('Mint amount exceeds u64 range');
+    if (transferAmount > maxU64) {
+      throw new Error('Transfer amount exceeds u64 range');
     }
 
-    // Mintar tokens
+    // Verificar se admin tem saldo suficiente
+    if (adminAccount.amount < transferAmount) {
+      throw new Error(
+        `Insufficient admin token balance. Required: ${transferAmount.toString()}, Available: ${adminAccount.amount.toString()}`
+      );
+    }
+
+    // Transferir tokens
     instructions.push(
-      createMintToInstruction(
+      createTransferCheckedInstruction(
+        adminAta,
         mint,
         investorAta,
-        wallet.publicKey, // mint authority (admin)
-        mintAmount
+        wallet.publicKey, // owner (admin)
+        Number(transferAmount),
+        decimals
       )
     );
 
     const tx = new Transaction().add(...instructions);
     const signature = await sendWithWallet(tx, { preflightCommitment: 'confirmed' });
 
-    console.log('[useIssuanceRequests.mintTokensToInvestor] Tokens minted successfully', {
+    console.log('[useIssuanceRequests.transferFromAdminToInvestor] Tokens transferred successfully', {
       investor: investor.toBase58(),
       investorAta: investorAta.toBase58(),
-      amount: mintAmount.toString(),
+      amount: transferAmount.toString(),
       signature,
       explorer: `https://explorer.solana.com/tx/${signature}?cluster=devnet`,
     });
@@ -577,7 +669,7 @@ export function useIssuanceRequests() {
     rejectSrwa,
     createMintForRequest,
     sendTokensToIssuer,
-    mintTokensToInvestor,
+    transferFromAdminToInvestor,
     getEffectiveMintKey,
   };
 }

@@ -110,7 +110,8 @@ export function AdminPanel() {
       const mint = new PublicKey(purchaseReq.mint);
       const investor = new PublicKey(purchaseReq.investor);
 
-      const signature = await issuance.mintTokensToInvestor(
+      // Transferir tokens do admin para o investidor
+      const signature = await issuance.transferFromAdminToInvestor(
         mint,
         investor,
         purchaseReq.quantity,
@@ -121,7 +122,7 @@ export function AdminPanel() {
       purchaseRequests.approveRequest(purchaseReq.id, signature, publicKey.toBase58());
 
       toast.success('Compra aprovada!', {
-        description: `${purchaseReq.quantity} ${purchaseReq.tokenSymbol} enviados para ${investor.toBase58().slice(0, 8)}...`,
+        description: `${purchaseReq.quantity} ${purchaseReq.tokenSymbol} transferidos para ${investor.toBase58().slice(0, 8)}...`,
       });
     } catch (err: any) {
       toast.error(err.message ?? 'Falha ao processar compra');
@@ -559,12 +560,10 @@ export function AdminPanel() {
                     <p>Offering: {request.account.offeringState?.toBase58?.()?.slice(0, 24) ?? '—'}...</p>
                   </div>
                   <div className="pt-2 border-t border-green-500/20">
-                    <p className="text-xs text-fg-muted mb-1">Como visualizar na carteira:</p>
-                    <ol className="text-xs text-fg-secondary space-y-1 list-decimal list-inside">
-                      <li>Abra Phantom ou Solflare (conectado à Devnet)</li>
-                      <li>Adicione token customizado com o mint address acima</li>
-                      <li>O issuer verá o saldo total no wallet dele</li>
-                    </ol>
+                    <p className="text-xs text-fg-muted mb-1">Supply do Admin:</p>
+                    <p className="text-xs text-fg-secondary">
+                      Os tokens foram mintados para sua carteira de admin. Você gerencia o supply e vende aos investidores conforme recebe pagamentos em SOL.
+                    </p>
                   </div>
                 </div>
               </div>
