@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { useIssuanceRequests } from '@/hooks/solana';
-import type { RequestStatus } from '@/hooks/solana';
+import { PublicKey } from '@solana/web3.js';
+import { useIssuanceRequests, usePurchaseRequests } from '@/hooks/solana';
+import type { RequestStatus, PurchaseRequest } from '@/hooks/solana';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -22,8 +23,16 @@ import {
   RefreshCw,
   FileText,
   TrendingUp,
-  Users
+  Users,
+  PlusCircle,
+  ExternalLink,
+  Wallet,
+  Send,
+  ShoppingCart
 } from 'lucide-react';
+import { SolendPoolCreator } from '@/components/srwa/admin/SolendPoolCreator';
+
+const ZERO_PUBKEY = new PublicKey(new Uint8Array(32));
 
 function mapStatus(status: any): RequestStatus {
   if (!status) return 'pending';
@@ -46,6 +55,7 @@ const topicNames: { [key: number]: string } = {
 export function AdminPanel() {
   const { publicKey } = useWallet();
   const issuance = useIssuanceRequests();
+  const purchaseRequests = usePurchaseRequests();
   const [loading, setLoading] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
@@ -91,6 +101,42 @@ export function AdminPanel() {
     }
   };
 
+  const handleApprovePurchase = async (purchaseReq: PurchaseRequest) => {
+    if (!publicKey) return;
+
+    try {
+      setLoading(true);
+
+      const mint = new PublicKey(purchaseReq.mint);
+      const investor = new PublicKey(purchaseReq.investor);
+
+      // Transferir tokens do admin para o investidor
+      const signature = await issuance.transferFromAdminToInvestor(
+        mint,
+        investor,
+        purchaseReq.quantity,
+        purchaseReq.decimals
+      );
+
+      // Marcar como aprovado
+      purchaseRequests.approveRequest(purchaseReq.id, signature, publicKey.toBase58());
+
+      toast.success('Compra aprovada!', {
+        description: `${purchaseReq.quantity} ${purchaseReq.tokenSymbol} transferidos para ${investor.toBase58().slice(0, 8)}...`,
+      });
+    } catch (err: any) {
+      toast.error(err.message ?? 'Falha ao processar compra');
+      console.error('[AdminPanel.handleApprovePurchase] Error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRejectPurchase = (purchaseReq: PurchaseRequest) => {
+    purchaseRequests.rejectRequest(purchaseReq.id);
+    toast.success('Compra rejeitada');
+  };
+
   if (!publicKey) {
     return (
       <div className="max-w-4xl mx-auto p-6">
@@ -110,10 +156,27 @@ export function AdminPanel() {
   const RequestCard = ({ request, status }: { request: any; status: RequestStatus }) => {
     const [showDetails, setShowDetails] = useState(false);
     const [showRejectDialog, setShowRejectDialog] = useState(false);
+    const [actionLoading, setActionLoading] = useState<'mint' | null>(null);
     const yieldProtocol = mapProtocol(request.account.yieldConfig?.protocol);
     const targetApy = Number(request.account.yieldConfig?.targetApyBps ?? 0) / 100;
     const config = request.account.config;
     const offering = request.account.offering;
+    const effectiveMint: PublicKey = issuance.getEffectiveMintKey(request);
+    const mintCreated = !effectiveMint.equals(ZERO_PUBKEY);
+
+    const handleCreateMint = async () => {
+      try {
+        setActionLoading('mint');
+        const mintKey = await issuance.createMintForRequest(request);
+        toast.success('Mint criado com sucesso', {
+          description: mintKey.toBase58(),
+        });
+      } catch (err: any) {
+        toast.error(err.message ?? 'Falha ao criar mint');
+      } finally {
+        setActionLoading(null);
+      }
+    };
 
     return (
       <>
@@ -151,13 +214,66 @@ export function AdminPanel() {
             <div className="grid grid-cols-2 gap-4 text-body-2">
               <div>
                 <p className="text-fg-muted text-micro">Mint</p>
-                <p className="font-mono text-xs text-fg-primary break-all">{request.account.mint.toBase58()}</p>
+                <p className="font-mono text-xs text-fg-primary break-all">
+                  {mintCreated ? effectiveMint.toBase58() : 'Mint ainda não criado'}
+                </p>
               </div>
               <div>
                 <p className="text-fg-muted text-micro">Decimals</p>
                 <p className="text-fg-primary">{request.account.decimals}</p>
               </div>
             </div>
+
+            {/* Token Explorer Link */}
+            {mintCreated && (
+              <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold text-blue-400 flex items-center gap-1">
+                    <Wallet className="h-3 w-3" />
+                    Token na Devnet
+                  </p>
+                  <a
+                    href={`https://explorer.solana.com/address/${effectiveMint.toBase58()}?cluster=devnet`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                  >
+                    Ver no Explorer
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                </div>
+                <p className="text-xs text-fg-muted font-mono break-all">
+                  {effectiveMint.toBase58()}
+                </p>
+                {status === 'deployed' && (
+                  <p className="text-xs text-green-400 mt-2">
+                    ✓ Tokens mintados para o issuer
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Mint Actions */}
+            {status === 'pending' && (
+              <div className="space-y-2">
+                <Label className="text-xs text-fg-muted">Ação necessária</Label>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-2 w-full"
+                  disabled={mintCreated || actionLoading === 'mint' || loading}
+                  onClick={handleCreateMint}
+                >
+                  {actionLoading === 'mint' ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
+                  {mintCreated ? 'Mint Criado ✓' : 'Criar Mint'}
+                </Button>
+                {mintCreated && (
+                  <p className="text-xs text-green-400">
+                    ✓ Mint criado. Agora você pode aprovar a request (os tokens serão mintados direto para o issuer).
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Metadata URI */}
             {config?.metadataUri && (
@@ -404,7 +520,7 @@ export function AdminPanel() {
               <div className="flex gap-2 pt-2">
                 <Button
                   onClick={() => handleApprove(request)}
-                  disabled={loading}
+                  disabled={loading || !mintCreated || actionLoading !== null}
                   className="flex-1 btn-primary"
                 >
                   {loading ? (
@@ -438,9 +554,17 @@ export function AdminPanel() {
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Successfully Deployed
                 </p>
-                <div className="space-y-1 text-micro font-mono text-fg-muted">
-                  <p>Config: {request.account.srwaConfig.toBase58().slice(0, 24)}...</p>
-                  <p>Offering: {request.account.offeringState?.toBase58?.()?.slice(0, 24) ?? '—'}...</p>
+                <div className="space-y-2">
+                  <div className="space-y-1 text-micro font-mono text-fg-muted">
+                    <p>Config: {request.account.srwaConfig.toBase58().slice(0, 24)}...</p>
+                    <p>Offering: {request.account.offeringState?.toBase58?.()?.slice(0, 24) ?? '—'}...</p>
+                  </div>
+                  <div className="pt-2 border-t border-green-500/20">
+                    <p className="text-xs text-fg-muted mb-1">Supply do Admin:</p>
+                    <p className="text-xs text-fg-secondary">
+                      Os tokens foram mintados para sua carteira de admin. Você gerencia o supply e vende aos investidores conforme recebe pagamentos em SOL.
+                    </p>
+                  </div>
                 </div>
               </div>
             )}
@@ -520,7 +644,7 @@ export function AdminPanel() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-4 gap-6">
         <Card className="card-institutional">
           <CardContent className="pt-6">
             <div className="flex items-center space-x-4">
@@ -529,7 +653,21 @@ export function AdminPanel() {
               </div>
               <div>
                 <p className="text-h1 text-fg-primary">{grouped.pending.length}</p>
-                <p className="text-body-2 text-fg-muted">Pending</p>
+                <p className="text-body-2 text-fg-muted">Pending Tokens</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="card-institutional">
+          <CardContent className="pt-6">
+            <div className="flex items-center space-x-4">
+              <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center">
+                <ShoppingCart className="h-6 w-6 text-blue-400" />
+              </div>
+              <div>
+                <p className="text-h1 text-fg-primary">{purchaseRequests.getPendingRequests().length}</p>
+                <p className="text-body-2 text-fg-muted">Pending Purchases</p>
               </div>
             </div>
           </CardContent>
@@ -566,7 +704,7 @@ export function AdminPanel() {
 
       {/* Tabs */}
       <Tabs defaultValue="pending" className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-3">
+        <TabsList className="grid w-full max-w-3xl grid-cols-5">
           <TabsTrigger value="pending">
             Pending ({grouped.pending.length})
           </TabsTrigger>
@@ -575,6 +713,12 @@ export function AdminPanel() {
           </TabsTrigger>
           <TabsTrigger value="rejected">
             Rejected ({grouped.rejected.length})
+          </TabsTrigger>
+          <TabsTrigger value="purchases">
+            Process Purchases
+          </TabsTrigger>
+          <TabsTrigger value="solend">
+            Solend Pools
           </TabsTrigger>
         </TabsList>
 
@@ -627,6 +771,120 @@ export function AdminPanel() {
               ))}
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="purchases" className="space-y-4">
+          {purchaseRequests.getPendingRequests().length === 0 ? (
+            <Card className="card-institutional">
+              <CardContent className="py-12 text-center">
+                <ShoppingCart className="h-12 w-12 text-fg-muted mx-auto mb-4 opacity-50" />
+                <p className="text-body-1 text-fg-muted">Nenhuma compra pendente</p>
+                <p className="text-body-2 text-fg-muted mt-2">
+                  Quando investidores comprarem tokens, eles aparecerão aqui
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {purchaseRequests.getPendingRequests().map((purchaseReq) => (
+                <Card key={purchaseReq.id} className="card-institutional hover-lift">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-h3">
+                          {purchaseReq.tokenName} ({purchaseReq.tokenSymbol})
+                        </CardTitle>
+                        <CardDescription className="font-mono text-xs mt-1">
+                          Investidor: {purchaseReq.investor.slice(0, 8)}...{purchaseReq.investor.slice(-6)}
+                        </CardDescription>
+                      </div>
+                      <Badge variant="outline" className="text-amber-400 border-amber-500/30 bg-amber-500/10">
+                        <Clock className="h-3 w-3 mr-1" />
+                        Pending
+                      </Badge>
+                    </div>
+                  </CardHeader>
+
+                  <CardContent className="space-y-4">
+                    {/* Purchase Details */}
+                    <div className="grid grid-cols-3 gap-4 text-body-2">
+                      <div>
+                        <p className="text-fg-muted text-micro">Quantidade</p>
+                        <p className="text-fg-primary font-semibold">{purchaseReq.quantity} {purchaseReq.tokenSymbol}</p>
+                      </div>
+                      <div>
+                        <p className="text-fg-muted text-micro">Total Pago</p>
+                        <p className="text-fg-primary font-semibold">{purchaseReq.totalSol.toFixed(4)} SOL</p>
+                      </div>
+                      <div>
+                        <p className="text-fg-muted text-micro">Preço/Token</p>
+                        <p className="text-fg-primary font-semibold">{purchaseReq.pricePerToken.toFixed(4)} SOL</p>
+                      </div>
+                    </div>
+
+                    {/* Transaction Link */}
+                    {purchaseReq.txSignature && (
+                      <div className="p-3 bg-muted/30 rounded-lg">
+                        <p className="text-xs text-fg-muted mb-1">Transação de Pagamento:</p>
+                        <a
+                          href={`https://explorer.solana.com/tx/${purchaseReq.txSignature}?cluster=devnet`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-brand-400 hover:underline flex items-center gap-1 font-mono"
+                        >
+                          {purchaseReq.txSignature.slice(0, 16)}...
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                      </div>
+                    )}
+
+                    {/* Mint Info */}
+                    <div className="p-3 bg-muted/30 rounded-lg">
+                      <p className="text-xs text-fg-muted mb-1">Token Mint:</p>
+                      <p className="text-xs text-fg-primary font-mono break-all">{purchaseReq.mint}</p>
+                    </div>
+
+                    {/* Timestamp */}
+                    <div className="text-xs text-fg-muted">
+                      Solicitado em: {new Date(purchaseReq.timestamp).toLocaleString('pt-BR')}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        onClick={() => handleApprovePurchase(purchaseReq)}
+                        disabled={loading}
+                        className="flex-1 btn-primary"
+                      >
+                        {loading ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <>
+                            <CheckCircle className="mr-2 h-4 w-4" />
+                            Aprovar e Enviar Tokens
+                          </>
+                        )}
+                      </Button>
+
+                      <Button
+                        variant="destructive"
+                        className="flex-1"
+                        onClick={() => handleRejectPurchase(purchaseReq)}
+                        disabled={loading}
+                      >
+                        <XCircle className="mr-2 h-4 w-4" />
+                        Rejeitar
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="solend">
+          <SolendPoolCreator />
         </TabsContent>
       </Tabs>
     </div>

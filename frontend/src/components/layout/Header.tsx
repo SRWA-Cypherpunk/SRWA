@@ -3,8 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { SolanaWalletButton } from "@/components/wallet/SolanaWalletButton";
 import { ROUTES } from "@/lib/constants";
+import { FEATURES } from "@/lib/constants/features";
 import Logo from "@/assets/logo.png";
 import SRWALetters from "@/assets/srwa_letters.png";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface HeaderProps {
   disableDashboardLink?: boolean;
@@ -38,6 +40,18 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
     return () => window.removeEventListener('scroll', controlNavbar);
   }, [lastScrollY]);
 
+  // Block body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [mobileMenuOpen]);
+
   const handleDashboardLink = (event: MouseEvent<HTMLAnchorElement>) => {
     if (disableDashboardLink) {
       event.preventDefault();
@@ -68,14 +82,16 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
               Home
               <span className="absolute bottom-0 left-0 w-0 h-px bg-brand-400 group-hover:w-full transition-all duration-300" />
             </a>
-            <a
-              href={disableDashboardLink ? "#" : ROUTES.DASHBOARD}
-              onClick={handleDashboardLink}
-              className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group font-medium"
-            >
-              Dashboard
-              <span className="absolute bottom-0 left-0 w-0 h-px bg-brand-400 group-hover:w-full transition-all duration-300" />
-            </a>
+            {FEATURES.DASHBOARD && (
+              <a
+                href={disableDashboardLink ? "#" : ROUTES.DASHBOARD}
+                onClick={handleDashboardLink}
+                className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group font-medium"
+              >
+                Dashboard
+                <span className="absolute bottom-0 left-0 w-0 h-px bg-brand-400 group-hover:w-full transition-all duration-300" />
+              </a>
+            )}
             <a href={ROUTES.DOCS} className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group">
               Documentation
               <span className="absolute bottom-0 left-0 w-0 h-px bg-brand-400 group-hover:w-full transition-all duration-300" />
@@ -99,30 +115,69 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
         </Button>
       </div>
 
-      {/* Mobile Navigation */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-t border-stroke-line bg-card animate-slide-up">
-          <nav className="container mx-auto px-4 sm:px-6 py-4 space-y-3">
-            <a href={ROUTES.HOME} className="block py-2 text-sm sm:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors">
-              Home
-            </a>
-            <a
-              href={disableDashboardLink ? "#" : ROUTES.DASHBOARD}
-              onClick={handleDashboardLink}
-              className="block py-2 text-sm sm:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors font-medium"
+      {/* Mobile Navigation Overlay */}
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <motion.div
+            className="fixed inset-0 top-14 md:hidden z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+          >
+            {/* Backdrop */}
+            <motion.div
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+              onClick={() => setMobileMenuOpen(false)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            />
+
+            {/* Menu Panel */}
+            <motion.div
+              className="absolute top-0 left-0 right-0 border-t border-stroke-line bg-card shadow-2xl"
+              initial={{ y: -20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -20, opacity: 0 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
             >
-              Dashboard
-            </a>
-            <a href={ROUTES.DOCS} className="block py-2 text-sm sm:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors">
-              Documentation
-            </a>
-            {/* Mobile Wallet Button */}
-            <div className="pt-2 border-t border-stroke-line">
-              <SolanaWalletButton />
-            </div>
-          </nav>
-        </div>
-      )}
+              <nav className="container mx-auto px-4 sm:px-6 py-4 space-y-3">
+                <a
+                  href={ROUTES.HOME}
+                  className="block py-2 text-sm sm:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Home
+                </a>
+                {FEATURES.DASHBOARD && (
+                  <a
+                    href={disableDashboardLink ? "#" : ROUTES.DASHBOARD}
+                    onClick={(e) => {
+                      handleDashboardLink(e);
+                      setMobileMenuOpen(false);
+                    }}
+                    className="block py-2 text-sm sm:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors font-medium"
+                  >
+                    Dashboard
+                  </a>
+                )}
+                <a
+                  href={ROUTES.DOCS}
+                  className="block py-2 text-sm sm:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Documentation
+                </a>
+                {/* Mobile Wallet Button */}
+                <div className="pt-2 border-t border-stroke-line">
+                  <SolanaWalletButton />
+                </div>
+              </nav>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

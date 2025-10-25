@@ -29,11 +29,12 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
-      buffer: "buffer",
+      buffer: "buffer/",
     },
   },
   define: {
     'global': 'globalThis',
+    'process.env': {},
   },
   optimizeDeps: {
     esbuildOptions: {
@@ -51,6 +52,9 @@ export default defineConfig(({ mode }) => ({
     target: 'es2020',
     minify: 'esbuild',
     sourcemap: mode === 'development',
+    commonjsOptions: {
+      transformMixedEsModules: true,
+    },
     rollupOptions: {
       output: {
         manualChunks: {

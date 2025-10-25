@@ -22,3 +22,7 @@ export type {
 export { useDeployedTokens } from './useDeployedTokens';
 export type { DeployedToken } from './useDeployedTokens';
 export { useUserRegistry } from './useUserRegistry';
+export { useInvestorPurchase } from './useInvestorPurchase';
+export type { PurchaseInput } from './useInvestorPurchase';
+export { usePurchaseRequests } from './usePurchaseRequests';
+export type { PurchaseRequest } from './usePurchaseRequests';

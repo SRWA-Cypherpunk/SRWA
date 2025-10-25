@@ -73,6 +73,8 @@ pub enum SRWAError {
 
     #[msg("Mint provided does not match the stored request mint")]
     MintMismatch,
+    #[msg("Mint account has invalid owner")]
+    MintInvalidOwner,
 
     #[msg("Reject reason exceeds maximum length")]
     RejectReasonTooLong,
