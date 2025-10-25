@@ -13,39 +13,46 @@ Convertemos o projeto para **Yarn Workspaces** (monorepo), que é a melhor prát
 1. ✅ `package.json` da raiz atualizado com workspace
 2. ✅ `package-lock.json` do frontend removido
 3. ✅ `.gitignore` atualizado
-4. ✅ `wrangler.toml` criado com configuração correta
+4. ✅ `.nvmrc` criado no frontend (Node 22)
 5. ✅ Link do Dashboard habilitado no menu
+6. ✅ Feature flag para controlar visibilidade do Dashboard
 
 ## Configuração no Cloudflare Pages Dashboard
 
-### Opção 1: Usar wrangler.toml (Recomendado)
+### ⚠️ IMPORTANTE: Configure Manualmente no Dashboard
 
-O arquivo `wrangler.toml` já está configurado. O Cloudflare detectará automaticamente.
+O Cloudflare Pages v2 **não usa wrangler.toml**. Configure no Dashboard:
 
-### Opção 2: Configuração Manual no Dashboard
+### Passo a Passo:
 
-Se preferir configurar manualmente:
+1. Acesse **Cloudflare Pages Dashboard**
+2. Vá em **Settings** > **Builds & deployments**
+3. Configure:
 
-1. **Framework preset**: `None` (ou deixe em branco)
+   - **Framework preset**: `None`
 
-2. **Build command**:
-   ```
-   yarn workspace solana-rwa-frontend build
-   ```
+   - **Build command**:
+     ```
+     yarn workspace solana-rwa-frontend build
+     ```
 
-3. **Build output directory**:
-   ```
-   dist
-   ```
+   - **Build output directory**:
+     ```
+     dist
+     ```
 
-4. **Root directory (advanced)**:
-   ```
-   frontend
-   ```
+   - **Root directory** (clique em "Advanced" para ver):
+     ```
+     frontend
+     ```
 
-5. **Environment variables**:
-   - `NODE_VERSION`: `22`
-   - **NÃO adicione** `VITE_ENABLE_DASHBOARD` (Dashboard ficará oculto em produção)
+4. **Environment variables** (Production):
+   - `NODE_VERSION` = `22`
+   - **NÃO adicione** `VITE_ENABLE_DASHBOARD`
+
+   ⚠️ Se adicionar `VITE_ENABLE_DASHBOARD=true`, o Dashboard ficará visível em produção
+
+5. Clique em **Save** e aguarde o redeploy automático
 
 ## Deploy
 
@@ -59,14 +66,17 @@ git push
 
 O Cloudflare Pages fará o build automaticamente.
 
-### Via Wrangler CLI
+### Via Wrangler CLI (Opcional)
+
+⚠️ **Não recomendado** - Use Git push automático
 
 ```bash
-# Instalar wrangler globalmente (se necessário)
-npm install -g wrangler
+# Primeiro faça o build local
+cd frontend
+yarn build
 
-# Deploy
-wrangler pages deploy frontend/dist --project-name=srwa-frontend
+# Deploy manual
+npx wrangler pages deploy dist --project-name=srwa-frontend
 ```
 
 ## Desenvolvimento Local
