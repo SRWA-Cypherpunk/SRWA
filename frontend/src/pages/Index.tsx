@@ -435,23 +435,23 @@ const Index = () => {
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 relative z-10">
         <motion.div
           className="text-center space-y-6 mb-16"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={isMobile ? false : { opacity: 0, y: 30 }}
+          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          viewport={{ once: true }}
+          viewport={isMobile ? false : { once: true }}
         >
           <motion.h2
             className="text-2xl sm:text-3xl lg:text-h1 font-semibold text-fg-primary px-4"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={isMobile ? false : { opacity: 0, y: 20 }}
+            whileInView={isMobile ? false : { opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             Powered by Industry Leaders
           </motion.h2>
           <motion.p
             className="text-sm sm:text-body-1 text-fg-secondary max-w-2xl mx-auto px-4"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={isMobile ? false : { opacity: 0, y: 20 }}
+            whileInView={isMobile ? false : { opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
             Built in collaboration with leading blockchain protocols and institutions.
@@ -460,9 +460,10 @@ const Index = () => {
 
         <motion.div
           className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 sm:gap-12 mb-12 sm:mb-16 px-4"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={isMobile ? false : { opacity: 0, y: 20 }}
+          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
+          viewport={isMobile ? false : { once: true }}
         >
           {PARTNERS.map((partner, index) => (
             <motion.a
@@ -470,11 +471,11 @@ const Index = () => {
               href={partner.website}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center opacity-70 hover:opacity-100 transition-opacity duration-300"
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 0.7, y: 0 }}
+              className={`flex items-center justify-center opacity-70 hover:opacity-100 ${!isMobile && "transition-opacity duration-300"}`}
+              initial={isMobile ? false : { opacity: 0, y: 20 }}
+              whileInView={isMobile ? false : { opacity: 0.7, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
-              whileHover={{
+              whileHover={isMobile ? {} : {
                 scale: 1.1,
                 opacity: 1,
                 transition: { duration: 0.3, ease: "easeOut" }
@@ -534,10 +535,10 @@ const Index = () => {
 
         <motion.div
           className="text-center space-y-4 mb-12"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: isMobile ? 0 : 0.8 }}
-          viewport={{ once: true, margin: isMobile ? "-20px" : "-100px" }}
+          initial={isMobile ? false : { opacity: 0, y: 30 }}
+          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={isMobile ? false : { once: true, margin: "-100px" }}
         >
           <h2 className="text-2xl sm:text-3xl lg:text-h1 font-bold text-white">
             Our Numbers
@@ -549,15 +550,15 @@ const Index = () => {
 
         <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch max-w-[280px] sm:max-w-5xl mx-auto"
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: isMobile ? 0 : 0.8, staggerChildren: isMobile ? 0 : 0.1 }}
-          viewport={{ once: true, margin: isMobile ? "-20px" : "-100px" }}
+          initial={isMobile ? false : { opacity: 0, y: 50 }}
+          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, staggerChildren: isMobile ? 0 : 0.1 }}
+          viewport={isMobile ? false : { once: true, margin: "-100px" }}
         >
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: isMobile ? 0 : 0.6, delay: isMobile ? 0 : 0 }}
+            initial={isMobile ? false : { opacity: 0, y: 30 }}
+            whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0 }}
             whileHover={isMobile ? {} : { y: -6 }}
             className="group w-full"
           >
@@ -571,9 +572,9 @@ const Index = () => {
             />
           </motion.div>
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: isMobile ? 0 : 0.6, delay: isMobile ? 0 : 0.1 }}
+            initial={isMobile ? false : { opacity: 0, y: 30 }}
+            whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
             whileHover={isMobile ? {} : { y: -6 }}
             className="group w-full"
           >
@@ -653,10 +654,10 @@ const Index = () => {
         {/* Header */}
         <motion.div
           className="text-center space-y-4 mb-16"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: isMobile ? 0 : 0.8 }}
-          viewport={{ once: true, margin: isMobile ? "-20px" : "-100px" }}
+          initial={isMobile ? false : { opacity: 0, y: 30 }}
+          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={isMobile ? false : { once: true, margin: "-100px" }}
         >
           <h2 className="text-2xl sm:text-3xl lg:text-h1 font-bold text-white">
             How SRWA Protocol Works
@@ -750,10 +751,10 @@ const Index = () => {
 
         <motion.div
           className="text-center space-y-6 mb-16"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: isMobile ? 0 : 0.8 }}
-          viewport={{ once: true, margin: isMobile ? "-20px" : "-100px" }}
+          initial={isMobile ? false : { opacity: 0, y: 30 }}
+          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={isMobile ? false : { once: true, margin: "-100px" }}
         >
           <h2 className="text-2xl sm:text-3xl lg:text-h1 font-bold text-white px-4">
             Active Markets
@@ -807,16 +808,16 @@ const Index = () => {
             topMarkets.map((market, index) => (
               <motion.div
                 key={market.address}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: isMobile ? 0 : 0.6, delay: isMobile ? 0 : index * 0.1 }}
-                viewport={{ once: true, margin: isMobile ? "-20px" : "-100px" }}
+                initial={isMobile ? false : { opacity: 0, y: 30 }}
+                whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                viewport={isMobile ? false : { once: true, margin: "-100px" }}
                 whileHover={isMobile ? {} : { y: -8, scale: 1.02 }}
                 className="group"
               >
-                <Card className="card-institutional hover-lift h-full relative overflow-hidden border-brand-500/30 group-hover:border-brand-400/50 transition-all duration-300">
+                <Card className={`card-institutional hover-lift h-full relative overflow-hidden border-brand-500/30 group-hover:border-brand-400/50 ${!isMobile && "transition-all duration-300"}`}>
                   {/* Subtle brand gradient on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-green-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                  <div className={`absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-green-500/5 opacity-0 group-hover:opacity-100 ${!isMobile && "transition-opacity duration-500"}`} />
                   
                   <div className="space-y-6 relative z-10">
                     <div className="flex items-center justify-between">
@@ -839,10 +840,10 @@ const Index = () => {
                     </div>
                     
                     <div className="space-y-3">
-                      <h3 className="text-h3 font-semibold text-fg-primary group-hover:text-brand-300 transition-colors">
+                      <h3 className={`text-h3 font-semibold text-fg-primary group-hover:text-brand-300 ${!isMobile && "transition-colors"}`}>
                         {market.name}
                       </h3>
-                      <p className="text-body-2 text-fg-muted group-hover:text-fg-secondary transition-colors">
+                      <p className={`text-body-2 text-fg-muted group-hover:text-fg-secondary ${!isMobile && "transition-colors"}`}>
                         Class:{" "}
                         <span className="bg-gradient-to-r from-brand-500 via-brand-400 to-orange-400 bg-clip-text text-transparent font-medium">
                           {market.class}
@@ -862,7 +863,7 @@ const Index = () => {
                         }}
                       >
                         <div
-                          className="flex flex-col items-center gap-1 bg-bg-elev-2/95 px-4 py-3 text-center transition-colors duration-300 group-hover:bg-bg-elev-2/80"
+                          className={`flex flex-col items-center gap-1 bg-bg-elev-2/95 px-4 py-3 text-center ${!isMobile && "transition-colors duration-300"} group-hover:bg-bg-elev-2/80`}
                           style={{ borderRadius: "calc(0.75rem - 2px)" }}
                         >
                           <p className="text-micro text-fg-muted uppercase tracking-wide">Supply APY</p>
@@ -883,7 +884,7 @@ const Index = () => {
                         }}
                       >
                         <div
-                          className="flex flex-col items-center gap-1 bg-bg-elev-2/95 px-4 py-3 text-center transition-colors duration-300 group-hover:bg-bg-elev-2/80"
+                          className={`flex flex-col items-center gap-1 bg-bg-elev-2/95 px-4 py-3 text-center ${!isMobile && "transition-colors duration-300"} group-hover:bg-bg-elev-2/80`}
                           style={{ borderRadius: "calc(0.75rem - 2px)" }}
                         >
                           <p className="text-micro text-fg-muted uppercase tracking-wide">TVL</p>
@@ -934,11 +935,11 @@ const Index = () => {
                     <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                       <Button
                         variant="gradient"
-                        className="group w-full shadow-[0_18px_45px_rgba(153,69,255,0.25)] transition-all duration-500 hover:shadow-[0_28px_60px_rgba(255,107,53,0.35)]"
+                        className={`group w-full shadow-[0_18px_45px_rgba(153,69,255,0.25)] ${!isMobile && "transition-all duration-500"} hover:shadow-[0_28px_60px_rgba(255,107,53,0.35)]`}
                         onClick={scrollToTop}
                       >
                         View Details
-                        <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                        <ArrowRight className={`ml-2 h-4 w-4 group-hover:translate-x-1 ${!isMobile && "transition-transform"}`} />
                       </Button>
                     </motion.div>
                   </div>
