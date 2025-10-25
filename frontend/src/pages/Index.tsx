@@ -316,17 +316,17 @@ const Index = () => {
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-24 relative z-40">
           <motion.div
             className="text-center space-y-8"
-            initial={{ opacity: 0, y: 50 }}
+            initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: isMobile ? 0 : 0.8, ease: "easeOut" }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
           >
             {/* Animated Hero Heading */}
             <div className="space-y-6 sm:space-y-8">
               <motion.div
                 className="space-y-3 sm:space-y-4"
-                initial={{ opacity: 0, y: 30 }}
+                initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: isMobile ? 0 : 0.8, delay: isMobile ? 0 : 0.2 }}
+                transition={{ duration: 0.8, delay: isMobile ? 0 : 0.2 }}
               >
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-fg-primary leading-tight px-4">
                   Real World Assets
@@ -356,9 +356,9 @@ const Index = () => {
 
                 <motion.p
                   className="text-base sm:text-lg md:text-xl lg:text-2xl text-fg-secondary max-w-4xl mx-auto leading-relaxed px-4"
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: isMobile ? 0 : 0.6, delay: isMobile ? 0 : 0.6 }}
+                  transition={{ duration: 0.6, delay: isMobile ? 0 : 0.6 }}
                 >
                   Bringing institutional-grade assets and compliance to decentralized finance, enabling real yield backed by tangible value.
                 </motion.p>
@@ -435,23 +435,23 @@ const Index = () => {
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 relative z-10">
         <motion.div
           className="text-center space-y-6 mb-16"
-          initial={isMobile ? false : { opacity: 0, y: 30 }}
-          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+          initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 30 }}
+          whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          viewport={isMobile ? false : { once: true }}
+          viewport={{ once: true }}
         >
           <motion.h2
             className="text-2xl sm:text-3xl lg:text-h1 font-semibold text-fg-primary px-4"
-            initial={isMobile ? false : { opacity: 0, y: 20 }}
-            whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+            initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 20 }}
+            whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             Powered by Industry Leaders
           </motion.h2>
           <motion.p
             className="text-sm sm:text-body-1 text-fg-secondary max-w-2xl mx-auto px-4"
-            initial={isMobile ? false : { opacity: 0, y: 20 }}
-            whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+            initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 20 }}
+            whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
             Built in collaboration with leading blockchain protocols and institutions.
@@ -460,10 +460,10 @@ const Index = () => {
 
         <motion.div
           className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 sm:gap-12 mb-12 sm:mb-16 px-4"
-          initial={isMobile ? false : { opacity: 0, y: 20 }}
-          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+          initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 20 }}
+          whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          viewport={isMobile ? false : { once: true }}
+          viewport={{ once: true }}
         >
           {PARTNERS.map((partner, index) => (
             <motion.a
@@ -472,8 +472,8 @@ const Index = () => {
               target="_blank"
               rel="noopener noreferrer"
               className={`flex items-center justify-center opacity-70 hover:opacity-100 ${!isMobile && "transition-opacity duration-300"}`}
-              initial={isMobile ? false : { opacity: 0, y: 20 }}
-              whileInView={isMobile ? false : { opacity: 0.7, y: 0 }}
+              initial={isMobile ? { opacity: 0.7 } : { opacity: 0, y: 20 }}
+              whileInView={isMobile ? { opacity: 0.7 } : { opacity: 0.7, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
               whileHover={isMobile ? {} : {
                 scale: 1.1,
@@ -535,10 +535,10 @@ const Index = () => {
 
         <motion.div
           className="text-center space-y-4 mb-12"
-          initial={isMobile ? false : { opacity: 0, y: 30 }}
-          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+          initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 30 }}
+          whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          viewport={isMobile ? false : { once: true, margin: "-100px" }}
+          viewport={{ once: true, margin: "-100px" }}
         >
           <h2 className="text-2xl sm:text-3xl lg:text-h1 font-bold text-white">
             Our Numbers
@@ -550,14 +550,14 @@ const Index = () => {
 
         <motion.div
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch max-w-[280px] sm:max-w-5xl mx-auto"
-          initial={isMobile ? false : { opacity: 0, y: 50 }}
-          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+          initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 50 }}
+          whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
           transition={{ duration: 0.8, staggerChildren: isMobile ? 0 : 0.1 }}
-          viewport={isMobile ? false : { once: true, margin: "-100px" }}
+          viewport={{ once: true, margin: "-100px" }}
         >
           <motion.div
-            initial={isMobile ? false : { opacity: 0, y: 30 }}
-            whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+            initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 30 }}
+            whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0 }}
             whileHover={isMobile ? {} : { y: -6 }}
             className="group w-full"
@@ -572,8 +572,8 @@ const Index = () => {
             />
           </motion.div>
           <motion.div
-            initial={isMobile ? false : { opacity: 0, y: 30 }}
-            whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+            initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 30 }}
+            whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
             whileHover={isMobile ? {} : { y: -6 }}
             className="group w-full"
@@ -654,10 +654,10 @@ const Index = () => {
         {/* Header */}
         <motion.div
           className="text-center space-y-4 mb-16"
-          initial={isMobile ? false : { opacity: 0, y: 30 }}
-          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+          initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 30 }}
+          whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          viewport={isMobile ? false : { once: true, margin: "-100px" }}
+          viewport={{ once: true, margin: "-100px" }}
         >
           <h2 className="text-2xl sm:text-3xl lg:text-h1 font-bold text-white">
             How SRWA Protocol Works
@@ -751,10 +751,10 @@ const Index = () => {
 
         <motion.div
           className="text-center space-y-6 mb-16"
-          initial={isMobile ? false : { opacity: 0, y: 30 }}
-          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+          initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 30 }}
+          whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          viewport={isMobile ? false : { once: true, margin: "-100px" }}
+          viewport={{ once: true, margin: "-100px" }}
         >
           <h2 className="text-2xl sm:text-3xl lg:text-h1 font-bold text-white px-4">
             Active Markets
@@ -808,10 +808,10 @@ const Index = () => {
             topMarkets.map((market, index) => (
               <motion.div
                 key={market.address}
-                initial={isMobile ? false : { opacity: 0, y: 30 }}
-                whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+                initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 30 }}
+                whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
-                viewport={isMobile ? false : { once: true, margin: "-100px" }}
+                viewport={{ once: true, margin: "-100px" }}
                 whileHover={isMobile ? {} : { y: -8, scale: 1.02 }}
                 className="group"
               >
@@ -956,8 +956,8 @@ const Index = () => {
 
         <motion.div
           className="text-center"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 20 }}
+          whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
           viewport={{ once: true }}
         >

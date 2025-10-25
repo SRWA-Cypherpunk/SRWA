@@ -1,5 +1,5 @@
 import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -113,6 +113,17 @@ export const RoadmapSection = () => {
   const sectionRef = useRef(null);
   const isSectionInView = useInView(sectionRef, { once: true, margin: "-100px" });
 
+  // Detect mobile to disable heavy animations
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   return (
     <section
       ref={sectionRef}
@@ -180,23 +191,23 @@ export const RoadmapSection = () => {
       {/* Header */}
       <motion.div
         className="text-center space-y-4 mb-16 sm:mb-20 relative z-10"
-        initial={{ opacity: 0, y: 30 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 30 }}
+        whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
         viewport={{ once: true }}
       >
         <motion.h2
           className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white px-4"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 20 }}
+          whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
         >
           Roadmap to the Future
         </motion.h2>
         <motion.p
           className="text-sm sm:text-lg text-fg-muted max-w-2xl mx-auto px-4"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 20 }}
+          whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.4 }}
         >
           Our journey to transform the Real-World Assets market on blockchain
@@ -213,24 +224,24 @@ export const RoadmapSection = () => {
               <motion.div
                 key={index}
                 className={`roadmap-item ${phase.status}`}
-                initial={{ opacity: 0, y: 50 }}
-                animate={isSectionInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
-                transition={{ duration: 0.6, delay: index * 0.2 }}
+                initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 50 }}
+                animate={isSectionInView ? { opacity: 1, y: 0 } : (isMobile ? { opacity: 1 } : { opacity: 0, y: 50 })}
+                transition={{ duration: 0.6, delay: isMobile ? 0 : index * 0.2 }}
               >
                 {/* Timeline Node (Icon) */}
                 <div className="roadmap-node">
                   <motion.div
                     className={`node-circle ${statusConfig[phase.status].bgColor} border-4 ${statusConfig[phase.status].borderColor} backdrop-blur-md`}
-                    initial={{ scale: 0, rotate: -180 }}
-                    animate={isSectionInView ? { scale: 1, rotate: 0 } : { scale: 0, rotate: -180 }}
+                    initial={isMobile ? { scale: 1 } : { scale: 0, rotate: -180 }}
+                    animate={isSectionInView ? { scale: 1, rotate: 0 } : (isMobile ? { scale: 1 } : { scale: 0, rotate: -180 })}
                     transition={{
                       duration: 0.8,
-                      delay: index * 0.2 + 0.3,
+                      delay: isMobile ? 0 : index * 0.2 + 0.3,
                       type: "spring",
                       stiffness: 150,
                       damping: 12
                     }}
-                    whileHover={{ scale: 1.1, rotate: 10 }}
+                    whileHover={isMobile ? {} : { scale: 1.1, rotate: 10 }}
                   >
                     {/* Pulsing ring for in-progress */}
                     {phase.status === "in-progress" && (
@@ -254,11 +265,11 @@ export const RoadmapSection = () => {
                 {/* Card Content */}
                 <div className="roadmap-content">
                   <motion.div
-                    whileHover={{ y: -8, scale: 1.01 }}
+                    whileHover={isMobile ? {} : { y: -8, scale: 1.01 }}
                     transition={{ duration: 0.3 }}
                   >
                     <Card
-                      className="relative overflow-hidden bg-gradient-to-br from-[#0D0D0D] via-[#121212] to-bg-black border-[3px] transition-all duration-500 group"
+                      className={`relative overflow-hidden bg-gradient-to-br from-[#0D0D0D] via-[#121212] to-bg-black border-[3px] ${!isMobile && "transition-all duration-500"} group`}
                       style={{
                         borderRadius: "20px",
                         borderColor: phase.status === "completed"
@@ -283,7 +294,7 @@ export const RoadmapSection = () => {
                     >
                       {/* Glow effect on hover */}
                       <motion.div
-                        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                        className={`absolute inset-0 opacity-0 group-hover:opacity-100 ${!isMobile && "transition-opacity duration-500"}`}
                         style={{
                           background: phase.status === "completed"
                             ? "linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, transparent 60%)"
