@@ -36,9 +36,10 @@ export function KPICard({
     <Card
       className={cn(
         "card-institutional hover-lift p-3 sm:p-5 h-full relative overflow-hidden group cursor-pointer transition-all duration-400",
-        variant === "gradient" && "bg-bg-elev-2/95 border border-transparent rounded-[1.4rem] hover:bg-bg-elev-2/90",
+        variant === "gradient" && "bg-bg-elev-2/95 border-0 hover:bg-bg-elev-2/90",
         className,
       )}
+      style={variant === "gradient" ? { borderRadius: "calc(1rem - 1px)" } : undefined}
     >
       {/* Scan line effect on hover */}
       <motion.div
@@ -89,19 +90,10 @@ export function KPICard({
               {/* Special gradient badge for "Markets" */}
               {trend === "neutral" && trendValue === "Markets" ? (
                 <motion.div
-                  className="relative flex-shrink-0 ml-2 px-2.5 py-1 rounded-full overflow-hidden"
+                  className="relative flex-shrink-0 ml-2 px-2.5 py-1 rounded-full overflow-hidden border-0"
                   style={{
                     background: "linear-gradient(135deg, #9945FF 0%, #FF6B35 100%)",
-                    backgroundSize: "200% 200%",
                     boxShadow: "0 0 12px rgba(153,69,255,0.4), 0 0 8px rgba(255,107,53,0.3)",
-                  }}
-                  animate={{
-                    backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
-                  }}
-                  transition={{
-                    duration: 3,
-                    repeat: Infinity,
-                    ease: "linear",
                   }}
                   whileHover={{
                     scale: 1.05,
@@ -116,7 +108,7 @@ export function KPICard({
                 /* Regular trend badges */
                 <motion.div
                   className={cn(
-                    "text-xs sm:text-sm font-medium flex-shrink-0 ml-2 px-2 py-0.5 rounded-full transition-all duration-300",
+                    "text-xs sm:text-sm font-medium flex-shrink-0 ml-2 px-2 py-0.5 rounded-full transition-all duration-300 border-0",
                     trendColors[trend],
                     "group-hover:shadow-[0_0_12px_currentColor]"
                   )}
@@ -161,46 +153,12 @@ export function KPICard({
           scale: 1.02,
         }}
         transition={{
-          backgroundPosition: { duration: 4, repeat: Infinity, ease: "linear" },
+          backgroundPosition: { duration: 5, repeat: Infinity, ease: "easeInOut" },
           boxShadow: { duration: 0.3 },
           scale: { duration: 0.3, ease: "easeOut" },
         }}
         whileTap={{ scale: 0.98 }}
       >
-        {/* Animated gradient border effect - always visible */}
-        <motion.div
-          className="absolute inset-0 opacity-30 group-hover:opacity-100 transition-opacity duration-500"
-          style={{
-            background: "linear-gradient(135deg, #9945FF 0%, #FF6B35 50%, #9945FF 100%)",
-            backgroundSize: "200% 200%",
-          }}
-          animate={{
-            backgroundPosition: ["0% 0%", "100% 100%", "0% 0%"],
-          }}
-          transition={{
-            duration: 3,
-            repeat: Infinity,
-            ease: "linear",
-          }}
-        />
-
-        {/* Glow pulse effect - always pulsing */}
-        <motion.div
-          className="absolute inset-0 opacity-20 group-hover:opacity-100 blur-xl"
-          style={{
-            background: "radial-gradient(circle at center, rgba(153,69,255,0.4), transparent 70%)",
-          }}
-          animate={{
-            scale: [1, 1.1, 1],
-            opacity: [0.2, 0.4, 0.2],
-          }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
-        />
-
         {cardBody}
       </motion.div>
     );

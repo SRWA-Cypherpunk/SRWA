@@ -1,0 +1,24 @@
+# Cloudflare Pages Configuration for SRWA Frontend
+# This file configures the build for the React frontend
+
+name = "srwa-frontend"
+
+# Pages configuration
+pages_build_output_dir = "frontend/dist"
+
+[build]
+command = "yarn workspace solana-rwa-frontend build"
+cwd = "."
+watch_dir = "frontend"
+
+[build.environment]
+# Use Node.js 22.x (matches local development)
+NODE_VERSION = "22"
+
+# Ensure optional dependencies are installed (needed for Linux binaries)
+NPM_FLAGS = ""
+
+# Environment variables for build
+[env.production]
+# Add any production environment variables here
+# VITE_API_URL = "https://api.srwa.com"
