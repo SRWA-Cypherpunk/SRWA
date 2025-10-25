@@ -299,12 +299,12 @@ const Index = () => {
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
               }}
-              animate={{
+              animate={isMobile ? {} : {
                 y: [0, -30, 0],
                 opacity: [0.2, 0.6, 0.2],
                 scale: [1, 1.5, 1],
               }}
-              transition={{
+              transition={isMobile ? {} : {
                 duration: 3 + Math.random() * 2,
                 repeat: Infinity,
                 delay: Math.random() * 2,
@@ -335,13 +335,19 @@ const Index = () => {
                     <motion.span
                       key={currentPhraseIndex}
                       initial={{ opacity: 0, y: 20 }}
-                      animate={{
+                      animate={isMobile ? {
+                        opacity: 1,
+                        y: 0
+                      } : {
                         opacity: 1,
                         y: 0,
                         backgroundPosition: ['0% 50%', '100% 50%', '0% 50%']
                       }}
                       exit={{ opacity: 0, y: -20 }}
-                      transition={{
+                      transition={isMobile ? {
+                        opacity: { duration: 0.5 },
+                        y: { duration: 0.5 }
+                      } : {
                         opacity: { duration: 0.5 },
                         y: { duration: 0.5 },
                         backgroundPosition: { duration: 5, repeat: Infinity, ease: 'easeInOut' }
@@ -403,11 +409,11 @@ const Index = () => {
                 width: `${200 + i * 120}px`,
                 height: `${200 + i * 120}px`,
               }}
-              animate={{
+              animate={isMobile ? {} : {
                 opacity: [0.8, 1, 0.8],
                 scale: [1, 1.02, 1],
               }}
-              transition={{
+              transition={isMobile ? {} : {
                 duration: 4 + i * 0.5,
                 repeat: Infinity,
                 ease: "easeInOut",
@@ -422,7 +428,7 @@ const Index = () => {
           {[...Array(8)].map((_, i) => (
             <div
               key={i}
-              className="absolute w-2 h-2 rounded-full bg-purple-500/10 animate-pulse"
+              className={`absolute w-2 h-2 rounded-full bg-purple-500/10 ${!isMobile && "animate-pulse"}`}
               style={{
                 left: `${15 + Math.random() * 70}%`,
                 top: `${20 + Math.random() * 60}%`,
@@ -549,7 +555,7 @@ const Index = () => {
         </motion.div>
 
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch max-w-[280px] sm:max-w-5xl mx-auto"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch max-w-full sm:max-w-5xl mx-auto"
           initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 50 }}
           whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
           transition={{ duration: 0.8, staggerChildren: isMobile ? 0 : 0.1 }}
@@ -588,9 +594,9 @@ const Index = () => {
             />
           </motion.div>
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: isMobile ? 0 : 0.6, delay: isMobile ? 0 : 0.2 }}
+            initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 30 }}
+            whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
             whileHover={isMobile ? {} : { y: -6 }}
             className="group w-full"
           >
@@ -636,11 +642,11 @@ const Index = () => {
                 left: `${20 + Math.random() * 60}%`,
                 top: `${20 + Math.random() * 60}%`,
               }}
-              animate={{
+              animate={isMobile ? {} : {
                 opacity: [0.1, 0.3, 0.1],
                 scale: [1, 1.5, 1],
               }}
-              transition={{
+              transition={isMobile ? {} : {
                 duration: 4 + Math.random() * 2,
                 repeat: Infinity,
                 delay: Math.random() * 2,
@@ -692,11 +698,11 @@ const Index = () => {
               background: 'radial-gradient(circle, rgba(255,107,53,0.4), transparent 70%)',
               filter: 'blur(80px)'
             }}
-            animate={{
+            animate={isMobile ? {} : {
               y: [0, 20, 0],
               opacity: [0.05, 0.08, 0.05],
             }}
-            transition={{
+            transition={isMobile ? {} : {
               duration: 8,
               repeat: Infinity,
               ease: "easeInOut"
@@ -709,11 +715,11 @@ const Index = () => {
               background: 'radial-gradient(circle, rgba(153,69,255,0.4), transparent 70%)',
               filter: 'blur(70px)'
             }}
-            animate={{
+            animate={isMobile ? {} : {
               x: [0, 15, 0],
               opacity: [0.04, 0.06, 0.04],
             }}
-            transition={{
+            transition={isMobile ? {} : {
               duration: 10,
               repeat: Infinity,
               ease: "easeInOut"
@@ -726,11 +732,11 @@ const Index = () => {
               background: 'radial-gradient(circle, rgba(20,241,149,0.3), transparent 70%)',
               filter: 'blur(60px)'
             }}
-            animate={{
+            animate={isMobile ? {} : {
               y: [0, -15, 0],
               opacity: [0.03, 0.05, 0.03],
             }}
-            transition={{
+            transition={isMobile ? {} : {
               duration: 9,
               repeat: Infinity,
               ease: "easeInOut"
@@ -832,8 +838,8 @@ const Index = () => {
                       <Badge variant="secondary" className="text-micro bg-green-500/10 text-green-400 border-green-500/20">
                         <motion.div
                           className="w-2 h-2 bg-green-400 rounded-full mr-1"
-                          animate={{ opacity: [0.6, 1, 0.6] }}
-                          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                          animate={isMobile ? {} : { opacity: [0.6, 1, 0.6] }}
+                          transition={isMobile ? {} : { duration: 3, repeat: Infinity, ease: "easeInOut" }}
                         />
                         {market.status}
                       </Badge>
@@ -855,8 +861,8 @@ const Index = () => {
                       <motion.div
                         className="relative overflow-hidden rounded-xl p-[1px] shadow-[0_18px_45px_rgba(153,69,255,0.25)]"
                         whileHover={{ scale: 1.02 }}
-                        animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
-                        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                        animate={isMobile ? {} : { backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+                        transition={isMobile ? {} : { duration: 5, repeat: Infinity, ease: "easeInOut" }}
                         style={{
                           backgroundSize: "200% 200%",
                           backgroundImage: "linear-gradient(135deg, #6D28D9 0%, #8B5CF6 50%, #FF6B35 100%)",
@@ -876,8 +882,8 @@ const Index = () => {
                       <motion.div
                         className="relative overflow-hidden rounded-xl p-[1px] shadow-[0_18px_45px_rgba(153,69,255,0.25)]"
                         whileHover={{ scale: 1.02 }}
-                        animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
-                        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
+                        animate={isMobile ? {} : { backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+                        transition={isMobile ? {} : { duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
                         style={{
                           backgroundSize: "200% 200%",
                           backgroundImage: "linear-gradient(135deg, #6D28D9 0%, #8B5CF6 50%, #FF6B35 100%)",
@@ -1076,7 +1082,7 @@ const Index = () => {
                   <li key={link.href}>
                     <motion.a
                       href={link.href}
-                      className="text-sm text-fg-secondary hover:text-purple-400 transition-all inline-flex items-center gap-2 group"
+                      className={`text-sm text-fg-secondary hover:text-purple-400 inline-flex items-center gap-2 group ${!isMobile && "transition-all"}`}
                       whileHover={{ x: 4 }}
                     >
                       <ArrowRight className="h-3 w-3 text-purple-500/60 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -1107,10 +1113,10 @@ const Index = () => {
                       href={link.href}
                       target={link.href.startsWith('http') ? '_blank' : undefined}
                       rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                      className="text-sm text-fg-secondary hover:text-orange-400 transition-all inline-flex items-center gap-2 group"
+                      className={`text-sm text-fg-secondary hover:text-orange-400 inline-flex items-center gap-2 group ${!isMobile && "transition-all"}`}
                       whileHover={{ x: 4 }}
                     >
-                      <link.icon className="h-4 w-4 text-orange-500/60 group-hover:text-orange-400 opacity-60 group-hover:opacity-100 transition-all" />
+                      <link.icon className={`h-4 w-4 text-orange-500/60 group-hover:text-orange-400 opacity-60 group-hover:opacity-100 ${!isMobile && "transition-all"}`} />
                       <span>{link.label}</span>
                     </motion.a>
                   </li>
@@ -1145,7 +1151,7 @@ const Index = () => {
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className="relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-stroke-line bg-bg-elev-2 group-hover:border-purple-500/50 group-hover:shadow-[0_0_20px_rgba(153,69,255,0.3)] transition-all">
+                  <div className={`relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-stroke-line bg-bg-elev-2 group-hover:border-purple-500/50 group-hover:shadow-[0_0_20px_rgba(153,69,255,0.3)] ${!isMobile && "transition-all"}`}>
                     <motion.div
                       className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-purple-600/10 opacity-0 group-hover:opacity-100 transition-opacity"
                     />
@@ -1162,7 +1168,7 @@ const Index = () => {
                       <span className="text-sm font-medium text-fg-primary group-hover:text-purple-300 transition-colors flex-1">
                         GitHub
                       </span>
-                      <ArrowRight className="h-3.5 w-3.5 text-fg-muted group-hover:text-purple-400 group-hover:translate-x-1 transition-all" />
+                      <ArrowRight className={`h-3.5 w-3.5 text-fg-muted group-hover:text-purple-400 group-hover:translate-x-1 ${!isMobile && "transition-all"}`} />
                     </div>
                   </div>
                 </motion.a>
@@ -1176,7 +1182,7 @@ const Index = () => {
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className="relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-stroke-line bg-bg-elev-2 group-hover:border-blue-500/50 group-hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all">
+                  <div className={`relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-stroke-line bg-bg-elev-2 group-hover:border-blue-500/50 group-hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] ${!isMobile && "transition-all"}`}>
                     <motion.div
                       className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-brand-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
                     />
@@ -1193,7 +1199,7 @@ const Index = () => {
                       <span className="text-sm font-medium text-fg-primary group-hover:text-blue-300 transition-colors flex-1">
                         Twitter / X
                       </span>
-                      <ArrowRight className="h-3.5 w-3.5 text-fg-muted group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
+                      <ArrowRight className={`h-3.5 w-3.5 text-fg-muted group-hover:text-blue-400 group-hover:translate-x-1 ${!isMobile && "transition-all"}`} />
                     </div>
                   </div>
                 </motion.a>
@@ -1207,7 +1213,7 @@ const Index = () => {
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className="relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-stroke-line bg-bg-elev-2 group-hover:border-[#5865F2]/50 group-hover:shadow-[0_0_20px_rgba(88,101,242,0.3)] transition-all">
+                  <div className={`relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-stroke-line bg-bg-elev-2 group-hover:border-[#5865F2]/50 group-hover:shadow-[0_0_20px_rgba(88,101,242,0.3)] ${!isMobile && "transition-all"}`}>
                     <motion.div
                       className="absolute inset-0 bg-gradient-to-r from-[#5865F2]/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
                     />
@@ -1227,7 +1233,7 @@ const Index = () => {
                       <span className="text-sm font-medium text-fg-primary group-hover:text-[#5865F2] transition-colors flex-1">
                         Discord
                       </span>
-                      <ArrowRight className="h-3.5 w-3.5 text-fg-muted group-hover:text-[#5865F2] group-hover:translate-x-1 transition-all" />
+                      <ArrowRight className={`h-3.5 w-3.5 text-fg-muted group-hover:text-[#5865F2] group-hover:translate-x-1 ${!isMobile && "transition-all"}`} />
                     </div>
                   </div>
                 </motion.a>
