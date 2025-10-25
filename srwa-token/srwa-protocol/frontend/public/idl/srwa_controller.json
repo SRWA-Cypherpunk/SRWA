@@ -1,0 +1,129 @@
+{
+  "address": "csSqPv1tnopH9XkRuCakGjkunz5aKECfYBU1SwrZbFR",
+  "metadata": {
+    "name": "srwa_controller",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "on_transfer",
+      "docs": [
+        "Transfer Hook - called automatically on every transfer"
+      ],
+      "discriminator": [
+        109,
+        85,
+        228,
+        126,
+        32,
+        128,
+        206,
+        77
+      ],
+      "accounts": [
+        {
+          "name": "mint"
+        },
+        {
+          "name": "from"
+        },
+        {
+          "name": "to"
+        },
+        {
+          "name": "owner"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "transfer_checked",
+      "docs": [
+        "Execute transfer with hook"
+      ],
+      "discriminator": [
+        119,
+        250,
+        202,
+        24,
+        253,
+        135,
+        244,
+        121
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "from",
+          "writable": true
+        },
+        {
+          "name": "to",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "TransferPaused",
+      "msg": "Transfer paused"
+    },
+    {
+      "code": 6001,
+      "name": "AccountFrozen",
+      "msg": "Account frozen"
+    },
+    {
+      "code": 6002,
+      "name": "KYCFailed",
+      "msg": "KYC verification failed"
+    },
+    {
+      "code": 6003,
+      "name": "OfferingRulesViolated",
+      "msg": "Offering rules violated"
+    },
+    {
+      "code": 6004,
+      "name": "InvestorLimitExceeded",
+      "msg": "Investor limit exceeded"
+    },
+    {
+      "code": 6005,
+      "name": "LockupActive",
+      "msg": "Lockup active"
+    },
+    {
+      "code": 6006,
+      "name": "WindowClosed",
+      "msg": "Transfer window closed"
+    },
+    {
+      "code": 6007,
+      "name": "NotAllowlisted",
+      "msg": "Not allowlisted"
+    }
+  ]
+}

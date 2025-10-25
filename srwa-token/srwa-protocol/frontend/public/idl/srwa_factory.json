@@ -1,0 +1,3101 @@
+{
+  "address": "G2TVaEY5pxLZbdBUq28Q7ZPGxQaxTxZzaSRTAEMh3z2A",
+  "metadata": {
+    "name": "srwa_factory",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "add_kyc_provider",
+      "docs": [
+        "Add a KYC provider to the registry"
+      ],
+      "discriminator": [
+        92,
+        149,
+        200,
+        252,
+        23,
+        156,
+        147,
+        31
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "kyc_registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  107,
+                  121,
+                  99,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "provider_pubkey",
+          "type": "pubkey"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "metadata_uri",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "add_platform_admin",
+      "docs": [
+        "Add a platform admin to the allowlist"
+      ],
+      "discriminator": [
+        161,
+        172,
+        63,
+        212,
+        254,
+        209,
+        243,
+        34
+      ],
+      "accounts": [
+        {
+          "name": "super_admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "admin_registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  100,
+                  109,
+                  105,
+                  110,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "new_admin",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "approve_srwa",
+      "docs": [
+        "Aprova e implanta uma solicitação de SRWA previamente registrada"
+      ],
+      "discriminator": [
+        88,
+        162,
+        173,
+        97,
+        47,
+        234,
+        231,
+        91
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "admin_registry",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  100,
+                  109,
+                  105,
+                  110,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "request",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  114,
+                  119,
+                  97,
+                  95,
+                  114,
+                  101,
+                  113,
+                  117,
+                  101,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "request.issuer",
+                "account": "SRWARequest"
+              },
+              {
+                "kind": "account",
+                "path": "request.request_id",
+                "account": "SRWARequest"
+              }
+            ]
+          }
+        },
+        {
+          "name": "mint"
+        },
+        {
+          "name": "srwa_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  114,
+                  119,
+                  97,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "request.mint",
+                "account": "SRWARequest"
+              }
+            ]
+          }
+        },
+        {
+          "name": "offering_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  111,
+                  102,
+                  102,
+                  101,
+                  114,
+                  105,
+                  110,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "request.mint",
+                "account": "SRWARequest"
+              }
+            ]
+          }
+        },
+        {
+          "name": "valuation_data",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  108,
+                  117,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "request.mint",
+                "account": "SRWARequest"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "complete_kyc",
+      "docs": [
+        "Complete KYC for a user"
+      ],
+      "discriminator": [
+        22,
+        87,
+        130,
+        145,
+        74,
+        20,
+        205,
+        6
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "user_registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "configure_issuer_kyc",
+      "docs": [
+        "Configure issuer KYC requirements"
+      ],
+      "discriminator": [
+        169,
+        178,
+        18,
+        67,
+        68,
+        130,
+        169,
+        122
+      ],
+      "accounts": [
+        {
+          "name": "issuer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "kyc_registry",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  107,
+                  121,
+                  99,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "issuer_kyc_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  105,
+                  115,
+                  115,
+                  117,
+                  101,
+                  114,
+                  95,
+                  107,
+                  121,
+                  99
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "mint",
+          "type": "pubkey"
+        },
+        {
+          "name": "approved_providers",
+          "type": {
+            "vec": "pubkey"
+          }
+        },
+        {
+          "name": "required_claim_topics",
+          "type": {
+            "vec": "u32"
+          }
+        },
+        {
+          "name": "require_kyc",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "create_srwa",
+      "docs": [
+        "Creates a new SRWA token with Token-2022 extensions"
+      ],
+      "discriminator": [
+        203,
+        107,
+        49,
+        216,
+        149,
+        107,
+        248,
+        97
+      ],
+      "accounts": [
+        {
+          "name": "issuer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint",
+          "writable": true
+        },
+        {
+          "name": "srwa_config",
+          "docs": [
+            "SRWA Configuration PDA"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  114,
+                  119,
+                  97,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "offering_state",
+          "docs": [
+            "Offering State PDA"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  111,
+                  102,
+                  102,
+                  101,
+                  114,
+                  105,
+                  110,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "valuation_data",
+          "docs": [
+            "Valuation Data PDA"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  108,
+                  117,
+                  97,
+                  116,
+                  105,
+                  111,
+                  110
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "config_init",
+          "type": {
+            "defined": {
+              "name": "SRWAConfigInit"
+            }
+          }
+        },
+        {
+          "name": "offering_init",
+          "type": {
+            "defined": {
+              "name": "OfferingInit"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "disable_module",
+      "docs": [
+        "Disable a compliance module"
+      ],
+      "discriminator": [
+        116,
+        116,
+        84,
+        243,
+        209,
+        1,
+        202,
+        58
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "srwa_config"
+          ]
+        },
+        {
+          "name": "srwa_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  114,
+                  119,
+                  97,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "module_id",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "enable_module",
+      "docs": [
+        "Enable a compliance module"
+      ],
+      "discriminator": [
+        54,
+        246,
+        14,
+        64,
+        244,
+        163,
+        195,
+        166
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "srwa_config"
+          ]
+        },
+        {
+          "name": "srwa_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  114,
+                  119,
+                  97,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "module_id",
+          "type": "u8"
+        },
+        {
+          "name": "params",
+          "type": "bytes"
+        }
+      ]
+    },
+    {
+      "name": "get_user_registry",
+      "docs": [
+        "Get user registry information"
+      ],
+      "discriminator": [
+        215,
+        36,
+        79,
+        148,
+        72,
+        2,
+        82,
+        241
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "signer": true
+        },
+        {
+          "name": "user_registry",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [],
+      "returns": {
+        "defined": {
+          "name": "UserRole"
+        }
+      }
+    },
+    {
+      "name": "initialize_admin_registry",
+      "docs": [
+        "Initialize the platform admin registry"
+      ],
+      "discriminator": [
+        207,
+        232,
+        144,
+        162,
+        172,
+        54,
+        192,
+        9
+      ],
+      "accounts": [
+        {
+          "name": "super_admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "admin_registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  100,
+                  109,
+                  105,
+                  110,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_kyc_registry",
+      "docs": [
+        "Initialize the KYC provider registry"
+      ],
+      "discriminator": [
+        165,
+        108,
+        71,
+        201,
+        167,
+        150,
+        89,
+        27
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "kyc_registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  107,
+                  121,
+                  99,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "open_offering",
+      "docs": [
+        "Open the offering by moving it from draft/pre-offer to open state"
+      ],
+      "discriminator": [
+        76,
+        220,
+        62,
+        135,
+        123,
+        15,
+        68,
+        22
+      ],
+      "accounts": [
+        {
+          "name": "issuer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "srwa_config",
+          "writable": true
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "srwa_config"
+          ]
+        },
+        {
+          "name": "offering_state",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  111,
+                  102,
+                  102,
+                  101,
+                  114,
+                  105,
+                  110,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "register_user",
+      "docs": [
+        "Register a new user with a specific role (Issuer, Investor, or Admin)"
+      ],
+      "discriminator": [
+        2,
+        241,
+        150,
+        223,
+        99,
+        214,
+        116,
+        97
+      ],
+      "accounts": [
+        {
+          "name": "user",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "user_registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "user"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "role",
+          "type": {
+            "defined": {
+              "name": "UserRole"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "reject_srwa",
+      "docs": [
+        "Rejeita uma solicitação de SRWA registrada"
+      ],
+      "discriminator": [
+        115,
+        105,
+        8,
+        251,
+        218,
+        154,
+        49,
+        36
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "request",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  114,
+                  119,
+                  97,
+                  95,
+                  114,
+                  101,
+                  113,
+                  117,
+                  101,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "request.issuer",
+                "account": "SRWARequest"
+              },
+              {
+                "kind": "account",
+                "path": "request.request_id",
+                "account": "SRWARequest"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "remove_platform_admin",
+      "docs": [
+        "Remove a platform admin from the allowlist"
+      ],
+      "discriminator": [
+        182,
+        87,
+        52,
+        81,
+        16,
+        1,
+        172,
+        34
+      ],
+      "accounts": [
+        {
+          "name": "super_admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "admin_registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  100,
+                  109,
+                  105,
+                  110,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "admin_to_remove",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "request_srwa",
+      "docs": [
+        "Submete uma solicitação de criação de SRWA para aprovação do admin"
+      ],
+      "discriminator": [
+        67,
+        88,
+        237,
+        3,
+        92,
+        45,
+        241,
+        221
+      ],
+      "accounts": [
+        {
+          "name": "issuer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "request",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  114,
+                  119,
+                  97,
+                  95,
+                  114,
+                  101,
+                  113,
+                  117,
+                  101,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "issuer"
+              },
+              {
+                "kind": "arg",
+                "path": "request_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "request_id",
+          "type": "u64"
+        },
+        {
+          "name": "mint",
+          "type": "pubkey"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "symbol",
+          "type": "string"
+        },
+        {
+          "name": "decimals",
+          "type": "u8"
+        },
+        {
+          "name": "config_init",
+          "type": {
+            "defined": {
+              "name": "SRWAConfigInit"
+            }
+          }
+        },
+        {
+          "name": "offering_init",
+          "type": {
+            "defined": {
+              "name": "OfferingInit"
+            }
+          }
+        },
+        {
+          "name": "yield_config",
+          "type": {
+            "defined": {
+              "name": "YieldConfig"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "rotate_role",
+      "docs": [
+        "Rotate a role"
+      ],
+      "discriminator": [
+        140,
+        30,
+        251,
+        28,
+        138,
+        169,
+        142,
+        215
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "srwa_config"
+          ]
+        },
+        {
+          "name": "srwa_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  114,
+                  119,
+                  97,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "role",
+          "type": {
+            "defined": {
+              "name": "RoleType"
+            }
+          }
+        },
+        {
+          "name": "new_pubkey",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "set_oracle_cfg",
+      "docs": [
+        "Set oracle configuration"
+      ],
+      "discriminator": [
+        244,
+        236,
+        212,
+        56,
+        188,
+        46,
+        38,
+        175
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "srwa_config"
+          ]
+        },
+        {
+          "name": "srwa_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  114,
+                  119,
+                  97,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "pyth_feeds",
+          "type": {
+            "vec": "pubkey"
+          }
+        },
+        {
+          "name": "heartbeat",
+          "type": "u32"
+        },
+        {
+          "name": "max_dev_bps",
+          "type": "u32"
+        },
+        {
+          "name": "nav_feeder",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "update_trusted_issuer",
+      "docs": [
+        "Update trusted issuer for a specific topic"
+      ],
+      "discriminator": [
+        8,
+        126,
+        55,
+        70,
+        187,
+        50,
+        166,
+        183
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint",
+          "relations": [
+            "srwa_config"
+          ]
+        },
+        {
+          "name": "srwa_config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  115,
+                  114,
+                  119,
+                  97,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "topic",
+          "type": "u32"
+        },
+        {
+          "name": "issuer",
+          "type": "pubkey"
+        },
+        {
+          "name": "add",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "verify_investor_kyc",
+      "docs": [
+        "Verify investor KYC status"
+      ],
+      "discriminator": [
+        123,
+        237,
+        236,
+        208,
+        28,
+        17,
+        39,
+        121
+      ],
+      "accounts": [
+        {
+          "name": "investor",
+          "signer": true
+        },
+        {
+          "name": "issuer_kyc_config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  105,
+                  115,
+                  115,
+                  117,
+                  101,
+                  114,
+                  95,
+                  107,
+                  121,
+                  99
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "investor_identity"
+        },
+        {
+          "name": "identity_claims_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "mint",
+          "type": "pubkey"
+        }
+      ],
+      "returns": "bool"
+    }
+  ],
+  "accounts": [
+    {
+      "name": "IssuerKYCConfig",
+      "discriminator": [
+        103,
+        96,
+        166,
+        61,
+        148,
+        53,
+        103,
+        183
+      ]
+    },
+    {
+      "name": "KYCProviderRegistry",
+      "discriminator": [
+        202,
+        101,
+        89,
+        117,
+        61,
+        173,
+        65,
+        146
+      ]
+    },
+    {
+      "name": "OfferingState",
+      "discriminator": [
+        232,
+        27,
+        7,
+        145,
+        97,
+        42,
+        93,
+        187
+      ]
+    },
+    {
+      "name": "PlatformAdminRegistry",
+      "discriminator": [
+        173,
+        8,
+        43,
+        230,
+        46,
+        59,
+        39,
+        31
+      ]
+    },
+    {
+      "name": "SRWAConfig",
+      "discriminator": [
+        194,
+        199,
+        237,
+        20,
+        148,
+        94,
+        25,
+        11
+      ]
+    },
+    {
+      "name": "SRWARequest",
+      "discriminator": [
+        35,
+        52,
+        209,
+        4,
+        217,
+        165,
+        212,
+        216
+      ]
+    },
+    {
+      "name": "UserRegistry",
+      "discriminator": [
+        37,
+        84,
+        98,
+        14,
+        130,
+        63,
+        210,
+        138
+      ]
+    },
+    {
+      "name": "ValuationData",
+      "discriminator": [
+        112,
+        28,
+        13,
+        74,
+        123,
+        207,
+        215,
+        222
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "ModuleUpdated",
+      "discriminator": [
+        182,
+        144,
+        186,
+        145,
+        85,
+        210,
+        194,
+        139
+      ]
+    },
+    {
+      "name": "OfferingLocked",
+      "discriminator": [
+        237,
+        72,
+        113,
+        129,
+        63,
+        73,
+        77,
+        53
+      ]
+    },
+    {
+      "name": "OfferingOpened",
+      "discriminator": [
+        222,
+        216,
+        13,
+        22,
+        140,
+        43,
+        9,
+        226
+      ]
+    },
+    {
+      "name": "OracleConfigUpdated",
+      "discriminator": [
+        130,
+        6,
+        5,
+        137,
+        29,
+        155,
+        34,
+        68
+      ]
+    },
+    {
+      "name": "RoleRotated",
+      "discriminator": [
+        133,
+        153,
+        246,
+        25,
+        93,
+        231,
+        156,
+        124
+      ]
+    },
+    {
+      "name": "TokenCreated",
+      "discriminator": [
+        236,
+        19,
+        41,
+        255,
+        130,
+        78,
+        147,
+        172
+      ]
+    },
+    {
+      "name": "TrustedIssuerUpdated",
+      "discriminator": [
+        95,
+        152,
+        179,
+        21,
+        1,
+        194,
+        94,
+        147
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "Unauthorized",
+      "msg": "Unauthorized: You can only update your own KYC status"
+    }
+  ],
+  "types": [
+    {
+      "name": "Currency",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "USD"
+          },
+          {
+            "name": "BRL"
+          },
+          {
+            "name": "EUR"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Distribution",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "oversub_policy",
+            "type": {
+              "defined": {
+                "name": "OversubPolicy"
+              }
+            }
+          },
+          {
+            "name": "lockups_data",
+            "type": "bytes"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Eligibility",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "jurisdictions_allow",
+            "type": {
+              "vec": "u16"
+            }
+          },
+          {
+            "name": "investor_types",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "InvestorType"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Fees",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "origination_bps",
+            "type": "u16"
+          },
+          {
+            "name": "platform_bps",
+            "type": "u16"
+          },
+          {
+            "name": "success_bps",
+            "type": "u16"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Funding",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "raised",
+            "type": "u64"
+          },
+          {
+            "name": "investors",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "IdleStrategy",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "None"
+          },
+          {
+            "name": "Marginfi"
+          },
+          {
+            "name": "Solend"
+          }
+        ]
+      }
+    },
+    {
+      "name": "InvestorType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "RetailQualified"
+          },
+          {
+            "name": "Accredited"
+          },
+          {
+            "name": "Institutional"
+          }
+        ]
+      }
+    },
+    {
+      "name": "IssuerKYCConfig",
+      "docs": [
+        "Issuer KYC Configuration - Configuração de KYC específica por issuer/token"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "issuer",
+            "type": "pubkey"
+          },
+          {
+            "name": "approved_providers",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "required_claim_topics",
+            "type": {
+              "vec": "u32"
+            }
+          },
+          {
+            "name": "require_kyc",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "KYCProviderInfo",
+      "docs": [
+        "KYC Provider Entry"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "provider_pubkey",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "metadata_uri",
+            "type": "string"
+          },
+          {
+            "name": "active",
+            "type": "bool"
+          },
+          {
+            "name": "added_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "KYCProviderRegistry",
+      "docs": [
+        "KYC Provider Registry - Lista global de KYC providers disponíveis"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "providers",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "KYCProviderInfo"
+                }
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ModuleId",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Jurisdiction"
+          },
+          {
+            "name": "Sanctions"
+          },
+          {
+            "name": "Accredited"
+          },
+          {
+            "name": "Lockup"
+          },
+          {
+            "name": "MaxHolders"
+          },
+          {
+            "name": "VolumeCaps"
+          },
+          {
+            "name": "TransferWindow"
+          },
+          {
+            "name": "ProgramAllowlist"
+          },
+          {
+            "name": "AccountAllowlist"
+          },
+          {
+            "name": "OfferingRules"
+          },
+          {
+            "name": "InvestorLimits"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ModuleUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "module_id",
+            "type": "u8"
+          },
+          {
+            "name": "enabled",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "NAVData",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "total",
+            "type": "u128"
+          },
+          {
+            "name": "per_token",
+            "type": "u64"
+          },
+          {
+            "name": "ccy",
+            "type": {
+              "defined": {
+                "name": "Currency"
+              }
+            }
+          },
+          {
+            "name": "ts",
+            "type": "i64"
+          },
+          {
+            "name": "signer",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OfferingInit",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "window",
+            "type": {
+              "defined": {
+                "name": "TimeWindow"
+              }
+            }
+          },
+          {
+            "name": "target",
+            "type": {
+              "defined": {
+                "name": "Target"
+              }
+            }
+          },
+          {
+            "name": "pricing",
+            "type": {
+              "defined": {
+                "name": "Pricing"
+              }
+            }
+          },
+          {
+            "name": "rules",
+            "type": {
+              "defined": {
+                "name": "OfferingRules"
+              }
+            }
+          },
+          {
+            "name": "oversub_policy",
+            "type": {
+              "defined": {
+                "name": "OversubPolicy"
+              }
+            }
+          },
+          {
+            "name": "fees_bps",
+            "type": {
+              "defined": {
+                "name": "Fees"
+              }
+            }
+          },
+          {
+            "name": "issuer_treasury",
+            "type": "pubkey"
+          },
+          {
+            "name": "fee_treasury",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OfferingLocked",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "raised",
+            "type": "u64"
+          },
+          {
+            "name": "investors",
+            "type": "u32"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OfferingOpened",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "start_ts",
+            "type": "i64"
+          },
+          {
+            "name": "end_ts",
+            "type": "i64"
+          },
+          {
+            "name": "soft_cap",
+            "type": "u64"
+          },
+          {
+            "name": "hard_cap",
+            "type": "u64"
+          },
+          {
+            "name": "min_ticket",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OfferingPhase",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Draft"
+          },
+          {
+            "name": "PreOffer"
+          },
+          {
+            "name": "OfferOpen"
+          },
+          {
+            "name": "OfferLocked"
+          },
+          {
+            "name": "OfferClosed"
+          },
+          {
+            "name": "Settlement"
+          },
+          {
+            "name": "Refund"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OfferingRules",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "min_ticket",
+            "type": "u64"
+          },
+          {
+            "name": "per_investor_cap",
+            "type": "u64"
+          },
+          {
+            "name": "max_investors",
+            "type": "u32"
+          },
+          {
+            "name": "eligibility",
+            "type": {
+              "defined": {
+                "name": "Eligibility"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "OfferingState",
+      "docs": [
+        "Offering state PDA"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "phase",
+            "type": {
+              "defined": {
+                "name": "OfferingPhase"
+              }
+            }
+          },
+          {
+            "name": "window",
+            "type": {
+              "defined": {
+                "name": "TimeWindow"
+              }
+            }
+          },
+          {
+            "name": "target",
+            "type": {
+              "defined": {
+                "name": "Target"
+              }
+            }
+          },
+          {
+            "name": "pricing",
+            "type": {
+              "defined": {
+                "name": "Pricing"
+              }
+            }
+          },
+          {
+            "name": "rules",
+            "type": {
+              "defined": {
+                "name": "OfferingRules"
+              }
+            }
+          },
+          {
+            "name": "distribution",
+            "type": {
+              "defined": {
+                "name": "Distribution"
+              }
+            }
+          },
+          {
+            "name": "funding",
+            "type": {
+              "defined": {
+                "name": "Funding"
+              }
+            }
+          },
+          {
+            "name": "pool_vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "idle_strategy",
+            "type": {
+              "defined": {
+                "name": "IdleStrategy"
+              }
+            }
+          },
+          {
+            "name": "fees_bps",
+            "type": {
+              "defined": {
+                "name": "Fees"
+              }
+            }
+          },
+          {
+            "name": "settlement",
+            "type": {
+              "defined": {
+                "name": "Settlement"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OracleConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pyth_feeds",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "heartbeat",
+            "type": "u32"
+          },
+          {
+            "name": "max_dev_bps",
+            "type": "u32"
+          },
+          {
+            "name": "nav_feeder",
+            "type": "pubkey"
+          },
+          {
+            "name": "base_ccy",
+            "type": {
+              "defined": {
+                "name": "Currency"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "OracleConfigUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "nav_feeder",
+            "type": "pubkey"
+          },
+          {
+            "name": "num_pyth_feeds",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "OversubPolicy",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "ProRata"
+          },
+          {
+            "name": "FCFS"
+          },
+          {
+            "name": "PriorityBuckets"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PlatformAdminRegistry",
+      "docs": [
+        "Platform Admin Registry - Global PDA que controla quem pode aprovar tokens/pools"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "super_admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "authorized_admins",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "updated_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PriceData",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "usd",
+            "type": "u64"
+          },
+          {
+            "name": "conf_bps",
+            "type": "u32"
+          },
+          {
+            "name": "ts",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PriceGuards",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "heartbeat",
+            "type": "u32"
+          },
+          {
+            "name": "max_dev_bps",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Pricing",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "model",
+            "type": {
+              "defined": {
+                "name": "PricingModel"
+              }
+            }
+          },
+          {
+            "name": "unit_price",
+            "type": "u64"
+          },
+          {
+            "name": "currency",
+            "type": {
+              "defined": {
+                "name": "Currency"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "PricingModel",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Fixed"
+          },
+          {
+            "name": "NAV"
+          },
+          {
+            "name": "Hybrid"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RequestStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Pending"
+          },
+          {
+            "name": "Rejected"
+          },
+          {
+            "name": "Deployed"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RoleRotated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "role_type",
+            "type": "string"
+          },
+          {
+            "name": "old_pubkey",
+            "type": "pubkey"
+          },
+          {
+            "name": "new_pubkey",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RoleType",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "IssuerAdmin"
+          },
+          {
+            "name": "ComplianceOfficer"
+          },
+          {
+            "name": "TransferAgent"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Roles",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "issuer_admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "compliance_officer",
+            "type": "pubkey"
+          },
+          {
+            "name": "transfer_agent",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SRWAConfig",
+      "docs": [
+        "Main configuration for an SRWA token"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "version",
+            "type": "u8"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "roles",
+            "type": {
+              "defined": {
+                "name": "Roles"
+              }
+            }
+          },
+          {
+            "name": "required_topics",
+            "type": {
+              "vec": "u32"
+            }
+          },
+          {
+            "name": "trusted_issuers_data",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "TrustedIssuerEntry"
+                }
+              }
+            }
+          },
+          {
+            "name": "modules_enabled",
+            "type": {
+              "vec": {
+                "defined": {
+                  "name": "ModuleId"
+                }
+              }
+            }
+          },
+          {
+            "name": "params_by_module",
+            "type": "bytes"
+          },
+          {
+            "name": "token_controls",
+            "type": {
+              "defined": {
+                "name": "TokenControls"
+              }
+            }
+          },
+          {
+            "name": "oracle_cfg",
+            "type": {
+              "defined": {
+                "name": "OracleConfig"
+              }
+            }
+          },
+          {
+            "name": "compliance_version",
+            "type": "u16"
+          },
+          {
+            "name": "metadata_uri",
+            "type": "string"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SRWAConfigInit",
+      "docs": [
+        "Initialization parameters for SRWA creation"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "roles",
+            "type": {
+              "defined": {
+                "name": "Roles"
+              }
+            }
+          },
+          {
+            "name": "required_topics",
+            "type": {
+              "vec": "u32"
+            }
+          },
+          {
+            "name": "metadata_uri",
+            "type": "string"
+          },
+          {
+            "name": "default_frozen",
+            "type": "bool"
+          },
+          {
+            "name": "permanent_delegate",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SRWARequest",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "request_id",
+            "type": "u64"
+          },
+          {
+            "name": "issuer",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "name": "decimals",
+            "type": "u8"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "RequestStatus"
+              }
+            }
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "updated_at",
+            "type": "i64"
+          },
+          {
+            "name": "config",
+            "type": {
+              "defined": {
+                "name": "SRWAConfigInit"
+              }
+            }
+          },
+          {
+            "name": "offering",
+            "type": {
+              "defined": {
+                "name": "OfferingInit"
+              }
+            }
+          },
+          {
+            "name": "yield_config",
+            "type": {
+              "defined": {
+                "name": "YieldConfig"
+              }
+            }
+          },
+          {
+            "name": "approval_admin",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "srwa_config",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "offering_state",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "valuation_data",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "reject_reason",
+            "type": {
+              "option": "string"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "Settlement",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "issuer_treasury",
+            "type": "pubkey"
+          },
+          {
+            "name": "fee_treasury",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Target",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "soft_cap",
+            "type": "u64"
+          },
+          {
+            "name": "hard_cap",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TimeWindow",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "start_ts",
+            "type": "i64"
+          },
+          {
+            "name": "end_ts",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenControls",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "default_frozen",
+            "type": "bool"
+          },
+          {
+            "name": "permanent_delegate",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TokenCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "issuer_admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "compliance_officer",
+            "type": "pubkey"
+          },
+          {
+            "name": "transfer_agent",
+            "type": "pubkey"
+          },
+          {
+            "name": "metadata_uri",
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TrustedIssuerEntry",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "topic",
+            "type": "u32"
+          },
+          {
+            "name": "issuer",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TrustedIssuerUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "topic",
+            "type": "u32"
+          },
+          {
+            "name": "issuer",
+            "type": "pubkey"
+          },
+          {
+            "name": "added",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserRegistry",
+      "docs": [
+        "User Registry - PDA individual para cada usuário"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "role",
+            "type": {
+              "defined": {
+                "name": "UserRole"
+              }
+            }
+          },
+          {
+            "name": "registered_at",
+            "type": "i64"
+          },
+          {
+            "name": "kyc_completed",
+            "type": "bool"
+          },
+          {
+            "name": "is_active",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserRole",
+      "docs": [
+        "User Role Type - Define o tipo de usuário na plataforma"
+      ],
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Issuer"
+          },
+          {
+            "name": "Investor"
+          },
+          {
+            "name": "Admin"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ValuationData",
+      "docs": [
+        "Valuation PDA"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "last_nav",
+            "type": {
+              "defined": {
+                "name": "NAVData"
+              }
+            }
+          },
+          {
+            "name": "pyth_refs",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "final_price",
+            "type": {
+              "defined": {
+                "name": "PriceData"
+              }
+            }
+          },
+          {
+            "name": "guards",
+            "type": {
+              "defined": {
+                "name": "PriceGuards"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "YieldConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "protocol",
+            "type": {
+              "defined": {
+                "name": "YieldProtocol"
+              }
+            }
+          },
+          {
+            "name": "target_apy_bps",
+            "type": "u32"
+          }
+        ]
+      }
+    },
+    {
+      "name": "YieldProtocol",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Marginfi"
+          },
+          {
+            "name": "Solend"
+          }
+        ]
+      }
+    }
+  ]
+}
