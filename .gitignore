@@ -3,6 +3,10 @@ node_modules/
 /.pnp
 .pnp.js
 
+# Package manager lock files (using yarn workspaces)
+frontend/package-lock.json
+package-lock.json
+
 # Testing
 /coverage
 *.lcov

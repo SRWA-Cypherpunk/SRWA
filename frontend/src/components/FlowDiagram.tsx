@@ -1,5 +1,5 @@
-import { motion } from "framer-motion";
-import { Building2, Layers, TrendingUp, Check, ArrowRight, LucideIcon } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Building2, Layers, TrendingUp, Check, ArrowRight, LucideIcon, ChevronDown } from "lucide-react";
 import { useState } from "react";
 
 interface FlowStep {
@@ -73,6 +73,7 @@ interface FlowCardProps {
   highlighted?: boolean;
 }
 
+// Desktop Flow Card (horizontal layout)
 const FlowCard = ({ step, index, isActive, onClick, highlighted = false }: FlowCardProps) => {
   const Icon = step.icon;
 
@@ -144,6 +145,103 @@ const FlowCard = ({ step, index, isActive, onClick, highlighted = false }: FlowC
           transition={{ duration: 2, repeat: Infinity }}
         />
       )}
+    </motion.div>
+  );
+};
+
+// Mobile Accordion Card
+interface AccordionCardProps {
+  step: FlowStep;
+  index: number;
+  isExpanded: boolean;
+  onToggle: () => void;
+  highlighted?: boolean;
+}
+
+const AccordionCard = ({ step, index, isExpanded, onToggle, highlighted = false }: AccordionCardProps) => {
+  const Icon = step.icon;
+
+  return (
+    <motion.div
+      className={`relative rounded-2xl border-2 ${step.borderColor} bg-gradient-to-br ${step.bgGradient} to-transparent backdrop-blur-sm overflow-hidden ${highlighted ? 'ring-2 ring-purple-500/30' : ''}`}
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5, delay: index * 0.15 }}
+    >
+      {/* Glow effect */}
+      <div
+        className={`absolute inset-0 ${isExpanded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300 rounded-2xl blur-xl`}
+        style={{ background: step.glowColor }}
+      />
+
+      {/* Header - Always visible */}
+      <button
+        onClick={onToggle}
+        className="w-full px-4 py-4 flex items-center justify-between relative z-10"
+      >
+        <div className="flex items-center gap-3">
+          <div
+            className={`w-10 h-10 rounded-lg flex items-center justify-center ${highlighted ? 'bg-purple-500/20' : `bg-${step.color}-500/10`}`}
+            style={{
+              backgroundColor: highlighted ? 'rgba(153,69,255,0.2)' : undefined
+            }}
+          >
+            <Icon
+              className="w-5 h-5"
+              style={{ color: step.accentColor }}
+            />
+          </div>
+          <div className="text-left">
+            <h3 className={`text-base font-bold ${highlighted ? 'text-purple-400' : 'text-white'}`}>
+              {step.title}
+            </h3>
+            {highlighted && (
+              <div className="text-xs text-purple-400/60">(Core Protocol)</div>
+            )}
+          </div>
+        </div>
+        <motion.div
+          animate={{ rotate: isExpanded ? 180 : 0 }}
+          transition={{ duration: 0.3 }}
+        >
+          <ChevronDown
+            className="w-5 h-5"
+            style={{ color: step.accentColor }}
+          />
+        </motion.div>
+      </button>
+
+      {/* Expandable Content */}
+      <AnimatePresence initial={false}>
+        {isExpanded && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="px-4 pb-4 space-y-2 relative z-10">
+              {step.items.map((item, idx) => (
+                <motion.div
+                  key={idx}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: 0.3, delay: idx * 0.05 }}
+                  className="flex items-center justify-start gap-2 px-3 py-2 rounded-lg bg-black/20 border border-white/5"
+                >
+                  <Check
+                    className="w-3.5 h-3.5 flex-shrink-0"
+                    style={{ color: step.accentColor }}
+                  />
+                  <span className="text-xs text-fg-secondary text-left">{item}</span>
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };
@@ -293,13 +391,167 @@ const BidirectionalArrow = ({ fromColor, toColor, delay = 0 }: BidirectionalArro
   );
 };
 
+// Vertical Bidirectional Arrow for Mobile
+interface VerticalBidirectionalArrowProps {
+  fromColor: string;
+  toColor: string;
+  delay?: number;
+  index?: number;
+}
+
+const VerticalBidirectionalArrow = ({ fromColor, toColor, delay = 0, index = 0 }: VerticalBidirectionalArrowProps) => {
+  const uniqueId = `vertical-${index}-${fromColor.replace('#', '')}-${toColor.replace('#', '')}`;
+
+  return (
+    <div className="flex items-center justify-center relative py-2 lg:hidden">
+      <svg
+        className="w-12 h-12 relative z-10"
+        viewBox="0 0 40 50"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <defs>
+          {/* Vertical bidirectional gradient (fromColor ↔ toColor) */}
+          <linearGradient id={`bidir-v-${uniqueId}`} x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" style={{ stopColor: fromColor, stopOpacity: 0.9 }} />
+            <stop offset="50%" style={{ stopColor: toColor, stopOpacity: 0.9 }} />
+            <stop offset="100%" style={{ stopColor: toColor, stopOpacity: 0.9 }} />
+          </linearGradient>
+
+          {/* Subtle glow filter */}
+          <filter id={`tech-glow-v-${uniqueId}`}>
+            <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+            <feMerge>
+              <feMergeNode in="coloredBlur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+
+        {/* Connection nodes */}
+        <circle
+          cx="20"
+          cy="5"
+          r="3"
+          fill={fromColor}
+          opacity="0.7"
+        />
+        <circle
+          cx="20"
+          cy="45"
+          r="3"
+          fill={toColor}
+          opacity="0.7"
+        />
+
+        {/* Main bidirectional line - THICK */}
+        <motion.path
+          d="M 20 5 L 20 45"
+          stroke={`url(#bidir-v-${uniqueId})`}
+          strokeWidth="3"
+          fill="none"
+          filter={`url(#tech-glow-v-${uniqueId})`}
+          initial={{ pathLength: 0, opacity: 0 }}
+          whileInView={{ pathLength: 1, opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 1, delay: delay + 0.2, ease: "easeOut" }}
+        />
+
+        {/* Top arrow head (pointing up) */}
+        <motion.path
+          d="M 20 5 L 20 0 L 17 2 L 20 5 L 23 2 L 20 0 Z"
+          fill={fromColor}
+          stroke={fromColor}
+          strokeWidth="0.5"
+          filter={`url(#tech-glow-v-${uniqueId})`}
+          initial={{ opacity: 0, scale: 0 }}
+          whileInView={{ opacity: 0.9, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.3, delay: delay + 1, ease: "backOut" }}
+        />
+
+        {/* Bottom arrow head (pointing down) */}
+        <motion.path
+          d="M 20 45 L 20 50 L 17 48 L 20 45 L 23 48 L 20 50 Z"
+          fill={toColor}
+          stroke={toColor}
+          strokeWidth="0.5"
+          filter={`url(#tech-glow-v-${uniqueId})`}
+          initial={{ opacity: 0, scale: 0 }}
+          whileInView={{ opacity: 0.9, scale: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.3, delay: delay + 1, ease: "backOut" }}
+        />
+
+        {/* Hexagonal data packet traveling down (fromColor → toColor) */}
+        <motion.path
+          d="M 20 0 L 23 2 L 23 4 L 20 6 L 17 4 L 17 2 Z"
+          fill={toColor}
+          opacity="0.8"
+          filter={`url(#tech-glow-v-${uniqueId})`}
+          animate={{
+            y: [0, 45],
+            opacity: [0, 0.8, 0.8, 0]
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            delay: delay + 1.5,
+            ease: "easeInOut"
+          }}
+        />
+
+        {/* Hexagonal data packet traveling up (toColor → fromColor) */}
+        <motion.path
+          d="M 20 50 L 23 48 L 23 46 L 20 44 L 17 46 L 17 48 Z"
+          fill={fromColor}
+          opacity="0.8"
+          filter={`url(#tech-glow-v-${uniqueId})`}
+          animate={{
+            y: [0, -45],
+            opacity: [0, 0.8, 0.8, 0]
+          }}
+          transition={{
+            duration: 3,
+            repeat: Infinity,
+            delay: delay + 2.2,
+            ease: "easeInOut"
+          }}
+        />
+
+        {/* Subtle energy pulse */}
+        <motion.path
+          d="M 20 5 L 20 45"
+          stroke={toColor}
+          strokeWidth="3"
+          fill="none"
+          opacity="0"
+          animate={{
+            opacity: [0, 0.2, 0]
+          }}
+          transition={{
+            duration: 2,
+            repeat: Infinity,
+            delay: delay + 2.5,
+            ease: "easeInOut"
+          }}
+        />
+      </svg>
+    </div>
+  );
+};
+
 export const FlowDiagram = () => {
   const [activeStep, setActiveStep] = useState<number | null>(null);
+  const [expandedStep, setExpandedStep] = useState<number>(1); // Default: expand SRWA (middle card)
+
+  const handleAccordionToggle = (index: number) => {
+    setExpandedStep(expandedStep === index ? -1 : index);
+  };
 
   return (
     <div className="relative">
-      {/* Flow Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr,auto,1fr,auto,1fr] gap-6 lg:gap-0 items-stretch">
+      {/* Desktop Layout - Horizontal with Arrows */}
+      <div className="hidden lg:grid lg:grid-cols-[1fr,auto,1fr,auto,1fr] lg:gap-0 items-stretch">
         {/* Card 1: ISSUERS */}
         <FlowCard
           step={steps[0]}
@@ -340,23 +592,50 @@ export const FlowDiagram = () => {
         />
       </div>
 
-      {/* Mobile Arrows (vertical) */}
-      <div className="lg:hidden flex flex-col items-center gap-6 my-6">
-        {[0, 1].map((idx) => (
-          <motion.div
-            key={idx}
-            className="flex flex-col items-center"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 0.6 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5, delay: idx * 0.3 }}
-          >
-            <ArrowRight
-              className="w-6 h-6 rotate-90"
-              style={{ color: steps[idx + 1].accentColor }}
-            />
-          </motion.div>
-        ))}
+      {/* Mobile Layout - Accordion with Vertical Arrows */}
+      <div className="lg:hidden flex flex-col">
+        {/* Card 1: ISSUERS */}
+        <AccordionCard
+          step={steps[0]}
+          index={0}
+          isExpanded={expandedStep === 0}
+          onToggle={() => handleAccordionToggle(0)}
+          highlighted={false}
+        />
+
+        {/* Vertical Arrow 1↕2 */}
+        <VerticalBidirectionalArrow
+          fromColor={steps[0].accentColor}
+          toColor={steps[1].accentColor}
+          delay={0.3}
+          index={0}
+        />
+
+        {/* Card 2: SRWA (Core Protocol - highlighted) */}
+        <AccordionCard
+          step={steps[1]}
+          index={1}
+          isExpanded={expandedStep === 1}
+          onToggle={() => handleAccordionToggle(1)}
+          highlighted={true}
+        />
+
+        {/* Vertical Arrow 2↕3 */}
+        <VerticalBidirectionalArrow
+          fromColor={steps[1].accentColor}
+          toColor={steps[2].accentColor}
+          delay={0.6}
+          index={1}
+        />
+
+        {/* Card 3: MARKET */}
+        <AccordionCard
+          step={steps[2]}
+          index={2}
+          isExpanded={expandedStep === 2}
+          onToggle={() => handleAccordionToggle(2)}
+          highlighted={false}
+        />
       </div>
 
       {/* Info Text */}

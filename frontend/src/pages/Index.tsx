@@ -533,7 +533,7 @@ const Index = () => {
         </motion.div>
 
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 justify-items-center max-w-5xl mx-auto"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch max-w-[280px] sm:max-w-5xl mx-auto"
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8, staggerChildren: 0.1 }}
@@ -544,7 +544,7 @@ const Index = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0 }}
             whileHover={{ y: -6 }}
-            className="group"
+            className="group w-full"
           >
             <KPICard
               title="Total Value Locked"
@@ -553,7 +553,6 @@ const Index = () => {
               trend="up"
               trendValue="Live"
               variant="gradient"
-              wrapperClassName="mx-auto"
             />
           </motion.div>
           <motion.div
@@ -561,15 +560,15 @@ const Index = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
             whileHover={{ y: -6 }}
-            className="group"
+            className="group w-full"
           >
             <KPICard
               title="Tokenized Assets"
               value={isLoading ? "-" : marketStats.tokenizedAssets.toString()}
               icon={Coins}
-              subtitle="RWA Markets"
+              trend="neutral"
+              trendValue="Markets"
               variant="gradient"
-              wrapperClassName="mx-auto"
             />
           </motion.div>
           <motion.div
@@ -577,7 +576,7 @@ const Index = () => {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             whileHover={{ y: -6 }}
-            className="group"
+            className="group w-full"
           >
             <KPICard
               title="Total Yield Distributed"
@@ -586,7 +585,6 @@ const Index = () => {
               trend="up"
               trendValue="Active"
               variant="gradient"
-              wrapperClassName="mx-auto"
             />
           </motion.div>
         </motion.div>
