@@ -777,6 +777,29 @@
 
 /* Clean, minimal animations for professional UI */
 
+/* Disable ALL animations and transitions on mobile to prevent flashing */
+@media (max-width: 767px) {
+  *, *::before, *::after {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  /* Preserve essential animations like loaders */
+  .animate-spin {
+    animation-duration: 1s !important;
+    animation-iteration-count: infinite !important;
+  }
+
+  /* Disable Framer Motion animations */
+  [data-framer-motion] {
+    transform: none !important;
+    opacity: 1 !important;
+  }
+}
+
 /* High contrast mode support */
 @media (prefers-contrast: high) {
   .card-institutional {

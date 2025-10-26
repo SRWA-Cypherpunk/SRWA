@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { BlendPool, BlendReserve, BlendAsset, UseBlendPoolsReturn, BlendError } from '@/types/lending';
 
@@ -1073,27 +1073,27 @@ const createMockBlendPools = (): BlendPool[] => {
 };
 
 export const useBlendPools = (): UseBlendPoolsReturn => {
-  console.log('🚀 Using mock pools for better presentation');
-  
-  // Return mock pools immediately - no loading time for better UX
-  const pools = createMockBlendPools();
+  // Memoize mock pools to prevent recreation on every render
+  const pools = useMemo(() => {
+    return createMockBlendPools();
+  }, []); // Empty deps - only create once
+
   const loading = false;
   const error = null;
-  const lastUpdated = Date.now();
+  const lastUpdated = useMemo(() => Date.now(), []); // Memoize timestamp
 
   // Mock refetch function - no network calls needed
   const refetch = useCallback(async (): Promise<void> => {
-    console.log('🔄 Mock refetch - pools refreshed (instant)');
     return Promise.resolve();
   }, []);
 
-  return {
+  return useMemo(() => ({
     pools,
     loading,
     error,
     refetch,
     lastUpdated
-  };
+  }), [pools, loading, error, refetch, lastUpdated]);
 };
 
 // ===== RELATED HOOKS =====

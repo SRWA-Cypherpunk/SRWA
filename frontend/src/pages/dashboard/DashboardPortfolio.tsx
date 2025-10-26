@@ -281,11 +281,11 @@ export default function DashboardPortfolio() {
 
                       <Button
                         onClick={connect}
-                        disabled={connecting}
+                        disabled={isConnecting}
                         className="btn-primary w-full px-6 py-3 text-sm font-medium relative overflow-hidden group"
                       >
                         <span className="relative">
-                          {connecting ? "Connecting..." : "Connect Wallet"}
+                          {isConnecting ? "Connecting..." : "Connect Wallet"}
                         </span>
                         <ArrowRight className="ml-2 h-4 w-4 relative" />
                         <div className="absolute inset-0 bg-gradient-to-r from-brand-600 to-brand-500 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -540,7 +540,7 @@ export default function DashboardPortfolio() {
                       icon={BarChart3}
                       trend={userPositions.length > 0 && blendPositions.summary.netProfitLoss > 0 ? "up" :
                         userPositions.length > 0 && blendPositions.summary.netProfitLoss < 0 ? "down" : undefined}
-                      trendValue={userPositions.length > 0 && connected && blendPositions.summary.netProfitLoss !== 0
+                      trendValue={userPositions.length > 0 && isConnected && blendPositions.summary.netProfitLoss !== 0
                         ? `${blendPositions.summary.netProfitLoss > 0 ? '+' : ''}$${(blendPositions.summary.netProfitLoss / 1000).toFixed(1)}K P&L`
                         : userPositions.length > 0 ? "+0.15%" : undefined}
                     />
