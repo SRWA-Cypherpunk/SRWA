@@ -72,10 +72,11 @@ interface FlowCardProps {
   onClick: () => void;
   highlighted?: boolean;
   isMobile?: boolean;
+  viewportConfig?: any;
 }
 
 // Desktop Flow Card (horizontal layout)
-const FlowCard = ({ step, index, isActive, onClick, highlighted = false, isMobile = false }: FlowCardProps) => {
+const FlowCard = ({ step, index, isActive, onClick, highlighted = false, isMobile = false, viewportConfig }: FlowCardProps) => {
   const Icon = step.icon;
 
   return (
@@ -158,9 +159,10 @@ interface AccordionCardProps {
   onToggle: () => void;
   highlighted?: boolean;
   isMobile?: boolean;
+  viewportConfig?: any;
 }
 
-const AccordionCard = ({ step, index, isExpanded, onToggle, highlighted = false, isMobile = false }: AccordionCardProps) => {
+const AccordionCard = ({ step, index, isExpanded, onToggle, highlighted = false, isMobile = false, viewportConfig }: AccordionCardProps) => {
   const Icon = step.icon;
 
   return (
@@ -252,9 +254,10 @@ interface BidirectionalArrowProps {
   fromColor: string;
   toColor: string;
   delay?: number;
+  viewportConfig?: any;
 }
 
-const BidirectionalArrow = ({ fromColor, toColor, delay = 0 }: BidirectionalArrowProps) => {
+const BidirectionalArrow = ({ fromColor, toColor, delay = 0, viewportConfig }: BidirectionalArrowProps) => {
   return (
     <div className="hidden lg:flex items-center justify-center relative px-4">
       <svg
@@ -399,9 +402,10 @@ interface VerticalBidirectionalArrowProps {
   toColor: string;
   delay?: number;
   index?: number;
+  viewportConfig?: any;
 }
 
-const VerticalBidirectionalArrow = ({ fromColor, toColor, delay = 0, index = 0 }: VerticalBidirectionalArrowProps) => {
+const VerticalBidirectionalArrow = ({ fromColor, toColor, delay = 0, index = 0, viewportConfig }: VerticalBidirectionalArrowProps) => {
   const uniqueId = `vertical-${index}-${fromColor.replace('#', '')}-${toColor.replace('#', '')}`;
 
   return (
@@ -578,6 +582,7 @@ export const FlowDiagram = () => {
           isActive={activeStep === 0}
           onClick={() => setActiveStep(activeStep === 0 ? null : 0)}
           isMobile={isMobile}
+          viewportConfig={viewportConfig}
         />
 
         {/* Bidirectional Arrow 1↔2 */}
@@ -585,6 +590,7 @@ export const FlowDiagram = () => {
           fromColor={steps[0].accentColor}
           toColor={steps[1].accentColor}
           delay={0.4}
+          viewportConfig={viewportConfig}
         />
 
         {/* Card 2: TOKENIZATION (highlighted) */}
@@ -595,6 +601,7 @@ export const FlowDiagram = () => {
           onClick={() => setActiveStep(activeStep === 1 ? null : 1)}
           highlighted={true}
           isMobile={isMobile}
+          viewportConfig={viewportConfig}
         />
 
         {/* Bidirectional Arrow 2↔3 */}
@@ -602,6 +609,7 @@ export const FlowDiagram = () => {
           fromColor={steps[1].accentColor}
           toColor={steps[2].accentColor}
           delay={0.8}
+          viewportConfig={viewportConfig}
         />
 
         {/* Card 3: MARKET */}
@@ -611,6 +619,7 @@ export const FlowDiagram = () => {
           isActive={activeStep === 2}
           onClick={() => setActiveStep(activeStep === 2 ? null : 2)}
           isMobile={isMobile}
+          viewportConfig={viewportConfig}
         />
       </div>
 
@@ -624,6 +633,7 @@ export const FlowDiagram = () => {
           onToggle={() => handleAccordionToggle(0)}
           highlighted={false}
           isMobile={isMobile}
+          viewportConfig={viewportConfig}
         />
 
         {/* Vertical Arrow 1↕2 */}
@@ -632,6 +642,7 @@ export const FlowDiagram = () => {
           toColor={steps[1].accentColor}
           delay={0.3}
           index={0}
+          viewportConfig={viewportConfig}
         />
 
         {/* Card 2: SRWA (Core Protocol - highlighted) */}
@@ -642,6 +653,7 @@ export const FlowDiagram = () => {
           onToggle={() => handleAccordionToggle(1)}
           highlighted={true}
           isMobile={isMobile}
+          viewportConfig={viewportConfig}
         />
 
         {/* Vertical Arrow 2↕3 */}
@@ -650,6 +662,7 @@ export const FlowDiagram = () => {
           toColor={steps[2].accentColor}
           delay={0.6}
           index={1}
+          viewportConfig={viewportConfig}
         />
 
         {/* Card 3: MARKET */}
@@ -660,6 +673,7 @@ export const FlowDiagram = () => {
           onToggle={() => handleAccordionToggle(2)}
           highlighted={false}
           isMobile={isMobile}
+          viewportConfig={viewportConfig}
         />
       </div>
 
