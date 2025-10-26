@@ -29,3 +29,4 @@ export type { PurchaseRequest } from './usePurchaseRequests';
 export { useAdminRegistry } from './useAdminRegistry';
 export { usePurchaseOrders } from './usePurchaseOrders';
 export type { PurchaseOrderAccount, PurchaseOrderStatus } from './usePurchaseOrders';
+export { useWalletTokenBalances } from './useWalletTokenBalances';
