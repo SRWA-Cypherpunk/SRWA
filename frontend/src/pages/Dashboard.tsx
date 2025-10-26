@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useNavigate } from 'react-router-dom';
 import '@/styles/features/dashboard.css';
 import { Header } from "@/components/layout/Header";
@@ -17,7 +17,12 @@ import SRWALetters from "@/assets/srwa_letters.png";
 import { useBlendPools } from '@/hooks/markets/useBlendPools';
 import { useEnhancedPoolData } from '@/hooks/markets/useDefIndexData';
 import { useSRWAMarkets } from '@/hooks/markets/useSRWAMarkets';
+<<<<<<< HEAD
 import { useWallet } from '@/contexts/wallet/WalletContext';
+=======
+import { useWallet } from '@solana/wallet-adapter-react';
+import { PublicKey } from '@solana/web3.js';
+>>>>>>> c29ed58 ([ADD] - portfolio page)
 import { useWalletAssets } from '@/hooks/wallet/useWalletAssets';
 import { useUserBlendPositions, formatPositionValue } from '@/hooks/markets/useUserBlendPositions';
 import { useWalletTransactions } from '@/hooks/wallet/useWalletTransactions';
@@ -25,6 +30,10 @@ import { MarketsDashboard } from '@/components/markets/MarketsDashboard';
 import { mockUserPositions, type UserPosition } from "@/lib/mock-data";
 import { DeployedTokensGrid } from '@/components/srwa/DeployedTokensGrid';
 import { RWALendingPools } from '@/components/rwa/RWALendingPools';
+import { useUserRegistry, useIssuanceRequests, useDeployedTokens, useWalletTokenBalances } from '@/hooks/solana';
+import type { DeployedToken } from '@/hooks/solana/useDeployedTokens';
+import type { WalletTokenBalance } from '@/hooks/solana/useWalletTokenBalances';
+import type { SrwaRequestAccount } from '@/hooks/solana';
 
 // Icons
 import {
@@ -39,7 +48,9 @@ import {
   ArrowRight,
   Github,
   Twitter,
-  BookOpen
+  BookOpen,
+  Loader2,
+  RefreshCw
 } from "lucide-react";
 
 // Function to get user positions based on wallet address
@@ -49,6 +60,40 @@ const getUserPositions = (address: string): UserPosition[] => {
   // using the user's address to get actual positions
   // We can simulate different scenarios based on the address for testing
   return mockUserPositions;
+};
+
+type IssuanceRequestStatus = {
+  pending?: unknown;
+  rejected?: unknown;
+  deployed?: unknown;
+};
+
+interface IssuanceRequestAccountData {
+  issuer?: PublicKey;
+  name?: string;
+  symbol?: string;
+  status?: IssuanceRequestStatus;
+  mint?: PublicKey | null;
+  decimals?: number;
+  createdAt?: { toNumber?: () => number };
+  updatedAt?: { toNumber?: () => number };
+}
+
+type WalletHolding = WalletTokenBalance & { metadata?: DeployedToken };
+
+const formatMintAddress = (mint: PublicKey | null | undefined) => {
+  if (!mint) {
+    return null;
+  }
+
+  return mint.toBase58();
+};
+
+const shortenAddress = (address: string, chars = 4) => {
+  if (address.length <= chars * 2) {
+    return address;
+  }
+  return `${address.slice(0, chars)}...${address.slice(-chars)}`;
 };
 
 export default function Dashboard() {
@@ -63,6 +108,71 @@ export default function Dashboard() {
   const walletAssets = useWalletAssets();
   const blendPositions = useUserBlendPositions();
   const recentTransactions = useWalletTransactions();
+  const { isIssuer, isInvestor } = useUserRegistry();
+  const {
+    requests: issuanceRequests,
+    loading: issuanceLoading,
+    error: issuanceError
+  } = useIssuanceRequests();
+  const {
+    tokens: deployedTokens,
+    loading: deployedTokensLoading
+  } = useDeployedTokens();
+  const {
+    tokens: walletTokenBalances,
+    loading: walletTokenLoading,
+    error: walletTokenError,
+    refresh: refreshWalletTokens
+  } = useWalletTokenBalances();
+  const issuerRequestBreakdown = useMemo(() => {
+    const empty: { approved: SrwaRequestAccount[]; rejected: SrwaRequestAccount[]; pending: SrwaRequestAccount[] } = {
+      approved: [],
+      rejected: [],
+      pending: [],
+    };
+
+    if (!address) {
+      return empty;
+    }
+
+    issuanceRequests.forEach((request) => {
+      const account = request.account as IssuanceRequestAccountData | undefined;
+      if (!account) {
+        return;
+      }
+
+      const issuerAddress = account.issuer?.toBase58();
+      if (!issuerAddress || issuerAddress !== address) {
+        return;
+      }
+
+      const status = account.status;
+      if (status && 'deployed' in status) {
+        empty.approved.push(request);
+      } else if (status && 'rejected' in status) {
+        empty.rejected.push(request);
+      } else {
+        empty.pending.push(request);
+      }
+    });
+
+    return empty;
+  }, [address, issuanceRequests]);
+
+  const deployedTokenByMint = useMemo(() => {
+    const map = new Map<string, DeployedToken>();
+    deployedTokens.forEach((token) => {
+      map.set(token.mint.toBase58(), token);
+    });
+    return map;
+  }, [deployedTokens]);
+
+  const walletHoldings = useMemo<WalletHolding[]>(() => {
+    return walletTokenBalances.map((token) => ({
+      ...token,
+      metadata: deployedTokenByMint.get(token.mint),
+    }));
+  }, [walletTokenBalances, deployedTokenByMint]);
   
   // User positions based on connected wallet (for backward compatibility)
   const userPositions = isConnected && blendPositions.positions.length > 0 
@@ -387,12 +497,228 @@ export default function Dashboard() {
                         </Button>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="space-y-8">
-                    {/* Portfolio Overview KPIs */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                      <KPICard
+                </div>
+              ) : (
+                <div className="space-y-8">
+                  {(isIssuer || isInvestor) && (
+                    <div className="space-y-6">
+                      {isIssuer && (
+                        <div className="card-institutional rounded-lg border bg-card text-card-foreground shadow-sm p-6 space-y-5">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div>
+                              <h3 className="text-lg font-semibold text-fg-primary">Suas emissões SRWA</h3>
+                              <p className="text-sm text-fg-secondary">
+                                Acompanhe quais tokens foram aprovados ou rejeitados pelo comitê.
+                              </p>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              <Badge variant="outline" className="bg-emerald-500/10 border-emerald-500/30 text-emerald-200">
+                                {issuerRequestBreakdown.approved.length} aprovados
+                              </Badge>
+                              <Badge variant="outline" className="bg-red-500/10 border-red-500/30 text-red-300">
+                                {issuerRequestBreakdown.rejected.length} rejeitados
+                              </Badge>
+                            </div>
+                          </div>
+
+                          {issuanceError && (
+                            <p className="text-xs text-red-400">
+                              Erro ao carregar solicitações: {issuanceError}
+                            </p>
+                          )}
+
+                          {issuanceLoading ? (
+                            <div className="flex items-center justify-center py-10">
+                              <Loader2 className="h-6 w-6 animate-spin text-brand-400" />
+                            </div>
+                          ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="rounded-lg border border-border/60 bg-muted/30 p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="text-xs font-semibold uppercase tracking-wide text-emerald-200">
+                                    Tokens aprovados
+                                  </h4>
+                                  <Badge variant="outline" className="bg-emerald-500/10 border-emerald-500/30 text-emerald-200">
+                                    {issuerRequestBreakdown.approved.length}
+                                  </Badge>
+                                </div>
+                                {issuerRequestBreakdown.approved.length === 0 ? (
+                                  <p className="text-xs text-fg-muted">
+                                    Nenhum token aprovado ainda. Envie sua solicitação para revisão.
+                                  </p>
+                                ) : (
+                                  <div className="space-y-3">
+                                    {issuerRequestBreakdown.approved.map((request) => {
+                                      const account = request.account as IssuanceRequestAccountData | undefined;
+                                      const mintAddress = formatMintAddress(account?.mint);
+                                      const metadata = mintAddress ? deployedTokenByMint.get(mintAddress) : undefined;
+                                      const displayName =
+                                        account?.name ??
+                                        metadata?.name ??
+                                        `Token ${shortenAddress(request.publicKey.toBase58())}`;
+                                      const displaySymbol =
+                                        account?.symbol ??
+                                        metadata?.symbol ??
+                                        (mintAddress ? shortenAddress(mintAddress) : '---');
+
+                                      return (
+                                        <div
+                                          key={request.publicKey.toBase58()}
+                                          className="rounded-md border border-emerald-500/20 bg-emerald-500/5 p-3 space-y-2"
+                                        >
+                                          <div className="flex items-start justify-between gap-3">
+                                            <div>
+                                              <p className="text-sm font-semibold text-fg-primary">{displayName}</p>
+                                              <p className="text-xs text-fg-muted font-mono">{displaySymbol}</p>
+                                            </div>
+                                            <Badge variant="outline" className="bg-emerald-500/10 border-emerald-500/30 text-emerald-200">
+                                              Aprovado
+                                            </Badge>
+                                          </div>
+                                          {mintAddress && (
+                                            <p className="text-[10px] text-fg-muted font-mono">
+                                              Mint: {shortenAddress(mintAddress, 6)}
+                                            </p>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="rounded-lg border border-border/60 bg-muted/10 p-4 space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <h4 className="text-xs font-semibold uppercase tracking-wide text-red-300">
+                                    Tokens rejeitados
+                                  </h4>
+                                  <Badge variant="outline" className="bg-red-500/10 border-red-500/30 text-red-300">
+                                    {issuerRequestBreakdown.rejected.length}
+                                  </Badge>
+                                </div>
+                                {issuerRequestBreakdown.rejected.length === 0 ? (
+                                  <p className="text-xs text-fg-muted">
+                                    Nenhuma solicitação rejeitada. Continue construindo!
+                                  </p>
+                                ) : (
+                                  <div className="space-y-3">
+                                    {issuerRequestBreakdown.rejected.map((request) => {
+                                      const account = request.account as IssuanceRequestAccountData | undefined;
+                                      const mintAddress = formatMintAddress(account?.mint);
+                                      const displayName =
+                                        account?.name ?? `Token ${shortenAddress(request.publicKey.toBase58())}`;
+                                      const displaySymbol =
+                                        account?.symbol ?? (mintAddress ? shortenAddress(mintAddress) : '---');
+
+                                      return (
+                                        <div
+                                          key={`rejected-${request.publicKey.toBase58()}`}
+                                          className="rounded-md border border-red-500/20 bg-red-500/5 p-3 space-y-2"
+                                        >
+                                          <div className="flex items-start justify-between gap-3">
+                                            <div>
+                                              <p className="text-sm font-semibold text-fg-primary">{displayName}</p>
+                                              <p className="text-xs text-fg-muted font-mono">{displaySymbol}</p>
+                                            </div>
+                                            <Badge variant="outline" className="bg-red-500/10 border-red-500/30 text-red-300">
+                                              Rejeitado
+                                            </Badge>
+                                          </div>
+                                          {mintAddress && (
+                                            <p className="text-[10px] text-fg-muted font-mono">
+                                              Mint: {shortenAddress(mintAddress, 6)}
+                                            </p>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {isInvestor && (
+                        <div className="card-institutional rounded-lg border bg-card text-card-foreground shadow-sm p-6 space-y-5">
+                          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                            <div>
+                              <h3 className="text-lg font-semibold text-fg-primary">Seus tokens stakados</h3>
+                              <p className="text-sm text-fg-secondary">
+                                Visualize os tokens SRWA que estão na sua carteira conectada.
+                              </p>
+                            </div>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={refreshWalletTokens}
+                              disabled={walletTokenLoading}
+                            >
+                              <RefreshCw className="h-4 w-4" />
+                              <span className="ml-2">Atualizar</span>
+                            </Button>
+                          </div>
+
+                          {walletTokenError && (
+                            <p className="text-xs text-red-400">
+                              Erro ao carregar tokens da carteira: {walletTokenError}
+                            </p>
+                          )}
+
+                          {walletTokenLoading || deployedTokensLoading ? (
+                            <div className="flex items-center justify-center py-10">
+                              <Loader2 className="h-6 w-6 animate-spin text-brand-400" />
+                            </div>
+                          ) : walletHoldings.length === 0 ? (
+                            <div className="rounded-lg border border-dashed border-border/70 bg-muted/10 p-6 text-center space-y-2">
+                              <Wallet className="h-8 w-8 mx-auto text-fg-muted opacity-70" />
+                              <p className="text-sm text-fg-muted">
+                                Nenhum token SRWA encontrado na carteira conectada.
+                              </p>
+                              <p className="text-xs text-fg-muted">
+                                Compre tokens nos mercados SRWA para ver seus saldos aqui.
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="space-y-3">
+                              {walletHoldings.map((holding) => {
+                                const mintShort = shortenAddress(holding.mint, 6);
+                                const displayName = holding.metadata?.name ?? `Token ${mintShort}`;
+                                const displaySymbol = holding.metadata?.symbol ?? mintShort;
+                                const fractionDigits = Math.min(4, Math.max(0, holding.decimals));
+                                const formattedAmount = holding.uiAmount.toLocaleString('pt-BR', {
+                                  minimumFractionDigits: 0,
+                                  maximumFractionDigits: fractionDigits,
+                                });
+
+                                return (
+                                  <div
+                                    key={holding.accountAddress}
+                                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-border/60 bg-muted/20 p-4"
+                                  >
+                                    <div>
+                                      <p className="text-sm font-semibold text-fg-primary">{displayName}</p>
+                                      <p className="text-xs text-fg-muted font-mono">
+                                        {displaySymbol} • Mint {mintShort}
+                                      </p>
+                                    </div>
+                                    <div className="text-left sm:text-right">
+                                      <p className="text-lg font-semibold text-fg-primary">{formattedAmount}</p>
+                                      <p className="text-xs text-fg-muted">Quantidade em carteira</p>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Portfolio Overview KPIs */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                    <KPICard
                         title="Total Supplied"
                         value={walletAssets.loading || blendPositions.loading ? "Loading..." : 
                           userPositions.length > 0 ? `$${totalSupplied.toFixed(1)}M` : "$0.0M"}
@@ -526,7 +852,13 @@ export default function Dashboard() {
                           </defs>
                           <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
                           <YAxis tick={{ fontSize: 12 }} domain={[0, "dataMax+0.5"]} />
-                          <Tooltip formatter={(value: any) => [`$${value.toFixed(1)}M`, 'TVL']} />
+                          <Tooltip
+                            formatter={(value: number | string) => {
+                              const numericValue = typeof value === 'number' ? value : parseFloat(value);
+                              const formatted = Number.isFinite(numericValue) ? numericValue.toFixed(1) : '0.0';
+                              return [`$${formatted}M`, 'TVL'];
+                            }}
+                          />
                           <Area type="monotone" dataKey="tvl" stroke="#60A5FA" strokeWidth={2} fill="url(#areaFillAdmin)" />
                         </AreaChart>
                       </ResponsiveContainer>
@@ -555,8 +887,12 @@ export default function Dashboard() {
                               <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
                             ))}
                           </Pie>
-                          <Tooltip 
-                            formatter={(value: any) => [`$${value.toFixed(1)}M`, 'TVL']}
+                          <Tooltip
+                            formatter={(value: number | string) => {
+                              const numericValue = typeof value === 'number' ? value : parseFloat(value);
+                              const formatted = Number.isFinite(numericValue) ? numericValue.toFixed(1) : '0.0';
+                              return [`$${formatted}M`, 'TVL'];
+                            }}
                             labelFormatter={(label) => `Pool: ${label}`}
                           />
                           <Legend />
