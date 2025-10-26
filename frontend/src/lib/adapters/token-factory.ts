@@ -1,7 +1,18 @@
+/**
+ * ⚠️ LEGACY/DEPRECATED - Stellar Token Factory Adapter
+ *
+ * Este arquivo é para deployment de tokens Stellar.
+ * O projeto usa Solana agora.
+ *
+ * Para deployment de tokens SRWA em Solana, use:
+ * - /hooks/solana/useIssuer.ts (função deployToken)
+ * - Programa: programs/srwa_factory/
+ */
+
 import { withTxToasts } from '@/lib/txFlow';
-import { 
-  TokenCreationForm, 
-  TokenConfig, 
+import {
+  TokenCreationForm,
+  TokenConfig,
   DeployedToken, 
   TokenTemplate,
   Address 

@@ -1,7 +1,15 @@
+/**
+ * ⚠️ LEGACY/DEPRECATED - Stellar Integrations Adapter
+ *
+ * Este arquivo contém integrações com Blend, Soroswap (Stellar).
+ * O projeto usa Solana agora com integrações nativas de Solana DeFi.
+ * Todos os MOCK_*_TX_HASH são placeholders.
+ */
+
 import { withTxToasts } from '@/lib/txFlow';
-import { 
-  Address, 
-  BlendRequest, 
+import {
+  Address,
+  BlendRequest,
   BlendRequestType, 
   BlendPoolInfo, 
   UserPosition 

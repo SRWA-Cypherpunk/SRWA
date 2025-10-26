@@ -1,7 +1,18 @@
+/**
+ * ⚠️ LEGACY/DEPRECATED - Stellar Identity Adapter
+ *
+ * Este arquivo é para contratos Stellar. O projeto usa Solana agora.
+ * Todos os MOCK_*_TX_HASH são placeholders.
+ *
+ * Para identity/KYC em Solana, use:
+ * - /hooks/solana/useInvestor.ts
+ * - Programa: programs/identity_claims/
+ */
+
 import { withTxToasts } from '@/lib/txFlow';
-import { 
-  Address, 
-  IdentityClaim, 
+import {
+  Address,
+  IdentityClaim,
   ClaimTopic, 
   TrustedIssuer 
 } from '@/types/srwa-contracts';
