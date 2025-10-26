@@ -58,15 +58,9 @@ export function ProtectedRoute({
   // Se tem allowedRoles especificados, verificar se o usuário tem um dos roles permitidos
   if (allowedRoles.length > 0 && userRegistry) {
     if (!allowedRoles.includes(userRegistry.role)) {
-      console.log('[ProtectedRoute] User role not allowed, redirecting to appropriate page');
-      // Redirecionar para a página apropriada baseado no role do usuário
-      if (userRegistry.role === UserRole.Issuer) {
-        return <Navigate to="/srwa-issuance" replace />;
-      } else if (userRegistry.role === UserRole.Investor) {
-        return <Navigate to="/investor" replace />;
-      } else if (userRegistry.role === UserRole.Admin) {
-        return <Navigate to="/admin" replace />;
-      }
+      console.log('[ProtectedRoute] User role not allowed, redirecting to dashboard');
+      // Always redirect to dashboard if role is not allowed
+      return <Navigate to="/dashboard" replace />;
     }
   }
 

@@ -6,19 +6,25 @@ import { KPICard } from "@/components/ui/kpi-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { HeroButton } from "@/components/ui/hero-button";
-import { LaunchCountdownButton } from "@/components/ui/launch-countdown-button";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, Legend } from "recharts";
 import { motion } from "framer-motion";
 import { ROUTES, DASHBOARD_ROUTES } from "@/lib/constants";
 import Logo from "@/assets/logo.png";
 import SRWALetters from "@/assets/srwa_letters.png";
 import { DashboardNav } from "@/components/dashboard/DashboardNav";
+import { RoleBasedActionCard } from "@/components/dashboard/RoleBasedActionCard";
+import { RoleGuard } from "@/components/guards";
 
 // Hooks
 import { useBlendPools } from '@/hooks/markets/useBlendPools';
 import { useEnhancedPoolData } from '@/hooks/markets/useDefIndexData';
 import { useSRWAMarkets } from '@/hooks/markets/useSRWAMarkets';
 import { useWallet } from '@/contexts/wallet/WalletContext';
+import { useUserRegistry } from '@/hooks/solana';
+
+// Types
+import { UserRole } from '@/types/srwa-contracts';
+import { ISSUER_ROUTES, ADMIN_ROUTES } from '@/lib/constants/routes';
 
 // Icons
 import {
@@ -41,6 +47,9 @@ export default function DashboardOverview() {
 
   // Wallet connection
   const { isConnected, address, connect, isConnecting } = useWallet();
+
+  // User registry for role-based features
+  const { userRegistry } = useUserRegistry();
 
   // Markets data
   const {
@@ -137,7 +146,7 @@ export default function DashboardOverview() {
 
         <main className="container mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
 
-          {/* Header with Create SRWA Button */}
+          {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
             <div className="w-full sm:w-auto">
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-400 via-purple-300 to-orange-400 bg-clip-text text-transparent">
@@ -147,21 +156,52 @@ export default function DashboardOverview() {
                 Real-time lending pool metrics and analytics
               </p>
             </div>
-
-            <div className="w-full sm:w-auto">
-              <HeroButton
-                onClick={() => window.location.href = '/srwa-issuance'}
-                variant="brand"
-                className="w-full sm:w-auto"
-                icon={<Plus className="h-4 w-4" />}
-              >
-                Create SRWA
-              </HeroButton>
-            </div>
           </div>
 
           {/* Dashboard Navigation */}
           <DashboardNav />
+
+          {/* Role-Based Action Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Issuer: Create SRWA Token */}
+            <RoleGuard allowedRoles={[UserRole.Issuer]}>
+              <RoleBasedActionCard
+                title="Criar Token SRWA"
+                description="Tokenize um novo ativo do mundo real"
+                icon={Plus}
+                href={ISSUER_ROUTES.CREATE_SRWA}
+                buttonText="Começar Criação"
+                gradient="from-blue-500 to-blue-600"
+                details="Inicie o processo de criação de um token SRWA em 5 etapas simples"
+              />
+            </RoleGuard>
+
+            {/* Issuer: My Tokens */}
+            <RoleGuard allowedRoles={[UserRole.Issuer]}>
+              <RoleBasedActionCard
+                title="Meus Tokens"
+                description="Gerencie seus tokens criados"
+                icon={BarChart3}
+                href={ISSUER_ROUTES.MY_TOKENS}
+                buttonText="Ver Meus Tokens"
+                gradient="from-green-500 to-green-600"
+                details="Acompanhe o status e gerencie todos os seus tokens SRWA"
+              />
+            </RoleGuard>
+
+            {/* Admin: Admin Panel */}
+            <RoleGuard allowedRoles={[UserRole.Admin]}>
+              <RoleBasedActionCard
+                title="Admin Panel"
+                description="Gerencie aprovações e sistema"
+                icon={Shield}
+                href={ADMIN_ROUTES.DASHBOARD}
+                buttonText="Abrir Painel Admin"
+                gradient="from-purple-500 to-purple-600"
+                details="Aprove tokens, gerencie usuários e monitore o sistema"
+              />
+            </RoleGuard>
+          </div>
 
           {/* Dashboard Content */}
           <div className="dashboard-tab-content relative space-y-8">
@@ -303,12 +343,14 @@ export default function DashboardOverview() {
                     </div>
                     <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0 sm:items-center md:items-end">
                       {isConnected ? (
-                        <LaunchCountdownButton
-                          className="w-full sm:w-auto items-center md:items-end text-center md:text-right"
-                          buttonClassName="!px-6 !py-3 !text-sm"
+                        <HeroButton
+                          onClick={() => navigate(DASHBOARD_ROUTES.MARKETS)}
+                          variant="brand"
+                          className="!px-6 !py-3 !text-sm"
                           icon={<ArrowRight className="h-4 w-4" />}
-                          onLaunch={() => navigate(DASHBOARD_ROUTES.MARKETS)}
-                        />
+                        >
+                          Explore Markets
+                        </HeroButton>
                       ) : (
                         <HeroButton
                           onClick={connect}

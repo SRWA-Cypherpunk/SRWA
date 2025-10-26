@@ -182,8 +182,8 @@ export function InvestorDashboard() {
     );
   }
 
-  // Show KYC form if not completed
-  if (showKYCForm || !hasCompletedKYC) {
+  // Show KYC form only if explicitly requested
+  if (showKYCForm) {
     return <KYCRegistrationForm onComplete={handleKYCComplete} />;
   }
 
@@ -191,7 +191,7 @@ export function InvestorDashboard() {
     <div className="max-w-6xl mx-auto p-6 space-y-8">
       <div className="text-center space-y-2">
         <h1 className="text-display-1 font-semibold text-fg-primary">Investor Dashboard</h1>
-        <p className="text-body-1 text-fg-secondary">Manage your identity and participate in offerings</p>
+        <p className="text-body-1 text-fg-secondary">Manage your investments and participate in offerings</p>
       </div>
 
       {error && (
@@ -201,39 +201,8 @@ export function InvestorDashboard() {
         </Alert>
       )}
 
-      {/* KYC Status */}
-      <Card className="card-institutional">
-        <CardHeader>
-          <div className="flex items-center space-x-3">
-            <Shield className="h-6 w-6 text-brand-400" />
-            <div>
-              <CardTitle>KYC Status</CardTitle>
-              <CardDescription>Verify your identity to participate</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between p-4 bg-green-500/10 rounded-lg border border-green-500/20">
-            <div className="flex items-center space-x-3">
-              <CheckCircle className="h-6 w-6 text-green-400" />
-              <div>
-                <p className="text-body-1 text-green-400 font-semibold">Verified</p>
-                <p className="text-body-2 text-fg-muted">You can participate in offerings</p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowKYCForm(true)}
-            >
-              Update KYC
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Available Tokens */}
-      {hasCompletedKYC && (
+      {true && (
         <Card className="card-institutional">
           <CardHeader>
             <div className="flex items-center justify-between">

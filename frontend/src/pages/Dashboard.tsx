@@ -6,7 +6,6 @@ import { KPICard } from "@/components/ui/kpi-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { HeroButton } from "@/components/ui/hero-button";
-import { LaunchCountdownButton } from "@/components/ui/launch-countdown-button";
 import { SolanaWalletButton } from "@/components/wallet/SolanaWalletButton";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, Legend } from "recharts";
 import { motion } from "framer-motion";
