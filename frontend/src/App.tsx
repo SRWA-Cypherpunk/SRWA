@@ -29,6 +29,7 @@ import Dashboard from "./pages/Dashboard";
 import DashboardOverview from "./pages/dashboard/DashboardOverview";
 import DashboardMarkets from "./pages/dashboard/DashboardMarkets";
 import DashboardPortfolio from "./pages/dashboard/DashboardPortfolio";
+import UnifiedDashboard from "./pages/dashboard/UnifiedDashboard";
 import Investor from "./pages/Investor";
 
 const App = () => (
@@ -58,8 +59,9 @@ const App = () => (
             <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/investor" element={<Investor />} />
 
-            {/* Dashboard routes - Refactored structure */}
-            <Route path="/dashboard" element={<DashboardOverview />} />
+            {/* Dashboard routes - Unified structure */}
+            <Route path="/dashboard" element={<UnifiedDashboard />} />
+            <Route path="/dashboard/overview" element={<DashboardOverview />} />
             <Route path="/dashboard/markets" element={<DashboardMarkets />} />
             <Route path="/dashboard/portfolio" element={<DashboardPortfolio />} />
 

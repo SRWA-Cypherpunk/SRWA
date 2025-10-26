@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import '@/styles/features/dashboard.css';
-import { DashboardLayout, DashboardSection } from "@/components/layout";
+import { Header } from '@/components/layout/Header';
+import { PageBackground } from '@/components/layout/PageBackground';
+import { DashboardSection } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { HeroButton } from "@/components/ui/hero-button";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, Legend } from "recharts";
@@ -89,10 +91,13 @@ export default function DashboardOverview() {
   };
 
   return (
-    <DashboardLayout>
+    <PageBackground variant="subtle">
+      <Header />
+      <main className="container mx-auto max-w-7xl px-6 py-8">
+        <DashboardNav />
 
-          {/* Header with Create SRWA Button */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
+        {/* Header with Create SRWA Button */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
             <div className="w-full sm:w-auto">
               <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-400 via-purple-300 to-orange-400 bg-clip-text text-transparent">
                 Dashboard Overview
@@ -214,6 +219,7 @@ export default function DashboardOverview() {
                 </div>
               </div>
           </DashboardSection>
-    </DashboardLayout>
+      </main>
+    </PageBackground>
   );
 }
