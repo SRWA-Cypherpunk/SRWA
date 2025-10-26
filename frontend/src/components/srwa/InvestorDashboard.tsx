@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { PublicKey } from '@solana/web3.js';
 import { BN } from '@coral-xyz/anchor';
 import { useWallet } from '@/contexts/wallet/WalletContext';
-import { useUserRegistry, useInvestor, useDeployedTokens, usePurchaseOrders, useAdminRegistry } from '@/hooks/solana';
+import { useUserRegistry, useInvestor, useDeployedTokens, usePurchaseOrders, useAdminRegistry, useWalletTokenBalances } from '@/hooks/solana';
 import { useProgramsSafe } from '@/contexts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,23 @@ export function InvestorDashboard() {
   const { registerIdentity, isVerified, subscribe, getSubscription, claimTokens } = useInvestor();
   const { tokens: deployedTokens, loading: tokensLoading, refresh: refreshTokens } = useDeployedTokens();
   const { createOrder, orders: purchaseOrders, getOrdersByInvestor } = usePurchaseOrders();
+  const {
+    tokens: walletTokens,
+    loading: walletTokensLoading,
+    error: walletTokensError,
+    refresh: refreshWalletTokens,
+  } = useWalletTokenBalances();
+
+  const walletTokenHoldings = useMemo(
+    () =>
+      walletTokens.map((token) => {
+        const metadata = deployedTokens.find(
+          (deployedToken) => deployedToken.mint.toBase58() === token.mint
+        );
+        return { ...token, metadata };
+      }),
+    [deployedTokens, walletTokens]
+  );
 
   const [showKYCForm, setShowKYCForm] = useState(false);
   const [verified, setVerified] = useState(false);
@@ -229,6 +246,94 @@ export function InvestorDashboard() {
               Update KYC
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* Wallet Tokens */}
+      <Card className="card-institutional">
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Wallet className="h-6 w-6 text-brand-400" />
+              <div>
+                <CardTitle>Seus Tokens</CardTitle>
+                <CardDescription>Saldo atual na carteira conectada</CardDescription>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refreshWalletTokens}
+              disabled={!publicKey || walletTokensLoading}
+            >
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {!publicKey ? (
+            <div className="text-center py-8">
+              <Wallet className="h-10 w-10 text-fg-muted mx-auto mb-2 opacity-50" />
+              <p className="text-sm text-fg-muted">
+                Conecte sua carteira para visualizar seus tokens SRWA.
+              </p>
+            </div>
+          ) : walletTokensLoading ? (
+            <div className="text-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto text-brand-400" />
+              <p className="text-sm text-fg-muted mt-2">Carregando tokens da carteira...</p>
+            </div>
+          ) : walletTokenHoldings.length === 0 ? (
+            <div className="text-center py-8">
+              <Wallet className="h-10 w-10 text-fg-muted mx-auto mb-2 opacity-50" />
+              <p className="text-sm text-fg-muted">
+                Você ainda não possui tokens SRWA na carteira conectada.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {walletTokenHoldings.map((token) => {
+                const mint = token.mint;
+                const mintShort =
+                  mint && mint.length > 8 ? `${mint.slice(0, 4)}...${mint.slice(-4)}` : mint || '---';
+                const displayName = token.metadata?.name ?? `Token ${mintShort}`;
+                const displaySymbol = token.metadata?.symbol ?? mintShort;
+                const amountNumber = Number(token.uiAmountString);
+                const fractionDigits = Math.min(4, Math.max(0, token.decimals));
+                const formattedAmount = Number.isFinite(amountNumber)
+                  ? amountNumber.toLocaleString('pt-BR', {
+                      minimumFractionDigits: 0,
+                      maximumFractionDigits: fractionDigits,
+                    })
+                  : token.uiAmountString;
+
+                return (
+                  <div
+                    key={token.accountAddress}
+                    className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-4 py-3"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-fg-primary">{displayName}</p>
+                      <p className="text-xs text-fg-muted font-mono">
+                        {displaySymbol}
+                        {token.metadata?.symbol ? ` • ${mintShort}` : ''}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-semibold text-fg-primary">{formattedAmount}</p>
+                      <p className="text-xs text-fg-muted">Quantidade</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+          {walletTokensError && (
+            <Alert variant="destructive" className="mt-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{walletTokensError}</AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
 
