@@ -14,6 +14,7 @@ offering_pool = "4D54H4NBA9Q7WtsAy2yaFs9BjEdT8DcdmXekKsf7n6KP"
 yield_adapter = "qSDUx7334aHWP44csqnJV61AmzC9vNmUKusJX4GQnor"
 valuation_oracle = "C4sJ1phqCh2MxFJJqVHZuddXbp6hWfvz29N4CkscPpaW"
 cashflow_engine = "4ySjU9NzSwg457oxWCVgaH3fqqrhh7iDQco7Db1Zq4Di"
+purchase_order = "EdyLMn3iUrF16Z4VPyTfv9hC9G7eqxsHQVxnsNcsAT3Z"
 
 [programs.devnet]
 srwa_factory = "G2TVaEY5pxLZbdBUq28Q7ZPGxQaxTxZzaSRTAEMh3z2A"
@@ -24,6 +25,7 @@ offering_pool = "4D54H4NBA9Q7WtsAy2yaFs9BjEdT8DcdmXekKsf7n6KP"
 yield_adapter = "qSDUx7334aHWP44csqnJV61AmzC9vNmUKusJX4GQnor"
 valuation_oracle = "C4sJ1phqCh2MxFJJqVHZuddXbp6hWfvz29N4CkscPpaW"
 cashflow_engine = "4ySjU9NzSwg457oxWCVgaH3fqqrhh7iDQco7Db1Zq4Di"
+purchase_order = "EdyLMn3iUrF16Z4VPyTfv9hC9G7eqxsHQVxnsNcsAT3Z"
 
 [registry]
 url = "https://api.apr.dev"

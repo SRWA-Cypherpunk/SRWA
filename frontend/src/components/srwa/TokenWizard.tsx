@@ -32,31 +32,9 @@ const WIZARD_STEPS = [
 
 export default function TokenWizard() {
   const { address, connect, isConnected, isConnecting } = useWallet();
-  
-  // Clean mock tokens from localStorage on component mount
-  useEffect(() => {
-    if (address) {
-      const userTokensKey = `userTokens_${address}`;
-      const existingTokens = JSON.parse(localStorage.getItem(userTokensKey) || '[]');
-      
-      // Filter out mock tokens (tokens starting with "CTOKEN" or other mock patterns)
-      const realTokens = existingTokens.filter((token: string) => 
-        !token.startsWith("CTOKEN") && 
-        !token.includes("MOCK") && 
-        token.length === 56 && // Standard Stellar address length
-        token.startsWith("C") // Stellar contract addresses start with C
-      );
-      
-      if (realTokens.length !== existingTokens.length) {
-        console.log("🔗 [TokenWizard] Cleaned mock tokens from localStorage:", {
-          before: existingTokens,
-          after: realTokens,
-          removed: existingTokens.filter((t: string) => !realTokens.includes(t))
-        });
-        localStorage.setItem(userTokensKey, JSON.stringify(realTokens));
-      }
-    }
-  }, [address]);
+
+  // Tokens deployados são buscados automaticamente on-chain via useDeployedTokens hook
+  // Não há necessidade de localStorage - tudo é indexado da blockchain
   const { 
     createToken, 
     deployTokenViaFactory,
@@ -209,26 +187,9 @@ export default function TokenWizard() {
         },
       };
 
-      // Save the new token address to localStorage so it appears in the dashboard
-      // Only save if it's a real deployment with a valid transaction hash
-      if (address && deployedTokenAddress && tokenResult.transactionHash && 
-          !tokenResult.transactionHash.startsWith("MOCK") && 
-          !tokenResult.transactionHash.startsWith("EXISTING_CONTRACT") &&
-          tokenResult.transactionHash !== "CONTRACT_ALREADY_INITIALIZED") {
-        console.log("🔗 [TokenWizard] Saving real token deployment to localStorage:", deployedTokenAddress);
-        const userTokensKey = `userTokens_${address}`;
-        const existingTokens = JSON.parse(localStorage.getItem(userTokensKey) || '[]');
-        
-        // Only add if it's not already in the list and not a mock token
-        if (!existingTokens.includes(deployedTokenAddress) && !deployedTokenAddress.startsWith("CTOKEN")) {
-          existingTokens.push(deployedTokenAddress);
-          localStorage.setItem(userTokensKey, JSON.stringify(existingTokens));
-          console.log("🔗 [TokenWizard] Real token saved to localStorage. User tokens:", existingTokens);
-        }
-      } else {
-        console.log("🔗 [TokenWizard] Skipping localStorage save - not a real deployment or mock/fallback used");
-      }
-      
+      // Token deployment é automaticamente indexado on-chain
+      // useDeployedTokens buscará este token na próxima atualização
+
       console.log("🔗 [TokenWizard] Deployment completed successfully:", realResult);
       setDeploymentResult(realResult);
       

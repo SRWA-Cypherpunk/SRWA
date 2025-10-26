@@ -1,6 +1,16 @@
+/**
+ * ⚠️ LEGACY/DEPRECATED - Stellar Compliance Adapter
+ *
+ * Este arquivo é para contratos Stellar. O projeto usa Solana agora.
+ * Todos os MOCK_*_TX_HASH são placeholders.
+ *
+ * Para compliance em Solana, use:
+ * - Programa: programs/compliance_modules/
+ */
+
 import { withTxToasts } from '@/lib/txFlow';
-import { 
-  Address, 
+import {
+  Address,
   TransferContext,
   IdentityClaim 
 } from '@/types/srwa-contracts';
