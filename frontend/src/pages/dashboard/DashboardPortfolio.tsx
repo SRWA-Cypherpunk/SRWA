@@ -540,7 +540,7 @@ export default function DashboardPortfolio() {
                       icon={BarChart3}
                       trend={userPositions.length > 0 && blendPositions.summary.netProfitLoss > 0 ? "up" :
                         userPositions.length > 0 && blendPositions.summary.netProfitLoss < 0 ? "down" : undefined}
-                      trendValue={userPositions.length > 0 && isConnected && blendPositions.summary.netProfitLoss !== 0
+                      trendValue={userPositions.length > 0 && connected && blendPositions.summary.netProfitLoss !== 0
                         ? `${blendPositions.summary.netProfitLoss > 0 ? '+' : ''}$${(blendPositions.summary.netProfitLoss / 1000).toFixed(1)}K P&L`
                         : userPositions.length > 0 ? "+0.15%" : undefined}
                     />

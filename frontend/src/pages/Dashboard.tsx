@@ -16,7 +16,6 @@ import { useEnhancedPoolData } from '@/hooks/markets/useDefIndexData';
 import { useSRWAMarkets } from '@/hooks/markets/useSRWAMarkets';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
-import { useWallet } from '@solana/wallet-adapter-react';
 import { useWalletAssets } from '@/hooks/wallet/useWalletAssets';
 import { useUserBlendPositions, formatPositionValue } from '@/hooks/markets/useUserBlendPositions';
 import { useWalletTransactions } from '@/hooks/wallet/useWalletTransactions';
