@@ -17,6 +17,15 @@ export const ROUTES = {
 } as const;
 
 /**
+ * DASHBOARD ROUTES
+ */
+export const DASHBOARD_ROUTES = {
+  OVERVIEW: '/dashboard',
+  MARKETS: '/dashboard/markets',
+  PORTFOLIO: '/dashboard/portfolio',
+} as const;
+
+/**
  * MARKET ROUTES
  */
 export const MARKET_ROUTES = {

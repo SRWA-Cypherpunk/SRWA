@@ -1,7 +1,7 @@
+import React, { useMemo, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { cn } from '@/lib/utils';
 import { Wallet, ChevronDown, Loader2, Check } from 'lucide-react';
-import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WalletModal } from './WalletModal';
 import { HeroButton } from '@/components/ui/hero-button';
@@ -30,11 +30,15 @@ export function SolanaWalletButton({ className }: SolanaWalletButtonProps) {
     return `${address.slice(0, 4)}...${address.slice(-4)}`;
   };
 
-  const handleConnect = () => {
+  const handleConnect = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    e?.preventDefault();
     setModalOpen(true);
   };
 
-  const handleDisconnect = () => {
+  const handleDisconnect = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    e?.preventDefault();
     disconnect();
     setShowDropdown(false);
   };

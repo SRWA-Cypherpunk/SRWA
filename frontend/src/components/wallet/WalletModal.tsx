@@ -33,9 +33,17 @@ export function WalletModal({ open, onClose }: WalletModalProps) {
     }
   }, [open]);
 
-  const handleWalletClick = async (walletName: WalletName) => {
-    setSelectedWallet(walletName);
-    select(walletName);
+  const handleWalletClick = async (walletName: WalletName, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    e?.preventDefault();
+
+    try {
+      setSelectedWallet(walletName);
+      select(walletName);
+    } catch (error) {
+      console.error('[WalletModal] Error selecting wallet:', error);
+      setSelectedWallet(null);
+    }
   };
 
   const popularWallets = ['Phantom', 'Solflare', 'Backpack'];
@@ -128,7 +136,7 @@ export function WalletModal({ open, onClose }: WalletModalProps) {
                     return (
                       <motion.button
                         key={wallet.adapter.name}
-                        onClick={() => handleWalletClick(wallet.adapter.name)}
+                        onClick={(e) => handleWalletClick(wallet.adapter.name, e)}
                         disabled={isConnecting}
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
