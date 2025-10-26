@@ -58,7 +58,6 @@ export function useIssuanceRequests() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [mintOverrides, setMintOverrides] = useState<Record<string, string>>({});
-  const ZERO_PUBKEY = new PublicKey(new Uint8Array(32));
 
   interface SendWithWalletOptions extends SendOptions {
     additionalSigners?: Signer[];
@@ -151,15 +150,27 @@ export function useIssuanceRequests() {
 
   const refresh = useCallback(async () => {
     if (!programs?.srwaFactory) {
+      console.log('[useIssuanceRequests.refresh] SRWA Factory program not loaded, skipping fetch');
       setRequests([]);
       return;
     }
 
     try {
+      console.log('[useIssuanceRequests.refresh] Fetching SRWA requests from program:', programs.srwaFactory.programId.toBase58());
       const all = await programs.srwaFactory.account.srwaRequest.all();
+      console.log('[useIssuanceRequests.refresh] Found requests:', {
+        count: all.length,
+        requests: all.map((r: any) => ({
+          pubkey: r.publicKey.toBase58(),
+          issuer: r.account.issuer?.toBase58(),
+          name: r.account.name,
+          symbol: r.account.symbol,
+          status: r.account.status
+        }))
+      });
       setRequests(all as SrwaRequestAccount[]);
     } catch (err: any) {
-      console.error('Failed to fetch SRWA requests', err);
+      console.error('[useIssuanceRequests.refresh] Failed to fetch SRWA requests', err);
       setError(err.message ?? 'Failed to fetch requests');
     }
   }, [programs?.srwaFactory]);
@@ -181,7 +192,7 @@ export function useIssuanceRequests() {
     if (override) {
       return new PublicKey(override);
     }
-    return request.account.mint ?? ZERO_PUBKEY;
+    return request.account.mint ?? PublicKey.default;
   }, [mintOverrides]);
 
   const requestSrwa = useCallback(async (input: RequestInput) => {
@@ -238,7 +249,7 @@ export function useIssuanceRequests() {
     }
 
     const mint: PublicKey = getEffectiveMintKey(request);
-    if (mint.equals(ZERO_PUBKEY)) {
+    if (mint.equals(PublicKey.default)) {
       throw new Error('Mint not created yet. Please create the mint before approving.');
     }
     const mintAccountInfo = await connection.getAccountInfo(mint);
@@ -278,7 +289,7 @@ export function useIssuanceRequests() {
 
     const approveBuilder = programs.srwaFactory.methods
       .approveSrwa()
-      .accountsStrict({
+      .accounts({
         admin: wallet.publicKey,
         adminRegistry: adminRegistryPda,
         request: request.publicKey,
@@ -485,7 +496,7 @@ export function useIssuanceRequests() {
     }
 
     const mint = getEffectiveMintKey(request);
-    if (mint.equals(ZERO_PUBKEY)) {
+    if (mint.equals(PublicKey.default)) {
       throw new Error('Mint not created yet');
     }
 

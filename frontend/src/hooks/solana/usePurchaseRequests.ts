@@ -1,6 +1,28 @@
 import { useState, useEffect, useCallback } from 'react';
 import { PublicKey } from '@solana/web3.js';
 
+/**
+ * TODO: MIGRAR PARA ON-CHAIN
+ *
+ * Este hook atualmente usa localStorage para armazenar purchase requests.
+ * PRÓXIMOS PASSOS:
+ *
+ * 1. Criar programa Solana purchase_request.rs com:
+ *    - PurchaseRequest account (PDA derivado de [mint, investor, timestamp])
+ *    - Estado: Pending, Approved, Rejected
+ *    - Instruções: create_purchase_request, approve_purchase, reject_purchase
+ *
+ * 2. Adicionar ao IDL e gerar tipos TypeScript
+ *
+ * 3. Substituir localStorage por queries on-chain usando getProgramAccounts
+ *    com filtros por mint, investor, status
+ *
+ * 4. Usar websocket subscriptions para updates em tempo real
+ *
+ * Por enquanto, os purchase requests são TEMPORÁRIOS e existem apenas no browser.
+ * Em produção, isso DEVE ser on-chain para auditoria e persistência.
+ */
+
 export interface PurchaseRequest {
   id: string;
   investor: string;
@@ -18,12 +40,14 @@ export interface PurchaseRequest {
   approvedBy?: string;
 }
 
+// TEMPORÁRIO: Será removido quando migrado para on-chain
 const STORAGE_KEY = 'srwa_purchase_requests';
 
 export function usePurchaseRequests() {
   const [requests, setRequests] = useState<PurchaseRequest[]>([]);
 
-  // Load from localStorage on mount
+  // TEMPORÁRIO: Load from localStorage on mount
+  // TODO: Substituir por fetch de PDAs on-chain
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
@@ -36,7 +60,8 @@ export function usePurchaseRequests() {
     }
   }, []);
 
-  // Save to localStorage whenever requests change
+  // TEMPORÁRIO: Save to localStorage whenever requests change
+  // TODO: Remover quando migrado para on-chain
   const saveToStorage = useCallback((reqs: PurchaseRequest[]) => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(reqs));
@@ -46,6 +71,7 @@ export function usePurchaseRequests() {
   }, []);
 
   // Create new purchase request
+  // TODO: Substituir por instrução create_purchase_request on-chain
   const createRequest = useCallback((request: Omit<PurchaseRequest, 'id' | 'timestamp' | 'status'>) => {
     const newRequest: PurchaseRequest = {
       ...request,
@@ -60,11 +86,12 @@ export function usePurchaseRequests() {
       return updated;
     });
 
-    console.log('[usePurchaseRequests.createRequest] Created purchase request:', newRequest);
+    console.log('[usePurchaseRequests.createRequest] Created purchase request (TEMPORARY - localStorage):', newRequest);
     return newRequest;
   }, [saveToStorage]);
 
   // Approve purchase request
+  // TODO: Substituir por instrução approve_purchase on-chain
   const approveRequest = useCallback((requestId: string, txSignature: string, approverAddress: string) => {
     setRequests((prev) => {
       const updated = prev.map((req) =>
@@ -82,10 +109,11 @@ export function usePurchaseRequests() {
       return updated;
     });
 
-    console.log('[usePurchaseRequests.approveRequest] Approved purchase request:', requestId);
+    console.log('[usePurchaseRequests.approveRequest] Approved purchase request (TEMPORARY - localStorage):', requestId);
   }, [saveToStorage]);
 
   // Reject purchase request
+  // TODO: Substituir por instrução reject_purchase on-chain
   const rejectRequest = useCallback((requestId: string) => {
     setRequests((prev) => {
       const updated = prev.map((req) =>
@@ -100,7 +128,7 @@ export function usePurchaseRequests() {
       return updated;
     });
 
-    console.log('[usePurchaseRequests.rejectRequest] Rejected purchase request:', requestId);
+    console.log('[usePurchaseRequests.rejectRequest] Rejected purchase request (TEMPORARY - localStorage):', requestId);
   }, [saveToStorage]);
 
   // Get requests by status
@@ -116,7 +144,7 @@ export function usePurchaseRequests() {
   const clearAll = useCallback(() => {
     setRequests([]);
     localStorage.removeItem(STORAGE_KEY);
-    console.log('[usePurchaseRequests.clearAll] Cleared all requests');
+    console.log('[usePurchaseRequests.clearAll] Cleared all requests (TEMPORARY - localStorage)');
   }, []);
 
   return {

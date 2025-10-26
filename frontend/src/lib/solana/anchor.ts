@@ -2,16 +2,17 @@ import * as anchor from "@coral-xyz/anchor";
 import type { Idl } from "@coral-xyz/anchor";
 import { PublicKey, Connection, LAMPORTS_PER_SOL } from "@solana/web3.js";
 
-// Program IDs (deployed on localhost)
+// Program IDs (deployed on devnet)
 export const PROGRAM_IDS = {
   srwaFactory: "G2TVaEY5pxLZbdBUq28Q7ZPGxQaxTxZzaSRTAEMh3z2A",
-  srwaController: "csSqPv1tnopH9XkRuCakGjkunz5aKECfYBU1SwrZbFR",
-  identityClaims: "Hr4S5caMKqLZFPRuJXu4rCktC9UfR3VxEDkU9JiQiCzv",
-  complianceModules: "Gz7tDtXsPtAKVhNQEky5kybzguEcwUoyzWKYFDUr6D75",
-  offeringPool: "GShjrSQhcZJLP2xRGAvpoLyU2ndZN1k8A8fwPPqxm73W",
-  yieldAdapter: "8xBNucLz1R72p8TMCzXGH1W1L65E9jHPKEXwSwC1jCot",
-  valuationOracle: "B9vVuDnzj5RE7HpSJ9am7Ld1iP2D8V7eVgzsej7kppPz",
-  cashflowEngine: "85UaZex7aRX647Dn3N8kYNxZNbZcHxB97nwGnkfD5JfQ",
+  srwaController: "HnPCaGFDW2Y7B9J1q8ZHnwKNZZ9ZhXfcnAGcEVK3Y6nA",
+  identityClaims: "AuUzmKAAVyvR6NvDdd56SDjXHSE8dUePEnC5moECw9mE",
+  complianceModules: "GD3ArP1GPKN9sWYPxiPia2i3iAKKsnbXxpcoB1gQK5D",
+  offeringPool: "4D54H4NBA9Q7WtsAy2yaFs9BjEdT8DcdmXekKsf7n6KP",
+  yieldAdapter: "qSDUx7334aHWP44csqnJV61AmzC9vNmUKusJX4GQnor",
+  valuationOracle: "C4sJ1phqCh2MxFJJqVHZuddXbp6hWfvz29N4CkscPpaW",
+  cashflowEngine: "4ySjU9NzSwg457oxWCVgaH3fqqrhh7iDQco7Db1Zq4Di",
+  purchaseOrder: "EdyLMn3iUrF16Z4VPyTfv9hC9G7eqxsHQVxnsNcsAT3Z",
 };
 
 export const RPC_ENDPOINT = import.meta.env.VITE_SOLANA_RPC_URL || 'http://127.0.0.1:8899';
@@ -115,6 +116,7 @@ export class SRWAClient {
 
   public async loadPrograms() {
     if (this.programs) {
+      console.log("✅ Programas já carregados, retornando cache");
       return this.programs;
     }
 
@@ -127,7 +129,14 @@ export class SRWAClient {
     try {
       await this.ensureWalletFunded(provider);
 
-      console.log("🔄 Carregando programas diretamente da blockchain (como CLI)...");
+      const endpoint = provider.connection.rpcEndpoint || "";
+      const isDevnet = endpoint.includes("devnet");
+
+      console.log("🔄 Carregando programas...", {
+        endpoint,
+        isDevnet,
+        strategy: isDevnet ? 'local IDL only (devnet)' : 'blockchain first, then local fallback'
+      });
 
       // Criar programas carregando IDL da blockchain (mesma abordagem do CLI que funciona)
       this.programs = {};
@@ -141,11 +150,10 @@ export class SRWAClient {
         { name: 'yieldAdapter', programId: PROGRAM_IDS.yieldAdapter, required: true, idlFile: 'yield_adapter' },
         { name: 'valuationOracle', programId: PROGRAM_IDS.valuationOracle, required: true, idlFile: 'valuation_oracle' },
         { name: 'cashflowEngine', programId: PROGRAM_IDS.cashflowEngine, required: true, idlFile: 'cashflow_engine' },
+        { name: 'purchaseOrder', programId: PROGRAM_IDS.purchaseOrder, required: false, idlFile: 'purchase_order' },
       ];
 
       for (const config of programConfigs) {
-        console.log(`🔧 Carregando programa ${config.name} da blockchain...`);
-
         if (!config.programId) {
           console.error(`❌ Program ID ausente para ${config.name}`);
           continue;
@@ -153,32 +161,49 @@ export class SRWAClient {
 
         const programIdPubkey = new PublicKey(config.programId);
         let program: anchor.Program | null = null;
-        let loadSource: 'chain' | 'local' = 'chain';
+        let loadSource: 'chain' | 'local' = 'local';
 
-        try {
-          // Usar Program.at() para carregar IDL da blockchain (mesma abordagem do CLI)
-          program = await anchor.Program.at(programIdPubkey, provider);
-        } catch (programError: any) {
-          console.warn(`⚠️ Falha ao carregar IDL on-chain para ${config.name}:`, programError.message);
-
+        // Se estiver em devnet, pular direto para IDL local (programas não estão deployados na devnet)
+        if (isDevnet) {
+          console.log(`🔧 Carregando ${config.name} via IDL local (devnet mode)...`);
           try {
-            const fallbackIdl = await this.fetchLocalIdl(config.idlFile);
-
-            if (fallbackIdl.address && fallbackIdl.address !== config.programId) {
-              console.warn(`⚠️ IDL local para ${config.name} possui address ${fallbackIdl.address}, diferente do esperado ${config.programId}`);
-            }
-
-            program = new anchor.Program(fallbackIdl, provider);
+            const localIdl = await this.fetchLocalIdl(config.idlFile);
+            program = new anchor.Program(localIdl, provider);
             loadSource = 'local';
-            console.log(`🧩 ${config.name} carregado usando IDL local (${config.idlFile}.json)`);
-          } catch (fallbackError: any) {
-            console.error(`❌ Erro ao carregar programa ${config.name} via fallback local:`, fallbackError.message);
+            console.log(`✅ ${config.name} carregado com sucesso via IDL local`);
+          } catch (localError: any) {
+            console.error(`❌ Erro ao carregar ${config.name} via IDL local:`, localError.message);
 
             if (config.required) {
-              throw new Error(`Falha ao carregar o programa obrigatório ${config.name}: ${fallbackError.message}`);
+              throw new Error(`Falha ao carregar o programa obrigatório ${config.name}: ${localError.message}`);
             }
 
-            console.warn(`⚠️ Programa ${config.name} marcado como opcional - continuando mesmo com erro.`);
+            console.warn(`⚠️ Programa ${config.name} marcado como opcional - continuando.`);
+          }
+        } else {
+          // Para localhost, tentar carregar da blockchain primeiro
+          console.log(`🔧 Carregando ${config.name} da blockchain (localhost)...`);
+
+          try {
+            program = await anchor.Program.at(programIdPubkey, provider);
+            loadSource = 'chain';
+          } catch (programError: any) {
+            console.warn(`⚠️ Falha ao carregar IDL on-chain para ${config.name}:`, programError.message);
+
+            try {
+              const fallbackIdl = await this.fetchLocalIdl(config.idlFile);
+              program = new anchor.Program(fallbackIdl, provider);
+              loadSource = 'local';
+              console.log(`🧩 ${config.name} carregado usando IDL local (fallback)`);
+            } catch (fallbackError: any) {
+              console.error(`❌ Erro ao carregar ${config.name} via fallback:`, fallbackError.message);
+
+              if (config.required) {
+                throw new Error(`Falha ao carregar o programa obrigatório ${config.name}: ${fallbackError.message}`);
+              }
+
+              console.warn(`⚠️ Programa ${config.name} marcado como opcional - continuando.`);
+            }
           }
         }
 

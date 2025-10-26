@@ -63,15 +63,24 @@ const Index = () => {
   const isLoading = poolsLoading || analyticsLoading;
 
   // Detect mobile to disable heavy animations
-  const [isMobile, setIsMobile] = useState(false);
+  // Initialize with actual window size to prevent flash
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
+    // Check immediately in case SSR gave wrong value
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
+
+  // Viewport config for animations (disabled on mobile to prevent flashing)
+  const viewportConfig = isMobile ? false : { once: true };
+  const viewportConfigWithMargin = isMobile ? false : { once: true, margin: "-100px" };
   
   // Calculate real market stats from enhanced pools
   const marketStats = enhancedPools.length > 0 ? {
@@ -299,12 +308,12 @@ const Index = () => {
                 left: `${Math.random() * 100}%`,
                 top: `${Math.random() * 100}%`,
               }}
-              animate={{
+              animate={isMobile ? {} : {
                 y: [0, -30, 0],
                 opacity: [0.2, 0.6, 0.2],
                 scale: [1, 1.5, 1],
               }}
-              transition={{
+              transition={isMobile ? {} : {
                 duration: 3 + Math.random() * 2,
                 repeat: Infinity,
                 delay: Math.random() * 2,
@@ -316,17 +325,17 @@ const Index = () => {
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 py-16 sm:py-24 relative z-40">
           <motion.div
             className="text-center space-y-8"
-            initial={{ opacity: 0, y: 50 }}
+            initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: isMobile ? 0 : 0.8, ease: "easeOut" }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
           >
             {/* Animated Hero Heading */}
             <div className="space-y-6 sm:space-y-8">
               <motion.div
                 className="space-y-3 sm:space-y-4"
-                initial={{ opacity: 0, y: 30 }}
+                initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: isMobile ? 0 : 0.8, delay: isMobile ? 0 : 0.2 }}
+                transition={{ duration: 0.8, delay: isMobile ? 0 : 0.2 }}
               >
                 <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-fg-primary leading-tight px-4">
                   Real World Assets
@@ -335,13 +344,19 @@ const Index = () => {
                     <motion.span
                       key={currentPhraseIndex}
                       initial={{ opacity: 0, y: 20 }}
-                      animate={{
+                      animate={isMobile ? {
+                        opacity: 1,
+                        y: 0
+                      } : {
                         opacity: 1,
                         y: 0,
                         backgroundPosition: ['0% 50%', '100% 50%', '0% 50%']
                       }}
                       exit={{ opacity: 0, y: -20 }}
-                      transition={{
+                      transition={isMobile ? {
+                        opacity: { duration: 0.5 },
+                        y: { duration: 0.5 }
+                      } : {
                         opacity: { duration: 0.5 },
                         y: { duration: 0.5 },
                         backgroundPosition: { duration: 5, repeat: Infinity, ease: 'easeInOut' }
@@ -356,9 +371,9 @@ const Index = () => {
 
                 <motion.p
                   className="text-base sm:text-lg md:text-xl lg:text-2xl text-fg-secondary max-w-4xl mx-auto leading-relaxed px-4"
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: isMobile ? 0 : 0.6, delay: isMobile ? 0 : 0.6 }}
+                  transition={{ duration: 0.6, delay: isMobile ? 0 : 0.6 }}
                 >
                   Bringing institutional-grade assets and compliance to decentralized finance, enabling real yield backed by tangible value.
                 </motion.p>
@@ -403,11 +418,11 @@ const Index = () => {
                 width: `${200 + i * 120}px`,
                 height: `${200 + i * 120}px`,
               }}
-              animate={{
+              animate={isMobile ? {} : {
                 opacity: [0.8, 1, 0.8],
                 scale: [1, 1.02, 1],
               }}
-              transition={{
+              transition={isMobile ? {} : {
                 duration: 4 + i * 0.5,
                 repeat: Infinity,
                 ease: "easeInOut",
@@ -422,7 +437,7 @@ const Index = () => {
           {[...Array(8)].map((_, i) => (
             <div
               key={i}
-              className="absolute w-2 h-2 rounded-full bg-purple-500/10 animate-pulse"
+              className={`absolute w-2 h-2 rounded-full bg-purple-500/10 ${!isMobile && "animate-pulse"}`}
               style={{
                 left: `${15 + Math.random() * 70}%`,
                 top: `${20 + Math.random() * 60}%`,
@@ -435,23 +450,23 @@ const Index = () => {
         <div className="container mx-auto max-w-7xl px-4 sm:px-6 relative z-10">
         <motion.div
           className="text-center space-y-6 mb-16"
-          initial={isMobile ? false : { opacity: 0, y: 30 }}
-          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+          initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 30 }}
+          whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          viewport={isMobile ? false : { once: true }}
+          viewport={viewportConfig}
         >
           <motion.h2
             className="text-2xl sm:text-3xl lg:text-h1 font-semibold text-fg-primary px-4"
-            initial={isMobile ? false : { opacity: 0, y: 20 }}
-            whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+            initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 20 }}
+            whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             Powered by Industry Leaders
           </motion.h2>
           <motion.p
             className="text-sm sm:text-body-1 text-fg-secondary max-w-2xl mx-auto px-4"
-            initial={isMobile ? false : { opacity: 0, y: 20 }}
-            whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+            initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 20 }}
+            whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
           >
             Built in collaboration with leading blockchain protocols and institutions.
@@ -460,10 +475,10 @@ const Index = () => {
 
         <motion.div
           className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8 sm:gap-12 mb-12 sm:mb-16 px-4"
-          initial={isMobile ? false : { opacity: 0, y: 20 }}
-          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+          initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 20 }}
+          whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
           transition={{ duration: 0.8, delay: 0.3 }}
-          viewport={isMobile ? false : { once: true }}
+          viewport={viewportConfig}
         >
           {PARTNERS.map((partner, index) => (
             <motion.a
@@ -472,8 +487,8 @@ const Index = () => {
               target="_blank"
               rel="noopener noreferrer"
               className={`flex items-center justify-center opacity-70 hover:opacity-100 ${!isMobile && "transition-opacity duration-300"}`}
-              initial={isMobile ? false : { opacity: 0, y: 20 }}
-              whileInView={isMobile ? false : { opacity: 0.7, y: 0 }}
+              initial={isMobile ? { opacity: 0.7 } : { opacity: 0, y: 20 }}
+              whileInView={isMobile ? { opacity: 0.7 } : { opacity: 0.7, y: 0 }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
               whileHover={isMobile ? {} : {
                 scale: 1.1,
@@ -535,10 +550,10 @@ const Index = () => {
 
         <motion.div
           className="text-center space-y-4 mb-12"
-          initial={isMobile ? false : { opacity: 0, y: 30 }}
-          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+          initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 30 }}
+          whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          viewport={isMobile ? false : { once: true, margin: "-100px" }}
+          viewport={viewportConfigWithMargin}
         >
           <h2 className="text-2xl sm:text-3xl lg:text-h1 font-bold text-white">
             Our Numbers
@@ -549,15 +564,15 @@ const Index = () => {
         </motion.div>
 
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch max-w-[280px] sm:max-w-5xl mx-auto"
-          initial={isMobile ? false : { opacity: 0, y: 50 }}
-          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8 items-stretch max-w-full sm:max-w-5xl mx-auto"
+          initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 50 }}
+          whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
           transition={{ duration: 0.8, staggerChildren: isMobile ? 0 : 0.1 }}
-          viewport={isMobile ? false : { once: true, margin: "-100px" }}
+          viewport={viewportConfigWithMargin}
         >
           <motion.div
-            initial={isMobile ? false : { opacity: 0, y: 30 }}
-            whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+            initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 30 }}
+            whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0 }}
             whileHover={isMobile ? {} : { y: -6 }}
             className="group w-full"
@@ -572,8 +587,8 @@ const Index = () => {
             />
           </motion.div>
           <motion.div
-            initial={isMobile ? false : { opacity: 0, y: 30 }}
-            whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+            initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 30 }}
+            whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
             whileHover={isMobile ? {} : { y: -6 }}
             className="group w-full"
@@ -588,9 +603,9 @@ const Index = () => {
             />
           </motion.div>
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: isMobile ? 0 : 0.6, delay: isMobile ? 0 : 0.2 }}
+            initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 30 }}
+            whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
             whileHover={isMobile ? {} : { y: -6 }}
             className="group w-full"
           >
@@ -636,11 +651,11 @@ const Index = () => {
                 left: `${20 + Math.random() * 60}%`,
                 top: `${20 + Math.random() * 60}%`,
               }}
-              animate={{
+              animate={isMobile ? {} : {
                 opacity: [0.1, 0.3, 0.1],
                 scale: [1, 1.5, 1],
               }}
-              transition={{
+              transition={isMobile ? {} : {
                 duration: 4 + Math.random() * 2,
                 repeat: Infinity,
                 delay: Math.random() * 2,
@@ -654,10 +669,10 @@ const Index = () => {
         {/* Header */}
         <motion.div
           className="text-center space-y-4 mb-16"
-          initial={isMobile ? false : { opacity: 0, y: 30 }}
-          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+          initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 30 }}
+          whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          viewport={isMobile ? false : { once: true, margin: "-100px" }}
+          viewport={viewportConfigWithMargin}
         >
           <h2 className="text-2xl sm:text-3xl lg:text-h1 font-bold text-white">
             How SRWA Protocol Works
@@ -692,11 +707,11 @@ const Index = () => {
               background: 'radial-gradient(circle, rgba(255,107,53,0.4), transparent 70%)',
               filter: 'blur(80px)'
             }}
-            animate={{
+            animate={isMobile ? {} : {
               y: [0, 20, 0],
               opacity: [0.05, 0.08, 0.05],
             }}
-            transition={{
+            transition={isMobile ? {} : {
               duration: 8,
               repeat: Infinity,
               ease: "easeInOut"
@@ -709,11 +724,11 @@ const Index = () => {
               background: 'radial-gradient(circle, rgba(153,69,255,0.4), transparent 70%)',
               filter: 'blur(70px)'
             }}
-            animate={{
+            animate={isMobile ? {} : {
               x: [0, 15, 0],
               opacity: [0.04, 0.06, 0.04],
             }}
-            transition={{
+            transition={isMobile ? {} : {
               duration: 10,
               repeat: Infinity,
               ease: "easeInOut"
@@ -726,11 +741,11 @@ const Index = () => {
               background: 'radial-gradient(circle, rgba(20,241,149,0.3), transparent 70%)',
               filter: 'blur(60px)'
             }}
-            animate={{
+            animate={isMobile ? {} : {
               y: [0, -15, 0],
               opacity: [0.03, 0.05, 0.03],
             }}
-            transition={{
+            transition={isMobile ? {} : {
               duration: 9,
               repeat: Infinity,
               ease: "easeInOut"
@@ -751,10 +766,10 @@ const Index = () => {
 
         <motion.div
           className="text-center space-y-6 mb-16"
-          initial={isMobile ? false : { opacity: 0, y: 30 }}
-          whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+          initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 30 }}
+          whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
-          viewport={isMobile ? false : { once: true, margin: "-100px" }}
+          viewport={viewportConfigWithMargin}
         >
           <h2 className="text-2xl sm:text-3xl lg:text-h1 font-bold text-white px-4">
             Active Markets
@@ -808,10 +823,10 @@ const Index = () => {
             topMarkets.map((market, index) => (
               <motion.div
                 key={market.address}
-                initial={isMobile ? false : { opacity: 0, y: 30 }}
-                whileInView={isMobile ? false : { opacity: 1, y: 0 }}
+                initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 30 }}
+                whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
-                viewport={isMobile ? false : { once: true, margin: "-100px" }}
+                viewport={viewportConfigWithMargin}
                 whileHover={isMobile ? {} : { y: -8, scale: 1.02 }}
                 className="group"
               >
@@ -832,8 +847,8 @@ const Index = () => {
                       <Badge variant="secondary" className="text-micro bg-green-500/10 text-green-400 border-green-500/20">
                         <motion.div
                           className="w-2 h-2 bg-green-400 rounded-full mr-1"
-                          animate={{ opacity: [0.6, 1, 0.6] }}
-                          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                          animate={isMobile ? {} : { opacity: [0.6, 1, 0.6] }}
+                          transition={isMobile ? {} : { duration: 3, repeat: Infinity, ease: "easeInOut" }}
                         />
                         {market.status}
                       </Badge>
@@ -855,8 +870,8 @@ const Index = () => {
                       <motion.div
                         className="relative overflow-hidden rounded-xl p-[1px] shadow-[0_18px_45px_rgba(153,69,255,0.25)]"
                         whileHover={{ scale: 1.02 }}
-                        animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
-                        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                        animate={isMobile ? {} : { backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+                        transition={isMobile ? {} : { duration: 5, repeat: Infinity, ease: "easeInOut" }}
                         style={{
                           backgroundSize: "200% 200%",
                           backgroundImage: "linear-gradient(135deg, #6D28D9 0%, #8B5CF6 50%, #FF6B35 100%)",
@@ -876,8 +891,8 @@ const Index = () => {
                       <motion.div
                         className="relative overflow-hidden rounded-xl p-[1px] shadow-[0_18px_45px_rgba(153,69,255,0.25)]"
                         whileHover={{ scale: 1.02 }}
-                        animate={{ backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
-                        transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
+                        animate={isMobile ? {} : { backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+                        transition={isMobile ? {} : { duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
                         style={{
                           backgroundSize: "200% 200%",
                           backgroundImage: "linear-gradient(135deg, #6D28D9 0%, #8B5CF6 50%, #FF6B35 100%)",
@@ -956,10 +971,10 @@ const Index = () => {
 
         <motion.div
           className="text-center"
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 20 }}
+          whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.8 }}
-          viewport={{ once: true }}
+          viewport={viewportConfig}
         >
           <LaunchCountdownButton
             icon={<ArrowRight className="h-5 w-5" />}
@@ -1046,11 +1061,11 @@ const Index = () => {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
+              viewport={viewportConfig}
             >
               <a href={ROUTES.HOME} className="flex items-center gap-2 group">
-                <img src={Logo} alt="SRWA Logo" className="h-auto w-8 transition-transform group-hover:scale-105" />
-                <img src={SRWALetters} alt="SRWA" className="h-auto w-20 transition-transform group-hover:scale-105" />
+                <img src={Logo} alt="SRWA Logo" className={`h-auto w-8 ${!isMobile && "transition-transform"} group-hover:scale-105`} />
+                <img src={SRWALetters} alt="SRWA" className={`h-auto w-20 ${!isMobile && "transition-transform"} group-hover:scale-105`} />
               </a>
               <p className="text-sm text-fg-secondary leading-relaxed">
                 Institutional-grade Real-World Asset lending on Solana with full compliance and transparency.
@@ -1063,7 +1078,7 @@ const Index = () => {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              viewport={{ once: true }}
+              viewport={viewportConfig}
             >
               <h4 className="text-sm font-semibold bg-gradient-to-r from-purple-400 to-purple-300 bg-clip-text text-transparent uppercase tracking-wider">Product</h4>
               <ul className="space-y-3">
@@ -1076,10 +1091,10 @@ const Index = () => {
                   <li key={link.href}>
                     <motion.a
                       href={link.href}
-                      className="text-sm text-fg-secondary hover:text-purple-400 transition-all inline-flex items-center gap-2 group"
+                      className={`text-sm text-fg-secondary hover:text-purple-400 inline-flex items-center gap-2 group ${!isMobile && "transition-all"}`}
                       whileHover={{ x: 4 }}
                     >
-                      <ArrowRight className="h-3 w-3 text-purple-500/60 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <ArrowRight className={`h-3 w-3 text-purple-500/60 opacity-0 group-hover:opacity-100 ${!isMobile && "transition-opacity"}`} />
                       <span>{link.label}</span>
                     </motion.a>
                   </li>
@@ -1093,7 +1108,7 @@ const Index = () => {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              viewport={{ once: true }}
+              viewport={viewportConfig}
             >
               <h4 className="text-sm font-semibold bg-gradient-to-r from-orange-400 to-orange-300 bg-clip-text text-transparent uppercase tracking-wider">Resources</h4>
               <ul className="space-y-3">
@@ -1107,10 +1122,10 @@ const Index = () => {
                       href={link.href}
                       target={link.href.startsWith('http') ? '_blank' : undefined}
                       rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                      className="text-sm text-fg-secondary hover:text-orange-400 transition-all inline-flex items-center gap-2 group"
+                      className={`text-sm text-fg-secondary hover:text-orange-400 inline-flex items-center gap-2 group ${!isMobile && "transition-all"}`}
                       whileHover={{ x: 4 }}
                     >
-                      <link.icon className="h-4 w-4 text-orange-500/60 group-hover:text-orange-400 opacity-60 group-hover:opacity-100 transition-all" />
+                      <link.icon className={`h-4 w-4 text-orange-500/60 group-hover:text-orange-400 opacity-60 group-hover:opacity-100 ${!isMobile && "transition-all"}`} />
                       <span>{link.label}</span>
                     </motion.a>
                   </li>
@@ -1124,7 +1139,7 @@ const Index = () => {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
-              viewport={{ once: true }}
+              viewport={viewportConfig}
             >
               <div className="space-y-2">
                 <h4 className="text-sm font-semibold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent uppercase tracking-wider">
@@ -1145,9 +1160,9 @@ const Index = () => {
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className="relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-stroke-line bg-bg-elev-2 group-hover:border-purple-500/50 group-hover:shadow-[0_0_20px_rgba(153,69,255,0.3)] transition-all">
+                  <div className={`relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-stroke-line bg-bg-elev-2 group-hover:border-purple-500/50 group-hover:shadow-[0_0_20px_rgba(153,69,255,0.3)] ${!isMobile && "transition-all"}`}>
                     <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-purple-600/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className={`absolute inset-0 bg-gradient-to-r from-purple-500/10 to-purple-600/10 opacity-0 group-hover:opacity-100 ${!isMobile && "transition-opacity"}`}
                     />
                     <motion.div
                       className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12"
@@ -1156,13 +1171,13 @@ const Index = () => {
                       transition={{ duration: 0.6 }}
                     />
                     <div className="relative flex items-center gap-2.5 flex-1">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/10 group-hover:bg-purple-500/20 transition-colors">
-                        <Github className="h-4 w-4 text-fg-secondary group-hover:text-purple-400 transition-colors" />
+                      <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-purple-500/10 group-hover:bg-purple-500/20 ${!isMobile && "transition-colors"}`}>
+                        <Github className={`h-4 w-4 text-fg-secondary group-hover:text-purple-400 ${!isMobile && "transition-colors"}`} />
                       </div>
-                      <span className="text-sm font-medium text-fg-primary group-hover:text-purple-300 transition-colors flex-1">
+                      <span className={`text-sm font-medium text-fg-primary group-hover:text-purple-300 ${!isMobile && "transition-colors"} flex-1`}>
                         GitHub
                       </span>
-                      <ArrowRight className="h-3.5 w-3.5 text-fg-muted group-hover:text-purple-400 group-hover:translate-x-1 transition-all" />
+                      <ArrowRight className={`h-3.5 w-3.5 text-fg-muted group-hover:text-purple-400 group-hover:translate-x-1 ${!isMobile && "transition-all"}`} />
                     </div>
                   </div>
                 </motion.a>
@@ -1176,9 +1191,9 @@ const Index = () => {
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className="relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-stroke-line bg-bg-elev-2 group-hover:border-blue-500/50 group-hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] transition-all">
+                  <div className={`relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-stroke-line bg-bg-elev-2 group-hover:border-blue-500/50 group-hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] ${!isMobile && "transition-all"}`}>
                     <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-brand-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className={`absolute inset-0 bg-gradient-to-r from-blue-500/10 to-brand-500/10 opacity-0 group-hover:opacity-100 ${!isMobile && "transition-opacity"}`}
                     />
                     <motion.div
                       className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12"
@@ -1187,13 +1202,13 @@ const Index = () => {
                       transition={{ duration: 0.6 }}
                     />
                     <div className="relative flex items-center gap-2.5 flex-1">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 group-hover:bg-blue-500/20 transition-colors">
-                        <Twitter className="h-4 w-4 text-fg-secondary group-hover:text-blue-400 transition-colors" />
+                      <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 group-hover:bg-blue-500/20 ${!isMobile && "transition-colors"}`}>
+                        <Twitter className={`h-4 w-4 text-fg-secondary group-hover:text-blue-400 ${!isMobile && "transition-colors"}`} />
                       </div>
-                      <span className="text-sm font-medium text-fg-primary group-hover:text-blue-300 transition-colors flex-1">
+                      <span className={`text-sm font-medium text-fg-primary group-hover:text-blue-300 ${!isMobile && "transition-colors"} flex-1`}>
                         Twitter / X
                       </span>
-                      <ArrowRight className="h-3.5 w-3.5 text-fg-muted group-hover:text-blue-400 group-hover:translate-x-1 transition-all" />
+                      <ArrowRight className={`h-3.5 w-3.5 text-fg-muted group-hover:text-blue-400 group-hover:translate-x-1 ${!isMobile && "transition-all"}`} />
                     </div>
                   </div>
                 </motion.a>
@@ -1207,9 +1222,9 @@ const Index = () => {
                   whileHover={{ scale: 1.02, y: -2 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  <div className="relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-stroke-line bg-bg-elev-2 group-hover:border-[#5865F2]/50 group-hover:shadow-[0_0_20px_rgba(88,101,242,0.3)] transition-all">
+                  <div className={`relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg border border-stroke-line bg-bg-elev-2 group-hover:border-[#5865F2]/50 group-hover:shadow-[0_0_20px_rgba(88,101,242,0.3)] ${!isMobile && "transition-all"}`}>
                     <motion.div
-                      className="absolute inset-0 bg-gradient-to-r from-[#5865F2]/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                      className={`absolute inset-0 bg-gradient-to-r from-[#5865F2]/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 ${!isMobile && "transition-opacity"}`}
                     />
                     <motion.div
                       className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12"
@@ -1218,16 +1233,16 @@ const Index = () => {
                       transition={{ duration: 0.6 }}
                     />
                     <div className="relative flex items-center gap-2.5 flex-1">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#5865F2]/10 group-hover:bg-[#5865F2]/20 transition-colors">
+                      <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-[#5865F2]/10 group-hover:bg-[#5865F2]/20 ${!isMobile && "transition-colors"}`}>
                         {/* Discord Logo SVG */}
-                        <svg className="h-4 w-4 text-fg-secondary group-hover:text-[#5865F2] transition-colors" viewBox="0 0 71 55" fill="none">
+                        <svg className={`h-4 w-4 text-fg-secondary group-hover:text-[#5865F2] ${!isMobile && "transition-colors"}`} viewBox="0 0 71 55" fill="none">
                           <path d="M60.1045 4.8978C55.5792 2.8214 50.7265 1.2916 45.6527 0.41542C45.5603 0.39851 45.468 0.440769 45.4204 0.525289C44.7963 1.6353 44.105 3.0834 43.6209 4.2216C38.1637 3.4046 32.7345 3.4046 27.3892 4.2216C26.905 3.0581 26.1886 1.6353 25.5617 0.525289C25.5141 0.443589 25.4218 0.40133 25.3294 0.41542C20.2584 1.2888 15.4057 2.8186 10.8776 4.8978C10.8384 4.9147 10.8048 4.9429 10.7825 4.9795C1.57795 18.7309 -0.943561 32.1443 0.293408 45.3914C0.299005 45.4562 0.335386 45.5182 0.385761 45.5576C6.45866 50.0174 12.3413 52.7249 18.1147 54.5195C18.2071 54.5477 18.305 54.5139 18.3638 54.4378C19.7295 52.5728 20.9469 50.6063 21.9907 48.5383C22.0523 48.4172 21.9935 48.2735 21.8676 48.2256C19.9366 47.4931 18.0979 46.6 16.3292 45.5858C16.1893 45.5041 16.1781 45.304 16.3068 45.2082C16.679 44.9293 17.0513 44.6391 17.4067 44.3461C17.471 44.2926 17.5606 44.2813 17.6362 44.3151C29.2558 49.6202 41.8354 49.6202 53.3179 44.3151C53.3935 44.2785 53.4831 44.2898 53.5502 44.3433C53.9057 44.6363 54.2779 44.9293 54.6529 45.2082C54.7816 45.304 54.7732 45.5041 54.6333 45.5858C52.8646 46.6197 51.0259 47.4931 49.0921 48.2228C48.9662 48.2707 48.9102 48.4172 48.9718 48.5383C50.038 50.6034 51.2554 52.5699 52.5959 54.435C52.6519 54.5139 52.7526 54.5477 52.845 54.5195C58.6464 52.7249 64.529 50.0174 70.6019 45.5576C70.6551 45.5182 70.6887 45.459 70.6943 45.3942C72.1747 30.0791 68.2147 16.7757 60.1968 4.9823C60.1772 4.9429 60.1437 4.9147 60.1045 4.8978ZM23.7259 37.3253C20.2276 37.3253 17.3451 34.1136 17.3451 30.1693C17.3451 26.225 20.1717 23.0133 23.7259 23.0133C27.308 23.0133 30.1626 26.2532 30.1066 30.1693C30.1066 34.1136 27.28 37.3253 23.7259 37.3253ZM47.3178 37.3253C43.8196 37.3253 40.9371 34.1136 40.9371 30.1693C40.9371 26.225 43.7636 23.0133 47.3178 23.0133C50.9 23.0133 53.7545 26.2532 53.6986 30.1693C53.6986 34.1136 50.9 37.3253 47.3178 37.3253Z" fill="currentColor"/>
                         </svg>
                       </div>
-                      <span className="text-sm font-medium text-fg-primary group-hover:text-[#5865F2] transition-colors flex-1">
+                      <span className={`text-sm font-medium text-fg-primary group-hover:text-[#5865F2] ${!isMobile && "transition-colors"} flex-1`}>
                         Discord
                       </span>
-                      <ArrowRight className="h-3.5 w-3.5 text-fg-muted group-hover:text-[#5865F2] group-hover:translate-x-1 transition-all" />
+                      <ArrowRight className={`h-3.5 w-3.5 text-fg-muted group-hover:text-[#5865F2] group-hover:translate-x-1 ${!isMobile && "transition-all"}`} />
                     </div>
                   </div>
                 </motion.a>
@@ -1241,7 +1256,7 @@ const Index = () => {
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 0.5 }}
-            viewport={{ once: true }}
+            viewport={viewportConfig}
           >
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-xs text-fg-muted">

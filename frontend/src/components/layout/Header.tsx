@@ -1,4 +1,5 @@
 import { useState, useEffect, type MouseEvent } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { SolanaWalletButton } from "@/components/wallet/SolanaWalletButton";
@@ -69,30 +70,30 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
 
         {/* Logo */}
         <div className="flex flex-1 items-center">
-          <a href={ROUTES.HOME} className="flex items-center gap-2 sm:gap-3 group">
+          <Link to={ROUTES.HOME} className="flex items-center gap-2 sm:gap-3 group">
             <img src={Logo} alt="SRWA Logo" className="h-auto w-4 sm:w-6 md:w-8 transition-transform group-hover:scale-105" />
             <img src={SRWALetters} alt="SRWA" className="h-auto w-16 sm:w-20 md:w-24 transition-transform group-hover:scale-105" />
-          </a>
+          </Link>
         </div>
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex flex-none items-center justify-center px-4">
           <nav className="flex items-center space-x-4 lg:space-x-6">
-            <a href={ROUTES.HOME} className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group">
+            <Link to={ROUTES.HOME} className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group">
               Home
               <span className="absolute bottom-0 left-0 w-0 h-px bg-brand-400 group-hover:w-full transition-all duration-300" />
-            </a>
+            </Link>
             {FEATURES.DASHBOARD && (
-              <a
-                href={disableDashboardLink ? "#" : ROUTES.DASHBOARD}
+              <Link
+                to={disableDashboardLink ? "#" : ROUTES.DASHBOARD}
                 onClick={handleDashboardLink}
                 className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group font-medium"
               >
                 Dashboard
                 <span className="absolute bottom-0 left-0 w-0 h-px bg-brand-400 group-hover:w-full transition-all duration-300" />
-              </a>
+              </Link>
             )}
-            <a href={ROUTES.DOCS} className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group">
+            <a href={ROUTES.DOCS} target="_blank" rel="noopener noreferrer" className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group">
               Documentation
               <span className="absolute bottom-0 left-0 w-0 h-px bg-brand-400 group-hover:w-full transition-all duration-300" />
             </a>
@@ -143,16 +144,16 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
               transition={{ duration: 0.3, ease: "easeOut" }}
             >
               <nav className="container mx-auto px-4 sm:px-6 py-4 space-y-3">
-                <a
-                  href={ROUTES.HOME}
+                <Link
+                  to={ROUTES.HOME}
                   className="block py-2 text-sm sm:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Home
-                </a>
+                </Link>
                 {FEATURES.DASHBOARD && (
-                  <a
-                    href={disableDashboardLink ? "#" : ROUTES.DASHBOARD}
+                  <Link
+                    to={disableDashboardLink ? "#" : ROUTES.DASHBOARD}
                     onClick={(e) => {
                       handleDashboardLink(e);
                       setMobileMenuOpen(false);
@@ -160,10 +161,12 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
                     className="block py-2 text-sm sm:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors font-medium"
                   >
                     Dashboard
-                  </a>
+                  </Link>
                 )}
                 <a
                   href={ROUTES.DOCS}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="block py-2 text-sm sm:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors"
                   onClick={() => setMobileMenuOpen(false)}
                 >

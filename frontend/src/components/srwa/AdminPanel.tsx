@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
-import { useIssuanceRequests, usePurchaseRequests } from '@/hooks/solana';
-import type { RequestStatus, PurchaseRequest } from '@/hooks/solana';
+import { useIssuanceRequests, usePurchaseOrders } from '@/hooks/solana';
+import type { RequestStatus, PurchaseOrderAccount } from '@/hooks/solana';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,8 +32,6 @@ import {
 } from 'lucide-react';
 import { SolendPoolCreator } from '@/components/srwa/admin/SolendPoolCreator';
 
-const ZERO_PUBKEY = new PublicKey(new Uint8Array(32));
-
 function mapStatus(status: any): RequestStatus {
   if (!status) return 'pending';
   if (status.deployed !== undefined) return 'deployed';
@@ -55,7 +53,7 @@ const topicNames: { [key: number]: string } = {
 export function AdminPanel() {
   const { publicKey } = useWallet();
   const issuance = useIssuanceRequests();
-  const purchaseRequests = usePurchaseRequests();
+  const purchaseOrders = usePurchaseOrders();
   const [loading, setLoading] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
@@ -101,40 +99,71 @@ export function AdminPanel() {
     }
   };
 
-  const handleApprovePurchase = async (purchaseReq: PurchaseRequest) => {
+  const handleApprovePurchaseOrder = async (order: PurchaseOrderAccount) => {
     if (!publicKey) return;
+
+    // Prevent double-click / double execution
+    if (loading) {
+      console.log('[AdminPanel] Already processing, skipping...');
+      return;
+    }
 
     try {
       setLoading(true);
 
-      const mint = new PublicKey(purchaseReq.mint);
-      const investor = new PublicKey(purchaseReq.investor);
-
-      // Transferir tokens do admin para o investidor
-      const signature = await issuance.transferFromAdminToInvestor(
-        mint,
-        investor,
-        purchaseReq.quantity,
-        purchaseReq.decimals
+      // Get admin's token account (onde estão os tokens SRWA para enviar)
+      const { getAssociatedTokenAddress } = await import('@solana/spl-token');
+      const adminTokenAccount = await getAssociatedTokenAddress(
+        order.account.mint,
+        publicKey
       );
 
-      // Marcar como aprovado
-      purchaseRequests.approveRequest(purchaseReq.id, signature, publicKey.toBase58());
-
-      toast.success('Compra aprovada!', {
-        description: `${purchaseReq.quantity} ${purchaseReq.tokenSymbol} transferidos para ${investor.toBase58().slice(0, 8)}...`,
+      // Aprovar a purchase order on-chain
+      const signature = await purchaseOrders.approveOrder({
+        purchaseOrderPda: order.publicKey,
+        mint: order.account.mint,
+        investor: order.account.investor,
+        adminTokenAccount,
       });
+
+      toast.success('Purchase Order Aprovada!', {
+        description: `${order.account.quantity.toString()} tokens transferidos para ${order.account.investor.toBase58().slice(0, 8)}...`,
+      });
+
+      console.log('[AdminPanel] Purchase order aprovada:', signature);
     } catch (err: any) {
-      toast.error(err.message ?? 'Falha ao processar compra');
-      console.error('[AdminPanel.handleApprovePurchase] Error:', err);
+      toast.error(err.message ?? 'Falha ao aprovar purchase order');
+      console.error('[AdminPanel.handleApprovePurchaseOrder] Error:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleRejectPurchase = (purchaseReq: PurchaseRequest) => {
-    purchaseRequests.rejectRequest(purchaseReq.id);
-    toast.success('Compra rejeitada');
+  const handleRejectPurchaseOrder = async (order: PurchaseOrderAccount, reason: string) => {
+    if (!publicKey) return;
+
+    try {
+      setLoading(true);
+
+      // Rejeitar a purchase order on-chain (reembolsa SOL automaticamente)
+      const signature = await purchaseOrders.rejectOrder({
+        purchaseOrderPda: order.publicKey,
+        investor: order.account.investor,
+        adminVault: publicKey, // Admin vault que recebeu o SOL
+        reason,
+      });
+
+      toast.success('Purchase Order Rejeitada', {
+        description: `SOL reembolsado para o investor. Motivo: ${reason}`,
+      });
+
+      console.log('[AdminPanel] Purchase order rejeitada:', signature);
+    } catch (err: any) {
+      toast.error(err.message ?? 'Falha ao rejeitar purchase order');
+      console.error('[AdminPanel.handleRejectPurchaseOrder] Error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (!publicKey) {
@@ -162,7 +191,8 @@ export function AdminPanel() {
     const config = request.account.config;
     const offering = request.account.offering;
     const effectiveMint: PublicKey = issuance.getEffectiveMintKey(request);
-    const mintCreated = !effectiveMint.equals(ZERO_PUBKEY);
+    // Verificar se o mint foi criado (não é zero/default)
+    const mintCreated = !effectiveMint.equals(PublicKey.default);
 
     const handleCreateMint = async () => {
       try {
@@ -666,7 +696,7 @@ export function AdminPanel() {
                 <ShoppingCart className="h-6 w-6 text-blue-400" />
               </div>
               <div>
-                <p className="text-h1 text-fg-primary">{purchaseRequests.getPendingRequests().length}</p>
+                <p className="text-h1 text-fg-primary">{purchaseOrders.getPendingOrders().length}</p>
                 <p className="text-body-2 text-fg-muted">Pending Purchases</p>
               </div>
             </div>
@@ -774,7 +804,7 @@ export function AdminPanel() {
         </TabsContent>
 
         <TabsContent value="purchases" className="space-y-4">
-          {purchaseRequests.getPendingRequests().length === 0 ? (
+          {purchaseOrders.getPendingOrders().length === 0 ? (
             <Card className="card-institutional">
               <CardContent className="py-12 text-center">
                 <ShoppingCart className="h-12 w-12 text-fg-muted mx-auto mb-4 opacity-50" />
@@ -786,16 +816,16 @@ export function AdminPanel() {
             </Card>
           ) : (
             <div className="grid gap-4">
-              {purchaseRequests.getPendingRequests().map((purchaseReq) => (
-                <Card key={purchaseReq.id} className="card-institutional hover-lift">
+              {purchaseOrders.getPendingOrders().map((order: PurchaseOrderAccount) => (
+                <Card key={order.publicKey.toBase58()} className="card-institutional hover-lift">
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <CardTitle className="text-h3">
-                          {purchaseReq.tokenName} ({purchaseReq.tokenSymbol})
+                          Purchase Order #{order.publicKey.toBase58().slice(0, 8)}
                         </CardTitle>
                         <CardDescription className="font-mono text-xs mt-1">
-                          Investidor: {purchaseReq.investor.slice(0, 8)}...{purchaseReq.investor.slice(-6)}
+                          Investidor: {order.account.investor.toBase58().slice(0, 8)}...{order.account.investor.toBase58().slice(-6)}
                         </CardDescription>
                       </div>
                       <Badge variant="outline" className="text-amber-400 border-amber-500/30 bg-amber-500/10">
@@ -810,49 +840,39 @@ export function AdminPanel() {
                     <div className="grid grid-cols-3 gap-4 text-body-2">
                       <div>
                         <p className="text-fg-muted text-micro">Quantidade</p>
-                        <p className="text-fg-primary font-semibold">{purchaseReq.quantity} {purchaseReq.tokenSymbol}</p>
+                        <p className="text-fg-primary font-semibold">{order.account.quantity.toString()} tokens</p>
                       </div>
                       <div>
                         <p className="text-fg-muted text-micro">Total Pago</p>
-                        <p className="text-fg-primary font-semibold">{purchaseReq.totalSol.toFixed(4)} SOL</p>
+                        <p className="text-fg-primary font-semibold">{(order.account.totalLamports.toNumber() / 1_000_000_000).toFixed(4)} SOL</p>
                       </div>
                       <div>
                         <p className="text-fg-muted text-micro">Preço/Token</p>
-                        <p className="text-fg-primary font-semibold">{purchaseReq.pricePerToken.toFixed(4)} SOL</p>
+                        <p className="text-fg-primary font-semibold">{(order.account.pricePerTokenLamports.toNumber() / 1_000_000_000).toFixed(4)} SOL</p>
                       </div>
                     </div>
-
-                    {/* Transaction Link */}
-                    {purchaseReq.txSignature && (
-                      <div className="p-3 bg-muted/30 rounded-lg">
-                        <p className="text-xs text-fg-muted mb-1">Transação de Pagamento:</p>
-                        <a
-                          href={`https://explorer.solana.com/tx/${purchaseReq.txSignature}?cluster=devnet`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-brand-400 hover:underline flex items-center gap-1 font-mono"
-                        >
-                          {purchaseReq.txSignature.slice(0, 16)}...
-                          <ExternalLink className="h-3 w-3" />
-                        </a>
-                      </div>
-                    )}
 
                     {/* Mint Info */}
                     <div className="p-3 bg-muted/30 rounded-lg">
                       <p className="text-xs text-fg-muted mb-1">Token Mint:</p>
-                      <p className="text-xs text-fg-primary font-mono break-all">{purchaseReq.mint}</p>
+                      <p className="text-xs text-fg-primary font-mono break-all">{order.account.mint.toBase58()}</p>
+                    </div>
+
+                    {/* PDA Info */}
+                    <div className="p-3 bg-muted/30 rounded-lg">
+                      <p className="text-xs text-fg-muted mb-1">Purchase Order PDA:</p>
+                      <p className="text-xs text-fg-primary font-mono break-all">{order.publicKey.toBase58()}</p>
                     </div>
 
                     {/* Timestamp */}
                     <div className="text-xs text-fg-muted">
-                      Solicitado em: {new Date(purchaseReq.timestamp).toLocaleString('pt-BR')}
+                      Solicitado em: {new Date(order.account.createdAt.toNumber() * 1000).toLocaleString('pt-BR')}
                     </div>
 
                     {/* Actions */}
                     <div className="flex gap-2 pt-2">
                       <Button
-                        onClick={() => handleApprovePurchase(purchaseReq)}
+                        onClick={() => handleApprovePurchaseOrder(order)}
                         disabled={loading}
                         className="flex-1 btn-primary"
                       >
@@ -866,15 +886,51 @@ export function AdminPanel() {
                         )}
                       </Button>
 
-                      <Button
-                        variant="destructive"
-                        className="flex-1"
-                        onClick={() => handleRejectPurchase(purchaseReq)}
-                        disabled={loading}
-                      >
-                        <XCircle className="mr-2 h-4 w-4" />
-                        Rejeitar
-                      </Button>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button
+                            variant="destructive"
+                            className="flex-1"
+                            disabled={loading}
+                          >
+                            <XCircle className="mr-2 h-4 w-4" />
+                            Rejeitar
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Rejeitar Purchase Order</DialogTitle>
+                            <DialogDescription>
+                              Informe o motivo da rejeição. O SOL será automaticamente reembolsado.
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div>
+                              <Label htmlFor="reject-reason">Motivo da Rejeição</Label>
+                              <Input
+                                id="reject-reason"
+                                placeholder="Ex: KYC pendente, valor incorreto..."
+                                value={rejectReason}
+                                onChange={(e) => setRejectReason(e.target.value)}
+                                maxLength={200}
+                              />
+                            </div>
+                            <Button
+                              onClick={() => {
+                                if (rejectReason.trim()) {
+                                  handleRejectPurchaseOrder(order, rejectReason);
+                                  setRejectReason('');
+                                }
+                              }}
+                              disabled={loading || !rejectReason.trim()}
+                              variant="destructive"
+                              className="w-full"
+                            >
+                              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirmar Rejeição'}
+                            </Button>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </CardContent>
                 </Card>
