@@ -1,15 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import '@/styles/features/dashboard.css';
-import { Header, Footer } from "@/components/layout";
+import { DashboardLayout, DashboardSection } from "@/components/layout";
 import { KPICard } from "@/components/ui/kpi-card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { HeroButton } from "@/components/ui/hero-button";
 import { DashboardNav } from "@/components/dashboard/DashboardNav";
 import { DeployedTokensGrid } from '@/components/srwa/DeployedTokensGrid';
 import { mockUserPositions, type UserPosition } from "@/lib/mock-data";
-import { DASHBOARD_ROUTES } from "@/lib/constants";
 
 // Hooks
 import { useWallet } from '@/contexts/wallet/WalletContext';
@@ -79,32 +77,7 @@ export default function DashboardPortfolio() {
     : "3.78%";
 
   return (
-    <div className="min-h-screen bg-background relative overflow-x-hidden">
-      {/* Background Gradiente Harmonioso */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        {/* SVG Noise Overlay */}
-        <svg className="absolute inset-0 opacity-[0.015] w-full h-full">
-          <filter id="dashboardNoiseFilter">
-            <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" />
-            <feColorMatrix type="saturate" values="0" />
-          </filter>
-          <rect width="100%" height="100%" filter="url(#dashboardNoiseFilter)" />
-        </svg>
-
-        {/* Gradient Background */}
-        <div className="absolute inset-0 opacity-60" style={{
-          background: `
-            radial-gradient(ellipse 80% 50% at 50% 0%, rgba(153,69,255,0.15), transparent 50%),
-            radial-gradient(ellipse 60% 40% at 50% 100%, rgba(255,107,53,0.12), transparent 50%),
-            linear-gradient(180deg, #0A0A0A 0%, #0d0b0e 30%, #110d14 70%, #0A0A0A 100%)
-          `
-        }} />
-      </div>
-
-      <div className="relative z-10">
-        <Header />
-
-        <main className="container mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8 space-y-6 sm:space-y-8">
+    <DashboardLayout>
 
           {/* Header with Create SRWA Button */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
@@ -133,26 +106,19 @@ export default function DashboardPortfolio() {
           <DashboardNav />
 
           {/* Portfolio Tab Content */}
-          <div className="dashboard-tab-content dashboard-portfolio-tab relative space-y-8">
-            {/* Decorative Background - Orange */}
-            <div className="absolute inset-0 pointer-events-none opacity-40">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-96" style={{
-                background: 'radial-gradient(ellipse 60% 50% at 50% 20%, rgba(255,107,53,0.12), transparent 70%)'
-              }} />
-            </div>
-
-            <div className="relative z-10 space-y-6">
-              <div className="text-center space-y-4">
-                <h2 className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-orange-400 via-orange-300 to-orange-500 bg-clip-text text-transparent">
-                  Your Portfolio Overview
-                  <span className="inline-block ml-2">
-                    <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-orange-400 inline" />
-                  </span>
-                </h2>
-                <p className="text-base sm:text-lg text-fg-secondary max-w-2xl mx-auto px-4">
-                  Track your lending positions, yields, and portfolio health in real-time
-                </p>
-              </div>
+          <DashboardSection
+            title={
+              <>
+                Your Portfolio Overview
+                <span className="inline-block ml-2">
+                  <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-orange-400 inline" />
+                </span>
+              </>
+            }
+            description="Track your lending positions, yields, and portfolio health in real-time"
+            decorativeColor="orange"
+            className="dashboard-portfolio-tab"
+          >
 
               {/* Wallet Connection Check */}
               {!isConnected ? (
@@ -241,18 +207,7 @@ export default function DashboardPortfolio() {
                   </div>
                 </div>
               )}
-            </div>
-          </div>
-        </main>
-
-        {/* Footer */}
-        <Footer
-          showCTA
-          ctaAction="top"
-          ctaTitle="Manage Your Portfolio"
-          ctaDescription="Track and optimize your positions"
-        />
-      </div>
-    </div>
+          </DashboardSection>
+    </DashboardLayout>
   );
 }

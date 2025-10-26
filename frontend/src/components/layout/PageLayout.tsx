@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Header } from './Header';
 import { Footer, FooterProps } from './Footer';
+import { BackgroundGradient, BackgroundVariant } from './BackgroundGradient';
 import { cn } from '@/lib/utils';
 
 interface PageLayoutProps {
@@ -16,6 +17,10 @@ interface PageLayoutProps {
   // Footer customization
   showFooter?: boolean;
   footerProps?: FooterProps;
+
+  // Background customization
+  backgroundVariant?: BackgroundVariant;
+  showNoise?: boolean;
 
   // Content customization
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'full' | 'none';
@@ -47,16 +52,27 @@ const maxWidthClasses = {
  *
  * Features:
  * - Consistent Header + Content + Footer structure
+ * - Optional animated background with noise texture
  * - Flexible customization through props
+ * - Proper z-index management (prevents Footer click bugs)
  * - Eliminates layout duplication across pages
  * - Responsive and accessible
  *
  * @example
  * ```tsx
+ * // Simple layout
  * <PageLayout
  *   showFooter
  *   footerProps={{ showCTA: true, ctaAction: 'dashboard' }}
  *   maxWidth="7xl"
+ * >
+ *   <YourPageContent />
+ * </PageLayout>
+ *
+ * // With background gradient
+ * <PageLayout
+ *   backgroundVariant="purple"
+ *   showNoise
  * >
  *   <YourPageContent />
  * </PageLayout>
@@ -68,37 +84,49 @@ export function PageLayout({
   headerProps,
   showFooter = true,
   footerProps,
+  backgroundVariant = 'none',
+  showNoise = false,
   maxWidth = '7xl',
   containerClassName,
   contentClassName,
   withPadding = true,
   fullHeight = false,
 }: PageLayoutProps) {
+  const hasBackground = backgroundVariant !== 'none';
+
   return (
-    <div className={cn(
-      'flex flex-col',
-      fullHeight ? 'min-h-screen' : 'min-h-screen'
-    )}>
-      {/* Header */}
-      {showHeader && <Header {...headerProps} />}
+    <div
+      className={cn(
+        'flex flex-col',
+        fullHeight ? 'min-h-screen' : 'min-h-screen',
+        hasBackground && 'bg-background relative overflow-x-hidden'
+      )}
+    >
+      {/* Background Layer (z-0) - Only if variant is specified */}
+      {hasBackground && <BackgroundGradient variant={backgroundVariant} showNoise={showNoise} />}
 
-      {/* Main Content */}
-      <main className={cn(
-        'flex-1',
-        containerClassName
-      )}>
-        <div className={cn(
-          'mx-auto',
-          maxWidth !== 'none' && maxWidthClasses[maxWidth],
-          withPadding && 'px-4 sm:px-6 lg:px-8',
-          contentClassName
-        )}>
-          {children}
-        </div>
-      </main>
+      {/* Content Layer (z-10) - Wraps everything if background is present */}
+      <div className={cn(hasBackground && 'relative z-10', 'flex flex-col min-h-screen')}>
+        {/* Header */}
+        {showHeader && <Header {...headerProps} />}
 
-      {/* Footer */}
-      {showFooter && <Footer {...footerProps} />}
+        {/* Main Content */}
+        <main className={cn('flex-1', containerClassName)}>
+          <div
+            className={cn(
+              'mx-auto',
+              maxWidth !== 'none' && maxWidthClasses[maxWidth],
+              withPadding && 'px-4 sm:px-6 lg:px-8',
+              contentClassName
+            )}
+          >
+            {children}
+          </div>
+        </main>
+
+        {/* Footer */}
+        {showFooter && <Footer {...footerProps} />}
+      </div>
     </div>
   );
 }
