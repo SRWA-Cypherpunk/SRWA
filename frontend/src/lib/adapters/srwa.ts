@@ -1,3 +1,14 @@
+/**
+ * ⚠️ LEGACY/DEPRECATED - Mock SRWA Adapter
+ *
+ * Este arquivo contém funções mock. Todos os MOCK_TX_HASH são placeholders.
+ *
+ * Para operações SRWA em Solana, use:
+ * - /hooks/solana/useIssuer.ts
+ * - /hooks/solana/useAdmin.ts
+ * - Programa: programs/srwa_factory/
+ */
+
 import { withTxToasts } from '@/lib/txFlow';
 
 export type Address = string;

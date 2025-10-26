@@ -26,3 +26,6 @@ export { useInvestorPurchase } from './useInvestorPurchase';
 export type { PurchaseInput } from './useInvestorPurchase';
 export { usePurchaseRequests } from './usePurchaseRequests';
 export type { PurchaseRequest } from './usePurchaseRequests';
+export { useAdminRegistry } from './useAdminRegistry';
+export { usePurchaseOrders } from './usePurchaseOrders';
+export type { PurchaseOrderAccount, PurchaseOrderStatus } from './usePurchaseOrders';

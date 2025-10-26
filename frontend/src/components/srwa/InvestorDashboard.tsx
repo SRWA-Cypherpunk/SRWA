@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { PublicKey } from '@solana/web3.js';
 import { BN } from '@coral-xyz/anchor';
 import { useWallet } from '@/contexts/wallet/WalletContext';
-import { useUserRegistry, useInvestor, useDeployedTokens, useInvestorPurchase, usePurchaseRequests } from '@/hooks/solana';
+import { useUserRegistry, useInvestor, useDeployedTokens, usePurchaseOrders, useAdminRegistry } from '@/hooks/solana';
 import { useProgramsSafe } from '@/contexts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -28,16 +28,14 @@ import {
   RefreshCw
 } from 'lucide-react';
 
-const ADMIN_WALLET = new PublicKey('6DRSJNQfE9sHm6GKtjsV6fNBQfQkYkfQv9nSb2zLbgJf'); // TODO: Get from admin registry
-
 export function InvestorDashboard() {
   const { publicKey } = useWallet();
   const { userRegistry } = useUserRegistry();
   const { programs, loading: programsLoading, hasPrograms } = useProgramsSafe();
+  const { adminRegistry, loading: adminLoading } = useAdminRegistry();
   const { registerIdentity, isVerified, subscribe, getSubscription, claimTokens } = useInvestor();
   const { tokens: deployedTokens, loading: tokensLoading, refresh: refreshTokens } = useDeployedTokens();
-  const { requestPurchaseWithSOL } = useInvestorPurchase();
-  const { createRequest: createPurchaseRequest } = usePurchaseRequests();
+  const { createOrder, orders: purchaseOrders, getOrdersByInvestor } = usePurchaseOrders();
 
   const [showKYCForm, setShowKYCForm] = useState(false);
   const [verified, setVerified] = useState(false);
@@ -64,37 +62,44 @@ export function InvestorDashboard() {
   const handlePurchase = async () => {
     if (!selectedToken || !purchaseQuantity || !publicKey) return;
 
+    // Prevent double-click / double execution
+    if (loading) {
+      console.log('[InvestorDashboard] Already processing, skipping...');
+      return;
+    }
+
+    if (!adminRegistry || adminRegistry.authorizedAdmins.length === 0) {
+      toast.error('Admin registry não encontrado. Por favor, tente novamente.');
+      return;
+    }
+
     try {
       setLoading(true);
       setError(null);
 
       const quantity = parseFloat(purchaseQuantity);
-      const pricePerToken = 0.01; // 0.01 SOL por token (temporário para devnet)
-      const totalSol = quantity * pricePerToken;
+      const pricePerTokenSOL = 0.01; // 0.01 SOL por token (temporário para devnet)
+      const pricePerTokenLamports = Math.floor(pricePerTokenSOL * 1_000_000_000); // Converter para lamports
+      const totalSol = quantity * pricePerTokenSOL;
 
-      // 1. Enviar SOL para o admin
-      const signature = await requestPurchaseWithSOL({
+      // Admin vault (primeiro admin autorizado)
+      const adminVault = adminRegistry.authorizedAdmins[0];
+
+      // Criar purchase order on-chain
+      const { signature, purchaseOrderPda } = await createOrder({
         mint: selectedToken.mint,
-        adminWallet: ADMIN_WALLET,
-        pricePerToken,
-        quantity,
+        quantity: Math.floor(quantity), // Quantidade em unidades base
+        pricePerTokenLamports,
+        adminVault,
       });
 
-      // 2. Criar purchase request para o admin aprovar
-      createPurchaseRequest({
-        investor: publicKey.toBase58(),
-        mint: selectedToken.mint.toBase58(),
-        tokenSymbol: selectedToken.symbol,
-        tokenName: selectedToken.name,
-        quantity,
-        pricePerToken,
-        totalSol,
-        decimals: selectedToken.decimals,
-        txSignature: signature,
+      toast.success('Purchase Order Criada!', {
+        description: `Você pagou ${totalSol.toFixed(4)} SOL. Aguardando aprovação do admin para receber ${quantity} ${selectedToken.symbol}.`,
       });
 
-      toast.success('Pagamento enviado!', {
-        description: `Você pagou ${totalSol.toFixed(4)} SOL. O admin irá processar e enviar seus ${quantity} ${selectedToken.symbol} em breve.`,
+      console.log('[InvestorDashboard] Purchase order criada:', {
+        signature,
+        purchaseOrderPda: purchaseOrderPda.toBase58(),
       });
 
       setShowPurchaseDialog(false);
@@ -102,7 +107,8 @@ export function InvestorDashboard() {
       setSelectedToken(null);
     } catch (err: any) {
       setError(err.message);
-      toast.error(err.message);
+      toast.error('Erro ao criar purchase order: ' + err.message);
+      console.error('[InvestorDashboard] Erro:', err);
     } finally {
       setLoading(false);
     }

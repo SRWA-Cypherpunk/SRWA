@@ -2,8 +2,20 @@ import { withTxToasts } from '@/lib/txFlow';
 import { Address, TokenEvent } from '@/types/srwa-contracts';
 
 /**
- * SRWA Token Operations
- * Based on the SRWA Token contract from contracts3/srwa_token
+ * ⚠️ LEGACY/DEPRECATED - Stellar Contract Adapter
+ *
+ * Este arquivo contém adapters para contratos Stellar (não Solana).
+ * O projeto agora usa Solana/Anchor exclusivamente.
+ *
+ * TODO: Remover este arquivo ou migrar completamente para Solana
+ *
+ * Todos os MOCK_*_TX_HASH são placeholders porque:
+ * 1. Não há implementação real dos contratos Stellar
+ * 2. O projeto migrou para Solana
+ *
+ * Para operações de token em Solana, use:
+ * - @solana/spl-token para operações SPL Token
+ * - hooks em /hooks/solana/* para interações com programas Anchor
  */
 
 // SEP-41 Token Interface Implementation
