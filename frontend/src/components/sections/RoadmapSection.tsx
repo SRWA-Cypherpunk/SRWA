@@ -124,6 +124,9 @@ export const RoadmapSection = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Viewport config for animations (disabled on mobile to prevent flashing)
+  const viewportConfig = isMobile ? false : { once: true };
+
   return (
     <section
       ref={sectionRef}
@@ -194,7 +197,7 @@ export const RoadmapSection = () => {
         initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 30 }}
         whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
-        viewport={{ once: true }}
+        viewport={viewportConfig}
       >
         <motion.h2
           className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white px-4"
@@ -356,7 +359,7 @@ export const RoadmapSection = () => {
                           </div>
 
                           {/* Title */}
-                          <h3 className="text-xl sm:text-2xl font-extrabold text-fg-primary leading-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-fg-primary group-hover:to-brand-300 transition-all duration-300">
+                          <h3 className={`text-xl sm:text-2xl font-extrabold text-fg-primary leading-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-fg-primary group-hover:to-brand-300 ${!isMobile && "transition-all duration-300"}`}>
                             {phase.title}
                           </h3>
                         </div>
@@ -389,7 +392,7 @@ export const RoadmapSection = () => {
                                       : phase.status === "upcoming"
                                       ? "border-orange-400 text-orange-400"
                                       : "border-purple-400 text-purple-400"
-                                  } group-hover/milestone:scale-125 transition-transform duration-300`}
+                                  } group-hover/milestone:scale-125 ${!isMobile && "transition-transform duration-300"}`}
                                   whileHover={{
                                     boxShadow: `0 0 15px ${
                                       phase.status === "completed"
@@ -416,7 +419,7 @@ export const RoadmapSection = () => {
                                     />
                                   </svg>
                                 </motion.div>
-                                <p className="text-sm sm:text-base text-fg-secondary group-hover/milestone:text-fg-primary transition-colors leading-relaxed flex-1">
+                                <p className={`text-sm sm:text-base text-fg-secondary group-hover/milestone:text-fg-primary ${!isMobile && "transition-colors"} leading-relaxed flex-1`}>
                                   {milestone}
                                 </p>
                               </motion.div>

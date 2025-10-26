@@ -1,6 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { Building2, Layers, TrendingUp, Check, ArrowRight, LucideIcon, ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface FlowStep {
   id: string;
@@ -71,10 +71,11 @@ interface FlowCardProps {
   isActive: boolean;
   onClick: () => void;
   highlighted?: boolean;
+  isMobile?: boolean;
 }
 
 // Desktop Flow Card (horizontal layout)
-const FlowCard = ({ step, index, isActive, onClick, highlighted = false }: FlowCardProps) => {
+const FlowCard = ({ step, index, isActive, onClick, highlighted = false, isMobile = false }: FlowCardProps) => {
   const Icon = step.icon;
 
   return (
@@ -82,7 +83,7 @@ const FlowCard = ({ step, index, isActive, onClick, highlighted = false }: FlowC
       className={`relative p-6 sm:p-8 rounded-2xl border-2 ${step.borderColor} bg-gradient-to-br ${step.bgGradient} to-transparent backdrop-blur-sm cursor-pointer group ${highlighted ? 'ring-2 ring-purple-500/30' : ''}`}
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
+      viewport={viewportConfig}
       transition={{ duration: 0.6, delay: index * 0.2 }}
       whileHover={{
         scale: 1.05,
@@ -92,7 +93,7 @@ const FlowCard = ({ step, index, isActive, onClick, highlighted = false }: FlowC
     >
       {/* Glow effect on hover */}
       <div
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl blur-xl"
+        className={`absolute inset-0 opacity-0 group-hover:opacity-100 ${!isMobile && "transition-opacity duration-300"} rounded-2xl blur-xl`}
         style={{ background: step.glowColor }}
       />
 
@@ -156,9 +157,10 @@ interface AccordionCardProps {
   isExpanded: boolean;
   onToggle: () => void;
   highlighted?: boolean;
+  isMobile?: boolean;
 }
 
-const AccordionCard = ({ step, index, isExpanded, onToggle, highlighted = false }: AccordionCardProps) => {
+const AccordionCard = ({ step, index, isExpanded, onToggle, highlighted = false, isMobile = false }: AccordionCardProps) => {
   const Icon = step.icon;
 
   return (
@@ -166,12 +168,12 @@ const AccordionCard = ({ step, index, isExpanded, onToggle, highlighted = false 
       className={`relative rounded-2xl border-2 ${step.borderColor} bg-gradient-to-br ${step.bgGradient} to-transparent backdrop-blur-sm overflow-hidden ${highlighted ? 'ring-2 ring-purple-500/30' : ''}`}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
+      viewport={viewportConfig}
       transition={{ duration: 0.5, delay: index * 0.15 }}
     >
       {/* Glow effect */}
       <div
-        className={`absolute inset-0 ${isExpanded ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300 rounded-2xl blur-xl`}
+        className={`absolute inset-0 ${isExpanded ? 'opacity-100' : 'opacity-0'} ${!isMobile && "transition-opacity duration-300"} rounded-2xl blur-xl`}
         style={{ background: step.glowColor }}
       />
 
@@ -303,7 +305,7 @@ const BidirectionalArrow = ({ fromColor, toColor, delay = 0 }: BidirectionalArro
           filter={`url(#tech-glow-${fromColor}-${toColor})`}
           initial={{ pathLength: 0, opacity: 0 }}
           whileInView={{ pathLength: 1, opacity: 1 }}
-          viewport={{ once: true }}
+          viewport={viewportConfig}
           transition={{ duration: 1.2, delay: delay + 0.3, ease: "easeOut" }}
         />
 
@@ -316,7 +318,7 @@ const BidirectionalArrow = ({ fromColor, toColor, delay = 0 }: BidirectionalArro
           filter={`url(#tech-glow-${fromColor}-${toColor})`}
           initial={{ opacity: 0, scale: 0 }}
           whileInView={{ opacity: 0.9, scale: 1 }}
-          viewport={{ once: true }}
+          viewport={viewportConfig}
           transition={{ duration: 0.4, delay: delay + 1.3, ease: "backOut" }}
         />
 
@@ -329,7 +331,7 @@ const BidirectionalArrow = ({ fromColor, toColor, delay = 0 }: BidirectionalArro
           filter={`url(#tech-glow-${fromColor}-${toColor})`}
           initial={{ opacity: 0, scale: 0 }}
           whileInView={{ opacity: 0.9, scale: 1 }}
-          viewport={{ once: true }}
+          viewport={viewportConfig}
           transition={{ duration: 0.4, delay: delay + 1.3, ease: "backOut" }}
         />
 
@@ -452,7 +454,7 @@ const VerticalBidirectionalArrow = ({ fromColor, toColor, delay = 0, index = 0 }
           filter={`url(#tech-glow-v-${uniqueId})`}
           initial={{ pathLength: 0, opacity: 0 }}
           whileInView={{ pathLength: 1, opacity: 1 }}
-          viewport={{ once: true }}
+          viewport={viewportConfig}
           transition={{ duration: 1, delay: delay + 0.2, ease: "easeOut" }}
         />
 
@@ -465,7 +467,7 @@ const VerticalBidirectionalArrow = ({ fromColor, toColor, delay = 0, index = 0 }
           filter={`url(#tech-glow-v-${uniqueId})`}
           initial={{ opacity: 0, scale: 0 }}
           whileInView={{ opacity: 0.9, scale: 1 }}
-          viewport={{ once: true }}
+          viewport={viewportConfig}
           transition={{ duration: 0.3, delay: delay + 1, ease: "backOut" }}
         />
 
@@ -478,7 +480,7 @@ const VerticalBidirectionalArrow = ({ fromColor, toColor, delay = 0, index = 0 }
           filter={`url(#tech-glow-v-${uniqueId})`}
           initial={{ opacity: 0, scale: 0 }}
           whileInView={{ opacity: 0.9, scale: 1 }}
-          viewport={{ once: true }}
+          viewport={viewportConfig}
           transition={{ duration: 0.3, delay: delay + 1, ease: "backOut" }}
         />
 
@@ -544,9 +546,26 @@ export const FlowDiagram = () => {
   const [activeStep, setActiveStep] = useState<number | null>(null);
   const [expandedStep, setExpandedStep] = useState<number>(1); // Default: expand SRWA (middle card)
 
+  // Detect mobile to disable animations
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== 'undefined' ? window.innerWidth < 768 : false
+  );
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const handleAccordionToggle = (index: number) => {
     setExpandedStep(expandedStep === index ? -1 : index);
   };
+
+  // Viewport config for animations (disabled on mobile to prevent flashing)
+  const viewportConfig = isMobile ? false : { once: true };
 
   return (
     <div className="relative">
@@ -558,6 +577,7 @@ export const FlowDiagram = () => {
           index={0}
           isActive={activeStep === 0}
           onClick={() => setActiveStep(activeStep === 0 ? null : 0)}
+          isMobile={isMobile}
         />
 
         {/* Bidirectional Arrow 1↔2 */}
@@ -574,6 +594,7 @@ export const FlowDiagram = () => {
           isActive={activeStep === 1}
           onClick={() => setActiveStep(activeStep === 1 ? null : 1)}
           highlighted={true}
+          isMobile={isMobile}
         />
 
         {/* Bidirectional Arrow 2↔3 */}
@@ -589,6 +610,7 @@ export const FlowDiagram = () => {
           index={2}
           isActive={activeStep === 2}
           onClick={() => setActiveStep(activeStep === 2 ? null : 2)}
+          isMobile={isMobile}
         />
       </div>
 
@@ -601,6 +623,7 @@ export const FlowDiagram = () => {
           isExpanded={expandedStep === 0}
           onToggle={() => handleAccordionToggle(0)}
           highlighted={false}
+          isMobile={isMobile}
         />
 
         {/* Vertical Arrow 1↕2 */}
@@ -618,6 +641,7 @@ export const FlowDiagram = () => {
           isExpanded={expandedStep === 1}
           onToggle={() => handleAccordionToggle(1)}
           highlighted={true}
+          isMobile={isMobile}
         />
 
         {/* Vertical Arrow 2↕3 */}
@@ -635,6 +659,7 @@ export const FlowDiagram = () => {
           isExpanded={expandedStep === 2}
           onToggle={() => handleAccordionToggle(2)}
           highlighted={false}
+          isMobile={isMobile}
         />
       </div>
 
@@ -643,7 +668,7 @@ export const FlowDiagram = () => {
         className="mt-12 text-center"
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
+        viewport={viewportConfig}
         transition={{ duration: 0.6, delay: 1.2 }}
       >
         <p className="text-sm text-fg-secondary max-w-3xl mx-auto">
