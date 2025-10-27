@@ -11,10 +11,13 @@ export default function Register() {
   const { connected } = useWallet();
   const { userRegistry, isLoading } = useUserRegistry();
 
-  // Log state for debugging
+  // Auto-redirect to dashboard if already registered
   useEffect(() => {
-    console.log('[Register] State:', { connected, isLoading, userRegistry });
-  }, [connected, isLoading, userRegistry]);
+    if (userRegistry?.is_active) {
+      console.log('[Register] User already registered, redirecting to dashboard');
+      navigate('/dashboard');
+    }
+  }, [userRegistry, navigate]);
 
   // Mostrar loading enquanto carrega
   if (isLoading) {

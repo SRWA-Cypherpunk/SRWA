@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { UserRole } from '@/types/srwa-contracts';
 import { useUserRegistry } from '@/hooks/solana';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Loader2, Building2, TrendingUp, Shield, CheckCircle, ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { useIsAuthorizedAdmin } from '@/hooks/useIsAuthorizedAdmin';
 
 interface RoleOption {
   role: UserRole;
@@ -66,6 +67,15 @@ export function RegistrationWizard() {
   const [isRegistering, setIsRegistering] = useState(false);
   const { registerUser } = useUserRegistry();
   const navigate = useNavigate();
+  const isAuthorizedAdmin = useIsAuthorizedAdmin();
+
+  // Filter available roles based on admin authorization
+  const availableRoles = useMemo(() => {
+    // Only show Admin role if wallet is authorized on-chain
+    return ROLE_OPTIONS.filter(
+      (option) => option.role !== UserRole.Admin || isAuthorizedAdmin
+    );
+  }, [isAuthorizedAdmin]);
 
   const handleRegister = async () => {
     if (!selectedRole) {
@@ -82,15 +92,9 @@ export function RegistrationWizard() {
         description: `You have been registered as ${selectedRole}`,
       });
 
-      // Redirect based on role
+
       setTimeout(() => {
-        if (selectedRole === UserRole.Issuer) {
-          navigate('/srwa-issuance');
-        } else if (selectedRole === UserRole.Investor) {
-          navigate('/investor');
-        } else {
-          navigate('/admin');
-        }
+        navigate('/dashboard');
       }, 1500);
     } catch (error: any) {
       console.error('Registration error:', error);
