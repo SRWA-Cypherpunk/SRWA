@@ -21,7 +21,7 @@ export default function DashboardOverview() {
   const navigate = useNavigate();
 
   // Wallet connection
-  const { isConnected, address, connect, isConnecting } = useWallet();
+  const { connected, address, connect, connecting } = useWallet();
 
   // Markets data
   const {
@@ -46,7 +46,7 @@ export default function DashboardOverview() {
   } = useSRWAMarkets();
 
   const loading = poolsLoading || analyticsLoading || srwaLoading;
-  const error = poolsError?.message || analyticsError?.message || srwaError?.message || null;
+  const error = poolsError || analyticsError || srwaError || null;
 
   // Combine Blend pools and SRWA markets for dashboard stats
   const allMarkets = [...enhancedPools, ...srwaMarkets];
