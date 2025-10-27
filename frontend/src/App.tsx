@@ -31,6 +31,9 @@ import DashboardMarkets from "./pages/dashboard/DashboardMarkets";
 import DashboardPortfolio from "./pages/dashboard/DashboardPortfolio";
 import UnifiedDashboard from "./pages/dashboard/UnifiedDashboard";
 import Investor from "./pages/Investor";
+import CreateSRWA from "./pages/issuer/CreateSRWA";
+import MyTokens from "./pages/issuer/MyTokens";
+import IssuerDashboard from "./pages/issuer/IssuerDashboard";
 
 const App = () => (
   <CombinedProvider>
@@ -58,6 +61,8 @@ const App = () => (
             <Route path="/market/:id" element={<MarketDetail />} />
             <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/investor" element={<Investor />} />
+            <Route path="/investor/kyc" element={<KYC />} />
+            <Route path="/investor/investments" element={<Investor />} />
 
             {/* Dashboard routes - Unified structure */}
             <Route path="/dashboard" element={<UnifiedDashboard />} />
@@ -75,12 +80,46 @@ const App = () => (
             <Route path="/optimizer" element={<Optimizer />} />
             <Route path="/oracle-nav" element={<OracleNav />} />
 
-            {/* Issuer routes - still protected by role */}
+            {/* Issuer routes - New structured routes */}
+            <Route
+              path="/issuer"
+              element={
+                <ProtectedRoute allowedRoles={[UserRole.Issuer]}>
+                  <IssuerDashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/issuer/create-srwa"
+              element={
+                <ProtectedRoute allowedRoles={[UserRole.Issuer]}>
+                  <CreateSRWA />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/issuer/my-tokens"
+              element={
+                <ProtectedRoute allowedRoles={[UserRole.Issuer]}>
+                  <MyTokens />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/issuer/create-pool"
+              element={
+                <ProtectedRoute allowedRoles={[UserRole.Issuer]}>
+                  <CreatePool />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Legacy Issuer routes - redirect to new structure */}
             <Route
               path="/srwa-issuance"
               element={
                 <ProtectedRoute allowedRoles={[UserRole.Issuer, UserRole.Admin]}>
-                  <SRWAIssuance />
+                  <CreateSRWA />
                 </ProtectedRoute>
               }
             />

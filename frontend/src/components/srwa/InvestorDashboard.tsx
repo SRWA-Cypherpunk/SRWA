@@ -199,8 +199,8 @@ export function InvestorDashboard() {
     );
   }
 
-  // Show KYC form if not completed
-  if (showKYCForm || !hasCompletedKYC) {
+  // Show KYC form only if explicitly requested
+  if (showKYCForm) {
     return <KYCRegistrationForm onComplete={handleKYCComplete} />;
   }
 
@@ -208,7 +208,7 @@ export function InvestorDashboard() {
     <div className="max-w-6xl mx-auto p-6 space-y-8">
       <div className="text-center space-y-2">
         <h1 className="text-display-1 font-semibold text-fg-primary">Investor Dashboard</h1>
-        <p className="text-body-1 text-fg-secondary">Manage your identity and participate in offerings</p>
+        <p className="text-body-1 text-fg-secondary">Manage your investments and participate in offerings</p>
       </div>
 
       {error && (
@@ -218,127 +218,8 @@ export function InvestorDashboard() {
         </Alert>
       )}
 
-      {/* KYC Status */}
-      <Card className="card-institutional">
-        <CardHeader>
-          <div className="flex items-center space-x-3">
-            <Shield className="h-6 w-6 text-brand-400" />
-            <div>
-              <CardTitle>KYC Status</CardTitle>
-              <CardDescription>Verify your identity to participate</CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between p-4 bg-green-500/10 rounded-lg border border-green-500/20">
-            <div className="flex items-center space-x-3">
-              <CheckCircle className="h-6 w-6 text-green-400" />
-              <div>
-                <p className="text-body-1 text-green-400 font-semibold">Verified</p>
-                <p className="text-body-2 text-fg-muted">You can participate in offerings</p>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowKYCForm(true)}
-            >
-              Update KYC
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Wallet Tokens */}
-      <Card className="card-institutional">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Wallet className="h-6 w-6 text-brand-400" />
-              <div>
-                <CardTitle>Seus Tokens</CardTitle>
-                <CardDescription>Saldo atual na carteira conectada</CardDescription>
-              </div>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={refreshWalletTokens}
-              disabled={!publicKey || walletTokensLoading}
-            >
-              <RefreshCw className="h-4 w-4" />
-            </Button>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {!publicKey ? (
-            <div className="text-center py-8">
-              <Wallet className="h-10 w-10 text-fg-muted mx-auto mb-2 opacity-50" />
-              <p className="text-sm text-fg-muted">
-                Conecte sua carteira para visualizar seus tokens SRWA.
-              </p>
-            </div>
-          ) : walletTokensLoading ? (
-            <div className="text-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto text-brand-400" />
-              <p className="text-sm text-fg-muted mt-2">Carregando tokens da carteira...</p>
-            </div>
-          ) : walletTokenHoldings.length === 0 ? (
-            <div className="text-center py-8">
-              <Wallet className="h-10 w-10 text-fg-muted mx-auto mb-2 opacity-50" />
-              <p className="text-sm text-fg-muted">
-                Você ainda não possui tokens SRWA na carteira conectada.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {walletTokenHoldings.map((token) => {
-                const mint = token.mint;
-                const mintShort =
-                  mint && mint.length > 8 ? `${mint.slice(0, 4)}...${mint.slice(-4)}` : mint || '---';
-                const displayName = token.metadata?.name ?? `Token ${mintShort}`;
-                const displaySymbol = token.metadata?.symbol ?? mintShort;
-                const amountNumber = Number(token.uiAmountString);
-                const fractionDigits = Math.min(4, Math.max(0, token.decimals));
-                const formattedAmount = Number.isFinite(amountNumber)
-                  ? amountNumber.toLocaleString('pt-BR', {
-                      minimumFractionDigits: 0,
-                      maximumFractionDigits: fractionDigits,
-                    })
-                  : token.uiAmountString;
-
-                return (
-                  <div
-                    key={token.accountAddress}
-                    className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-4 py-3"
-                  >
-                    <div>
-                      <p className="text-sm font-semibold text-fg-primary">{displayName}</p>
-                      <p className="text-xs text-fg-muted font-mono">
-                        {displaySymbol}
-                        {token.metadata?.symbol ? ` • ${mintShort}` : ''}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-semibold text-fg-primary">{formattedAmount}</p>
-                      <p className="text-xs text-fg-muted">Quantidade</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-          {walletTokensError && (
-            <Alert variant="destructive" className="mt-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{walletTokensError}</AlertDescription>
-            </Alert>
-          )}
-        </CardContent>
-      </Card>
-
       {/* Available Tokens */}
-      {hasCompletedKYC && (
+      {true && (
         <Card className="card-institutional">
           <CardHeader>
             <div className="flex items-center justify-between">

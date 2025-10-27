@@ -1,13 +1,15 @@
 import { useState, useEffect, type MouseEvent } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Plus, Shield, Building2 } from "lucide-react";
 import { SolanaWalletButton } from "@/components/wallet/SolanaWalletButton";
-import { ROUTES } from "@/lib/constants";
+import { ROUTES, ISSUER_ROUTES, ADMIN_ROUTES } from "@/lib/constants/routes";
 import { FEATURES } from "@/lib/constants/features";
 import Logo from "@/assets/logo.png";
 import SRWALetters from "@/assets/srwa_letters.png";
 import { AnimatePresence, motion } from "framer-motion";
+import { useUserRegistry } from "@/hooks/solana";
+import { UserRole } from "@/types/srwa-contracts";
 import { cn } from "@/lib/utils";
 
 interface HeaderProps {
@@ -20,6 +22,7 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
+  const { userRegistry } = useUserRegistry();
 
   // Helper function to check if route is active
   const isActive = (path: string) => {
@@ -131,12 +134,45 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
                 )} />
               </Link>
             )}
-            <a
-              href={ROUTES.DOCS}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-all duration-300 relative group"
-            >
+
+            {/* Issuer: Create SRWA */}
+            {userRegistry?.role === UserRole.Issuer && (
+              <Link
+                to={ISSUER_ROUTES.CREATE_SRWA}
+                className="text-sm lg:text-body-2 text-blue-400 hover:text-blue-300 transition-colors relative group font-semibold flex items-center gap-1"
+              >
+                <Plus className="w-3 h-3" />
+                Create SRWA
+                <span className="absolute bottom-0 left-0 w-0 h-px bg-blue-400 group-hover:w-full transition-all duration-300" />
+              </Link>
+            )}
+
+            {/* Issuer: My Tokens */}
+            {userRegistry?.role === UserRole.Issuer && (
+              <Link
+                to={ISSUER_ROUTES.MY_TOKENS}
+                className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group flex items-center gap-1"
+              >
+                <Building2 className="w-3 h-3" />
+                My Tokens
+                <span className="absolute bottom-0 left-0 w-0 h-px bg-brand-400 group-hover:w-full transition-all duration-300" />
+              </Link>
+            )}
+
+            {/* Admin: Admin Panel */}
+            {userRegistry?.role === UserRole.Admin && (
+              <Link
+                to={ADMIN_ROUTES.DASHBOARD}
+                className="text-sm lg:text-body-2 text-purple-400 hover:text-purple-300 transition-colors relative group font-semibold flex items-center gap-1"
+              >
+                <Shield className="w-3 h-3" />
+                Admin Panel
+                <span className="absolute bottom-0 left-0 w-0 h-px bg-purple-400 group-hover:w-full transition-all duration-300" />
+              </Link>
+            )}
+
+            <a href={ROUTES.DOCS} target="_blank" rel="noopener noreferrer" className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group">
+
               Documentation
               <span className="absolute -bottom-[2px] left-0 w-0 h-[2px] bg-brand-400 group-hover:w-full transition-all duration-300" />
             </a>
@@ -206,6 +242,41 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
                     Dashboard
                   </Link>
                 )}
+
+                {/* Issuer Menu Items */}
+                {userRegistry?.role === UserRole.Issuer && (
+                  <>
+                    <Link
+                      to={ISSUER_ROUTES.CREATE_SRWA}
+                      className="block py-2 text-sm sm:text-body-2 text-blue-400 hover:text-blue-300 transition-colors font-semibold flex items-center gap-2"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Plus className="w-4 h-4" />
+                      Create SRWA
+                    </Link>
+                    <Link
+                      to={ISSUER_ROUTES.MY_TOKENS}
+                      className="block py-2 text-sm sm:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors flex items-center gap-2"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Building2 className="w-4 h-4" />
+                      My Tokens
+                    </Link>
+                  </>
+                )}
+
+                {/* Admin Menu Items */}
+                {userRegistry?.role === UserRole.Admin && (
+                  <Link
+                    to={ADMIN_ROUTES.DASHBOARD}
+                    className="block py-2 text-sm sm:text-body-2 text-purple-400 hover:text-purple-300 transition-colors font-semibold flex items-center gap-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Shield className="w-4 h-4" />
+                    Admin Panel
+                  </Link>
+                )}
+
                 <a
                   href={ROUTES.DOCS}
                   target="_blank"

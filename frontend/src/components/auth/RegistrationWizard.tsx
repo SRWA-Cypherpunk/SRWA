@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { UserRole } from '@/types/srwa-contracts';
 import { useUserRegistry } from '@/hooks/solana';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, Building2, TrendingUp, Shield, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { useIsAuthorizedAdmin } from '@/hooks/useIsAuthorizedAdmin';
 
 interface RoleOption {
   role: UserRole;
@@ -64,6 +65,15 @@ export function RegistrationWizard() {
   const [isRegistering, setIsRegistering] = useState(false);
   const { registerUser } = useUserRegistry();
   const navigate = useNavigate();
+  const isAuthorizedAdmin = useIsAuthorizedAdmin();
+
+  // Filter available roles based on admin authorization
+  const availableRoles = useMemo(() => {
+    // Only show Admin role if wallet is authorized on-chain
+    return ROLE_OPTIONS.filter(
+      (option) => option.role !== UserRole.Admin || isAuthorizedAdmin
+    );
+  }, [isAuthorizedAdmin]);
 
   const handleRegister = async () => {
     if (!selectedRole) {
@@ -80,15 +90,9 @@ export function RegistrationWizard() {
         description: `Você foi registrado como ${selectedRole}`,
       });
 
-      // Redirecionar baseado no role
+      // Always redirect to dashboard regardless of role
       setTimeout(() => {
-        if (selectedRole === UserRole.Issuer) {
-          navigate('/srwa-issuance');
-        } else if (selectedRole === UserRole.Investor) {
-          navigate('/investor');
-        } else {
-          navigate('/admin');
-        }
+        navigate('/dashboard');
       }, 1500);
     } catch (error: any) {
       console.error('Erro ao registrar:', error);
@@ -110,7 +114,7 @@ export function RegistrationWizard() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        {ROLE_OPTIONS.map((option) => (
+        {availableRoles.map((option) => (
           <Card
             key={option.role}
             className={`cursor-pointer transition-all hover:scale-105 ${
@@ -180,14 +184,19 @@ export function RegistrationWizard() {
                 • Seu tipo de conta determinará as funcionalidades disponíveis
               </p>
               <p>
-                • Você precisará completar o processo de KYC para acessar todas as funcionalidades
-              </p>
-              <p>
                 • O registro é feito na blockchain e não pode ser alterado facilmente
               </p>
+              <p>
+                • Após o registro, você será redirecionado para o dashboard
+              </p>
+              {selectedRole === UserRole.Investor && (
+                <p className="text-blue-600 dark:text-blue-400">
+                  • KYC será solicitado apenas ao investir em pools que o exigem
+                </p>
+              )}
               {selectedRole === UserRole.Admin && (
                 <p className="text-amber-600 dark:text-amber-400 font-semibold">
-                  ⚠️ O tipo Admin requer aprovação especial e poderes elevados
+                  ⚠️ O tipo Admin requer autorização especial on-chain
                 </p>
               )}
             </CardContent>
