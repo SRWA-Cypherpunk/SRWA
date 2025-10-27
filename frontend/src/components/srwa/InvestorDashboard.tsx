@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { PublicKey } from '@solana/web3.js';
 import { BN } from '@coral-xyz/anchor';
 import { useWallet } from '@/contexts/wallet/WalletContext';
-import { useUserRegistry, useInvestor, useDeployedTokens, usePurchaseOrders, useAdminRegistry } from '@/hooks/solana';
+import { useUserRegistry, useInvestor, useDeployedTokens, usePurchaseOrders, useAdminRegistry, useWalletTokenBalances } from '@/hooks/solana';
 import { useProgramsSafe } from '@/contexts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -36,6 +36,23 @@ export function InvestorDashboard() {
   const { registerIdentity, isVerified, subscribe, getSubscription, claimTokens } = useInvestor();
   const { tokens: deployedTokens, loading: tokensLoading, refresh: refreshTokens } = useDeployedTokens();
   const { createOrder, orders: purchaseOrders, getOrdersByInvestor } = usePurchaseOrders();
+  const {
+    tokens: walletTokens,
+    loading: walletTokensLoading,
+    error: walletTokensError,
+    refresh: refreshWalletTokens,
+  } = useWalletTokenBalances();
+
+  const walletTokenHoldings = useMemo(
+    () =>
+      walletTokens.map((token) => {
+        const metadata = deployedTokens.find(
+          (deployedToken) => deployedToken.mint.toBase58() === token.mint
+        );
+        return { ...token, metadata };
+      }),
+    [deployedTokens, walletTokens]
+  );
 
   const [showKYCForm, setShowKYCForm] = useState(false);
   const [verified, setVerified] = useState(false);

@@ -1,5 +1,5 @@
 import { useState, useEffect, type MouseEvent } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Plus, Shield, Building2 } from "lucide-react";
 import { SolanaWalletButton } from "@/components/wallet/SolanaWalletButton";
@@ -10,6 +10,7 @@ import SRWALetters from "@/assets/srwa_letters.png";
 import { AnimatePresence, motion } from "framer-motion";
 import { useUserRegistry } from "@/hooks/solana";
 import { UserRole } from "@/types/srwa-contracts";
+import { cn } from "@/lib/utils";
 
 interface HeaderProps {
   disableDashboardLink?: boolean;
@@ -17,10 +18,19 @@ interface HeaderProps {
 }
 
 export function Header({ disableDashboardLink = false, onDashboardLinkClick }: HeaderProps) {
+  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const { userRegistry } = useUserRegistry();
+
+  // Helper function to check if route is active
+  const isActive = (path: string) => {
+    if (path === ROUTES.HOME) {
+      return location.pathname === path;
+    }
+    return location.pathname.startsWith(path);
+  };
 
   useEffect(() => {
     const controlNavbar = () => {
@@ -66,9 +76,14 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
   };
 
   return (
-    <header className={`sticky top-0 z-50 w-full border-b border-stroke-line bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-transform duration-300 ${
+    <header className={cn(
+      "sticky top-0 z-50 w-full",
+      "border-b border-brand-500/20",
+      "bg-black/80 backdrop-blur-xl",
+      "transition-all duration-300",
+      "shadow-[0_2px_20px_rgba(0,0,0,0.3)]",
       isVisible ? 'translate-y-0' : '-translate-y-full'
-    }`}>
+    )}>
       <div className="container mx-auto flex h-14 sm:h-16 max-w-7xl items-center px-4 sm:px-6">
 
         {/* Logo */}
@@ -82,18 +97,41 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
         {/* Desktop Navigation */}
         <div className="hidden md:flex flex-none items-center justify-center px-4">
           <nav className="flex items-center space-x-4 lg:space-x-6">
-            <Link to={ROUTES.HOME} className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group">
+            <Link
+              to={ROUTES.HOME}
+              className={cn(
+                "text-sm lg:text-body-2 transition-all duration-300 relative group",
+                isActive(ROUTES.HOME)
+                  ? "text-brand-400 font-semibold"
+                  : "text-fg-secondary hover:text-brand-400"
+              )}
+            >
               Home
-              <span className="absolute bottom-0 left-0 w-0 h-px bg-brand-400 group-hover:w-full transition-all duration-300" />
+              <span className={cn(
+                "absolute -bottom-[2px] left-0 h-[2px] transition-all duration-300",
+                isActive(ROUTES.HOME)
+                  ? "w-full bg-gradient-to-r from-brand-400 to-orange-400"
+                  : "w-0 bg-brand-400 group-hover:w-full"
+              )} />
             </Link>
             {FEATURES.DASHBOARD && (
               <Link
                 to={disableDashboardLink ? "#" : ROUTES.DASHBOARD}
                 onClick={handleDashboardLink}
-                className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group font-medium"
+                className={cn(
+                  "text-sm lg:text-body-2 transition-all duration-300 relative group font-medium",
+                  isActive(ROUTES.DASHBOARD)
+                    ? "text-brand-400 font-semibold"
+                    : "text-fg-secondary hover:text-brand-400"
+                )}
               >
                 Dashboard
-                <span className="absolute bottom-0 left-0 w-0 h-px bg-brand-400 group-hover:w-full transition-all duration-300" />
+                <span className={cn(
+                  "absolute -bottom-[2px] left-0 h-[2px] transition-all duration-300",
+                  isActive(ROUTES.DASHBOARD)
+                    ? "w-full bg-gradient-to-r from-brand-400 to-orange-400"
+                    : "w-0 bg-brand-400 group-hover:w-full"
+                )} />
               </Link>
             )}
 
@@ -134,8 +172,9 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
             )}
 
             <a href={ROUTES.DOCS} target="_blank" rel="noopener noreferrer" className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group">
+
               Documentation
-              <span className="absolute bottom-0 left-0 w-0 h-px bg-brand-400 group-hover:w-full transition-all duration-300" />
+              <span className="absolute -bottom-[2px] left-0 w-0 h-[2px] bg-brand-400 group-hover:w-full transition-all duration-300" />
             </a>
           </nav>
         </div>

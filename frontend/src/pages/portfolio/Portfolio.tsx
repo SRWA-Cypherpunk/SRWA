@@ -1,224 +1,191 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Header } from "@/components/layout/Header";
-import { KPICard } from "@/components/ui/kpi-card";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { mockUserPositions, type UserPosition } from "@/lib/mock-data";
-import { 
-  DollarSign, 
-  TrendingUp, 
-  Shield, 
-  BarChart3, 
+import PortfolioOverview from "@/components/portfolio/PortfolioOverview";
+import EnhancedPositionCard from "@/components/portfolio/EnhancedPositionCard";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useSRWATokens } from "@/hooks/solana/useSRWATokens";
+import { usePurchaseOrders } from "@/hooks/solana/usePurchaseOrders";
+import {
+  DollarSign,
+  TrendingUp,
+  Shield,
+  BarChart3,
   Activity,
   AlertTriangle,
   Plus,
-  Minus
+  Minus,
+  RefreshCw
 } from "lucide-react";
 
 export default function Portfolio() {
   const [selectedPosition, setSelectedPosition] = useState<UserPosition | null>(null);
+  const [activeTab, setActiveTab] = useState("overview");
 
-  // Calculate portfolio totals
-  const totalSupplied = mockUserPositions.reduce((acc, pos) => 
-    acc + parseFloat(pos.supplied.replace(/[$M,K]/g, '')), 0
-  );
-  const totalBorrowed = mockUserPositions.reduce((acc, pos) => 
-    acc + parseFloat(pos.borrowed.replace(/[$M,K]/g, '')), 0
-  );
-  const avgHealthFactor = mockUserPositions.reduce((acc, pos) => 
-    acc + parseFloat(pos.healthFactor), 0
-  ) / mockUserPositions.length;
-  const netApy = "3.78%"; // Calculated weighted average
+  // Wallet and blockchain hooks
+  const { publicKey } = useWallet();
+  const { tokens: srwaTokens, loading: tokensLoading } = useSRWATokens();
+  const { orders, loading: ordersLoading, getOrdersByInvestor } = usePurchaseOrders();
 
-  const getHealthFactorColor = (hf: string) => {
-    const value = parseFloat(hf);
-    if (value >= 2.0) return "text-emerald-400";
-    if (value >= 1.5) return "text-amber-400";
-    return "text-red-400";
-  };
+  // Get orders for current wallet
+  const purchaseOrders = useMemo(() => {
+    if (!publicKey) return [];
+    return getOrdersByInvestor ? getOrdersByInvestor(publicKey) : [];
+  }, [publicKey, getOrdersByInvestor]);
 
-  const getHealthFactorStatus = (hf: string) => {
-    const value = parseFloat(hf);
-    if (value >= 2.0) return "Healthy";
-    if (value >= 1.5) return "Moderate";
-    return "At Risk";
+  // Transform mock positions to enhanced format
+  const enhancedPositions = mockUserPositions.map(pos => ({
+    id: pos.marketName,
+    marketName: pos.marketName,
+    assetClass: pos.marketName.includes('Bill') ? 'T-Bills' :
+                pos.marketName.includes('CRI') ? 'Receivables' :
+                pos.marketName.includes('Estate') ? 'CRE' : 'T-Bills',
+    suppliedAmount: parseFloat(pos.supplied.replace(/[$M,K]/g, '')) * 1000000,
+    suppliedValue: parseFloat(pos.supplied.replace(/[$M,K]/g, '')) * 1000000,
+    borrowedAmount: parseFloat(pos.borrowed.replace(/[$M,K]/g, '')) * 1000000,
+    borrowedValue: parseFloat(pos.borrowed.replace(/[$M,K]/g, '')) * 1000000,
+    collateralValue: parseFloat(pos.collateral.replace(/[$M,K]/g, '')) * 1000000,
+    supplyAPY: parseFloat(pos.supplyAPY.replace('%', '')),
+    borrowAPY: parseFloat(pos.borrowAPY.replace('%', '')),
+    netAPY: parseFloat(pos.netAPY.replace('%', '')),
+    healthFactor: parseFloat(pos.healthFactor),
+    lastUpdated: Date.now() / 1000,
+    protocol: 'Blend' as const,
+    unrealizedPL: Math.random() * 10000 - 2000, // Mock P&L
+    plPercentage: Math.random() * 10 - 2 // Mock percentage
+  }));
+
+  const handleRefresh = () => {
+    // Refresh logic here
+    console.log('Refreshing portfolio data...');
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-primary">
       <Header />
-      
-      <main className="container mx-auto max-w-7xl px-6 py-8 space-y-8">
-        {/* Header Section */}
-        <div className="space-y-2 animate-fade-in">
-          <h1 className="text-h1 font-semibold text-fg-primary">Portfolio</h1>
-          <p className="text-body-1 text-fg-secondary">
-            Monitor your RWA lending positions, health factors, and performance metrics.
-          </p>
-        </div>
 
-        {/* Portfolio Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-slide-up">
-          <KPICard
-            title="Total Supplied"
-            value={`$${totalSupplied.toFixed(1)}M`}
-            icon={DollarSign}
-            trend="up"
-            trendValue="+5.2%"
-          />
-          <KPICard
-            title="Total Borrowed"
-            value={`$${totalBorrowed.toFixed(1)}M`}
-            icon={TrendingUp}
-            subtitle="Active positions"
-          />
-          <KPICard
-            title="Net APY"
-            value={netApy}
-            icon={BarChart3}
-            trend="up"
-            trendValue="+0.15%"
-          />
-          <KPICard
-            title="Avg Health Factor"
-            value={avgHealthFactor.toFixed(2)}
-            icon={Shield}
-            trend="neutral"
-            trendValue="Stable"
-          />
+      <main className="container mx-auto max-w-7xl px-6 py-8 space-y-8">
+        {/* Page Header */}
+        <div className="flex items-center justify-between animate-fade-in">
+          <div>
+            <h1 className="text-3xl font-bold text-primary">Portfolio</h1>
+            <p className="text-lg text-muted mt-1">
+              Manage your RWA investments and lending positions
+            </p>
+          </div>
+          <Button
+            onClick={handleRefresh}
+            variant="outline"
+            size="sm"
+            className="bg-glass border-glass hover:bg-elev-1"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
         </div>
 
         {/* Main Content */}
-        <Tabs defaultValue="positions" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-96">
+        <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4 lg:w-[500px]">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="positions">Positions</TabsTrigger>
             <TabsTrigger value="activity">Activity</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
+          {/* Overview Tab */}
+          <TabsContent value="overview" className="space-y-6">
+            <PortfolioOverview
+              userAddress={publicKey?.toString()}
+              positions={enhancedPositions}
+              srwaTokens={srwaTokens || []}
+              purchaseOrders={purchaseOrders || []}
+            />
+          </TabsContent>
+
           {/* Positions Tab */}
           <TabsContent value="positions" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {mockUserPositions.map((position, index) => (
-                <Card key={position.marketId} className="card-institutional hover-lift animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
-                  <div className="space-y-6">
-                    {/* Header */}
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <h3 className="text-h3 font-semibold text-fg-primary">
-                          {position.marketName}
-                        </h3>
-                        <div className="flex items-center gap-2">
-                          <Badge 
-                            variant="outline" 
-                            className={getHealthFactorColor(position.healthFactor)}
-                          >
-                            HF: {position.healthFactor}
-                          </Badge>
-                          <span className="text-micro text-fg-muted">
-                            {getHealthFactorStatus(position.healthFactor)}
-                          </span>
-                        </div>
-                      </div>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => setSelectedPosition(position)}
-                      >
-                        <Activity className="h-4 w-4" />
-                      </Button>
-                    </div>
-
-                    {/* Position Details */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-micro text-fg-muted uppercase tracking-wide">Supplied</p>
-                          <p className="text-body-1 font-semibold text-fg-primary tabular-nums">
-                            {position.supplied}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-micro text-fg-muted uppercase tracking-wide">Collateral Value</p>
-                          <p className="text-body-2 text-fg-secondary tabular-nums">
-                            {position.collateralValue}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-micro text-fg-muted uppercase tracking-wide">Borrowed</p>
-                          <p className="text-body-1 font-semibold text-fg-primary tabular-nums">
-                            {position.borrowed}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-micro text-fg-muted uppercase tracking-wide">Net APY</p>
-                          <p className="text-body-2 text-brand-400 font-medium tabular-nums">
-                            {position.netApy}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Health Factor Bar */}
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-micro text-fg-muted">Health Factor</span>
-                        <span className={`text-micro font-medium ${getHealthFactorColor(position.healthFactor)}`}>
-                          {position.healthFactor}
-                        </span>
-                      </div>
-                      <div className="w-full bg-bg-elev-2 rounded-full h-2">
-                        <div 
-                          className={`h-2 rounded-full transition-all duration-300 ${
-                            parseFloat(position.healthFactor) >= 2.0 ? 'bg-emerald-400' :
-                            parseFloat(position.healthFactor) >= 1.5 ? 'bg-amber-400' : 'bg-red-400'
-                          }`}
-                          style={{ 
-                            width: `${Math.min((parseFloat(position.healthFactor) / 3) * 100, 100)}%` 
-                          }}
-                        />
-                      </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-3">
-                      <Button variant="outline" size="sm" className="flex-1">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Supply
-                      </Button>
-                      <Button variant="outline" size="sm" className="flex-1">
-                        <Minus className="h-4 w-4 mr-2" />
-                        Withdraw
-                      </Button>
-                    </div>
+            {/* Positions Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Card className="bg-glass backdrop-blur-md border-glass p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted">Active Positions</p>
+                    <p className="text-2xl font-bold text-primary">
+                      {enhancedPositions.length}
+                    </p>
                   </div>
-                </Card>
+                  <Shield className="w-8 h-8 text-primary opacity-50" />
+                </div>
+              </Card>
+              <Card className="bg-glass backdrop-blur-md border-glass p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted">At Risk</p>
+                    <p className="text-2xl font-bold text-warning">
+                      {enhancedPositions.filter(p => p.healthFactor < 1.5).length}
+                    </p>
+                  </div>
+                  <AlertTriangle className="w-8 h-8 text-warning opacity-50" />
+                </div>
+              </Card>
+              <Card className="bg-glass backdrop-blur-md border-glass p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted">Total Net Value</p>
+                    <p className="text-2xl font-bold text-secondary">
+                      ${((enhancedPositions.reduce((sum, p) =>
+                        sum + p.suppliedValue - p.borrowedValue, 0
+                      )) / 1000000).toFixed(2)}M
+                    </p>
+                  </div>
+                  <DollarSign className="w-8 h-8 text-secondary opacity-50" />
+                </div>
+              </Card>
+            </div>
+
+            {/* Enhanced Position Cards */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {enhancedPositions.map((position, index) => (
+                <div
+                  key={position.id}
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <EnhancedPositionCard
+                    position={position}
+                    onSupply={() => console.log('Supply', position.id)}
+                    onWithdraw={() => console.log('Withdraw', position.id)}
+                    onBorrow={() => console.log('Borrow', position.id)}
+                    onRepay={() => console.log('Repay', position.id)}
+                    onManage={() => setSelectedPosition(mockUserPositions.find(p => p.marketName === position.marketName) || null)}
+                  />
+                </div>
               ))}
             </div>
 
-            {/* Risk Alerts */}
-            <Card className="card-institutional">
-              <div className="flex items-start space-x-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10">
-                  <AlertTriangle className="h-5 w-5 text-amber-400" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-h3 font-semibold text-fg-primary">Risk Management</h3>
-                  <p className="text-body-2 text-fg-secondary">
-                    Monitor health factors closely. Consider adding collateral or reducing borrowed amounts 
-                    when health factor approaches 1.5.
-                  </p>
-                  <Button variant="outline" size="sm">
-                    View Risk Guidelines
-                  </Button>
-                </div>
-              </div>
-            </Card>
+            {/* Empty State */}
+            {enhancedPositions.length === 0 && (
+              <Card className="bg-elev-1 border-border-primary p-12 text-center">
+                <Shield className="w-16 h-16 text-muted mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-primary mb-2">
+                  No Active Positions
+                </h3>
+                <p className="text-muted mb-6">
+                  Start by supplying assets to a lending pool or purchasing RWA tokens
+                </p>
+                <Button
+                  onClick={() => window.location.href = '/markets'}
+                  className="bg-gradient-primary"
+                >
+                  Explore Markets
+                </Button>
+              </Card>
+            )}
           </TabsContent>
 
           {/* Activity Tab */}

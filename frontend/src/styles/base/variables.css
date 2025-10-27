@@ -4,48 +4,119 @@
  */
 
 :root {
-  /* === Color System === */
+  /* === Color System - Landing Page Style === */
 
   /* Primary Colors - Solana Purple */
   --color-primary: #9945FF;
-  --color-primary-dark: #7928CA;
-  --color-primary-light: #B578FF;
+  --color-primary-dark: #6610F2;
+  --color-primary-light: #BD6FFF;
+  --color-primary-lighter: #D4A5FF;
+  --color-primary-50: rgba(153, 69, 255, 0.05);
+  --color-primary-100: rgba(153, 69, 255, 0.1);
+  --color-primary-200: rgba(153, 69, 255, 0.2);
 
   /* Secondary Colors - Solana Green */
   --color-secondary: #14F195;
   --color-secondary-dark: #0FCE7C;
-  --color-secondary-light: #5FF4B1;
+  --color-secondary-light: #2EDFA3;
+  --color-secondary-50: rgba(20, 241, 149, 0.05);
+  --color-secondary-100: rgba(20, 241, 149, 0.1);
 
-  /* Accent Colors */
+  /* Accent Colors - Orange */
   --color-orange: #FF6B35;
-  --color-orange-dark: #E85A2A;
-  --color-orange-light: #FF8C66;
+  --color-orange-dark: #E8552E;
+  --color-orange-light: #FF9955;
+  --color-orange-50: rgba(255, 107, 53, 0.05);
+  --color-orange-100: rgba(255, 107, 53, 0.1);
 
-  /* Background Colors */
-  --bg-primary: #0D0D0D;
+  /* Blue Accents */
+  --color-blue: #4DB2FF;
+  --color-blue-dark: #2196F3;
+  --color-blue-light: #90CAF9;
+  --color-blue-50: rgba(77, 178, 255, 0.05);
+  --color-blue-100: rgba(77, 178, 255, 0.1);
+
+  /* Background Colors - Deep Black Theme */
+  --bg-primary: #0A0A0A;
   --bg-secondary: #121212;
   --bg-tertiary: #1A1A1A;
-  --bg-elevated: #1F1F1F;
-  --bg-elevated-2: #252525;
-  --bg-hover: rgba(255, 255, 255, 0.05);
+  --bg-elevated: #121212;
+  --bg-elevated-2: #1A1A1A;
+  --bg-elevated-3: #262626;
+  --bg-hover: rgba(153, 69, 255, 0.05);
+  --bg-active: rgba(153, 69, 255, 0.08);
+  --bg-glass: rgba(10, 10, 10, 0.8);
+  --bg-glass-light: rgba(18, 18, 18, 0.6);
 
-  /* Text Colors */
+  /* Gradient Backgrounds - Landing Page Style */
+  --gradient-primary: linear-gradient(135deg, #9945FF 0%, #FF6B35 100%);
+  --gradient-secondary: linear-gradient(135deg, #14F195 0%, #9945FF 100%);
+  --gradient-solana: linear-gradient(135deg, #14F195 0%, #9945FF 50%, #FF6B35 100%);
+  --gradient-premium: linear-gradient(135deg, #6610F2 0%, #9945FF 50%, #BD6FFF 100%);
+  --gradient-dark-subtle: linear-gradient(180deg, #0A0A0A 0%, #121212 100%);
+  --gradient-mesh: radial-gradient(at 40% 20%, rgba(153, 69, 255, 0.06) 0%, transparent 50%),
+                   radial-gradient(at 80% 0%, rgba(255, 107, 53, 0.08) 0%, transparent 50%),
+                   radial-gradient(at 0% 50%, rgba(20, 241, 149, 0.04) 0%, transparent 50%);
+
+  /* Text Colors - High Contrast */
   --text-primary: #FFFFFF;
-  --text-secondary: #B8B8B8;
-  --text-tertiary: #808080;
-  --text-muted: #666666;
+  --text-secondary: #A6B0BF;
+  --text-tertiary: #8992A1;
+  --text-muted: #8992A1;
   --text-disabled: #4D4D4D;
+  --text-accent: #9945FF;
+  --text-success: #14F195;
+  --text-warning: #FFA726;
+  --text-error: #FF5252;
 
-  /* Border Colors */
-  --border-primary: rgba(255, 255, 255, 0.1);
-  --border-secondary: rgba(255, 255, 255, 0.05);
+  /* Border Colors - Subtle */
+  --border-primary: rgba(255, 255, 255, 0.15);
+  --border-secondary: rgba(255, 255, 255, 0.08);
   --border-accent: rgba(153, 69, 255, 0.3);
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-strong: rgba(153, 69, 255, 0.5);
+  --border-glass: rgba(255, 255, 255, 0.1);
 
-  /* Status Colors */
+  /* Status Colors - Professional palette */
   --color-success: #14F195;
+  --color-success-dark: #0FCE7C;
+  --color-success-light: #5FF4B1;
+  --color-success-bg: rgba(20, 241, 149, 0.1);
+
   --color-warning: #FFA726;
+  --color-warning-dark: #FB8C00;
+  --color-warning-light: #FFCC80;
+  --color-warning-bg: rgba(255, 167, 38, 0.1);
+
   --color-error: #FF5252;
+  --color-error-dark: #F44336;
+  --color-error-light: #FF8A80;
+  --color-error-bg: rgba(255, 82, 82, 0.1);
+
   --color-info: #42A5F5;
+  --color-info-dark: #2196F3;
+  --color-info-light: #90CAF9;
+  --color-info-bg: rgba(66, 165, 245, 0.1);
+
+  /* Risk Level Colors */
+  --risk-low: #14F195;
+  --risk-low-bg: rgba(20, 241, 149, 0.1);
+  --risk-medium: #FFA726;
+  --risk-medium-bg: rgba(255, 167, 38, 0.1);
+  --risk-high: #FF5252;
+  --risk-high-bg: rgba(255, 82, 82, 0.1);
+  --risk-experimental: #9945FF;
+  --risk-experimental-bg: rgba(153, 69, 255, 0.1);
+
+  /* Asset Classes Colors */
+  --asset-tbills: #4DB2FF;
+  --asset-tbills-bg: rgba(77, 178, 255, 0.1);
+  --asset-receivables: #9945FF;
+  --asset-receivables-bg: rgba(153, 69, 255, 0.1);
+  --asset-cre: #FF6B35;
+  --asset-cre-bg: rgba(255, 107, 53, 0.1);
+  --asset-debentures: #14F195;
+  --asset-debentures-bg: rgba(20, 241, 149, 0.1);
 
   /* === Spacing Scale === */
   --spacing-xs: 4px;
@@ -76,6 +147,20 @@
   --shadow-glow-purple: 0 0 20px rgba(153, 69, 255, 0.3);
   --shadow-glow-green: 0 0 20px rgba(20, 241, 149, 0.3);
   --shadow-glow-orange: 0 0 20px rgba(255, 107, 53, 0.3);
+  --shadow-glow-blue: 0 0 20px rgba(18, 83, 255, 0.3);
+
+  /* Institutional Shadows */
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+  --shadow-card-hover: 0 8px 32px rgba(0, 0, 0, 0.5);
+  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.2);
+  --shadow-inset: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+
+  /* === Glassmorphism Effects === */
+  --glass-backdrop: blur(10px) saturate(180%);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+  --glass-bg: rgba(31, 31, 31, 0.7);
+  --glass-bg-light: rgba(37, 37, 37, 0.5);
+  --glass-bg-heavy: rgba(31, 31, 31, 0.85);
 
   /* === Typography === */
 

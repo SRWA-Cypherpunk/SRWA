@@ -1,16 +1,11 @@
-import { useState } from "react";
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import '@/styles/features/dashboard.css';
-import { Header } from "@/components/layout/Header";
-import { KPICard } from "@/components/ui/kpi-card";
-import { Button } from "@/components/ui/button";
+import { Header } from '@/components/layout/Header';
+import { PageBackground } from '@/components/layout/PageBackground';
+import { DashboardSection } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { HeroButton } from "@/components/ui/hero-button";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, Legend } from "recharts";
-import { motion } from "framer-motion";
-import { ROUTES, DASHBOARD_ROUTES } from "@/lib/constants";
-import Logo from "@/assets/logo.png";
-import SRWALetters from "@/assets/srwa_letters.png";
 import { DashboardNav } from "@/components/dashboard/DashboardNav";
 import { RoleBasedActionCard } from "@/components/dashboard/RoleBasedActionCard";
 import { RoleGuard } from "@/components/guards";
@@ -27,20 +22,7 @@ import { UserRole } from '@/types/srwa-contracts';
 import { ISSUER_ROUTES, ADMIN_ROUTES } from '@/lib/constants/routes';
 
 // Icons
-import {
-  DollarSign,
-  TrendingUp,
-  Shield,
-  BarChart3,
-  Plus,
-  Globe,
-  Zap,
-  Wallet,
-  ArrowRight,
-  Github,
-  Twitter,
-  BookOpen
-} from "lucide-react";
+import { Plus, BarChart3 } from "lucide-react";
 
 export default function DashboardOverview() {
   const navigate = useNavigate();
@@ -119,17 +101,10 @@ export default function DashboardOverview() {
   };
 
   return (
-    <div className="min-h-screen bg-background relative overflow-x-hidden">
-      {/* Background Gradiente Harmonioso */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-        {/* SVG Noise Overlay */}
-        <svg className="absolute inset-0 opacity-[0.015] w-full h-full">
-          <filter id="dashboardNoiseFilter">
-            <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="4" />
-            <feColorMatrix type="saturate" values="0" />
-          </filter>
-          <rect width="100%" height="100%" filter="url(#dashboardNoiseFilter)" />
-        </svg>
+    <PageBackground variant="subtle">
+      <Header />
+      <main className="container mx-auto max-w-7xl px-6 py-8">
+        <DashboardNav />
 
         {/* Gradient Background */}
         <div className="absolute inset-0 opacity-60" style={{
@@ -204,15 +179,7 @@ export default function DashboardOverview() {
           </div>
 
           {/* Dashboard Content */}
-          <div className="dashboard-tab-content relative space-y-8">
-            {/* Decorative Background - Blue/Purple */}
-            <div className="absolute inset-0 pointer-events-none opacity-40">
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-96" style={{
-                background: 'radial-gradient(ellipse 60% 50% at 50% 20%, rgba(75,107,255,0.12), transparent 70%)'
-              }} />
-            </div>
-
-            <div className="relative z-10 space-y-6">
+          <DashboardSection decorativeColor="blue">
               {/* Admin Quick Stats */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 <div className="p-6 card-institutional hover-lift rounded-lg border bg-card text-card-foreground shadow-sm">

@@ -4,7 +4,7 @@
  * Provides clean imports for all layout components:
  * @example
  * ```tsx
- * import { PageLayout, Container, Section, Header, Footer } from '@/components/layout';
+ * import { PageLayout, DashboardLayout, BackgroundGradient } from '@/components/layout';
  * ```
  */
 
@@ -13,5 +13,8 @@ export { Footer } from './Footer';
 export type { FooterProps } from './Footer';
 
 export { PageLayout, PageSection } from './PageLayout';
+export { DashboardLayout, DashboardSection } from './DashboardLayout';
+export { BackgroundGradient, DecorativeGradient } from './BackgroundGradient';
+export type { BackgroundVariant } from './BackgroundGradient';
 
 export { Container, Section } from './Container';
