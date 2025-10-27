@@ -281,14 +281,36 @@ export function useSolendPoolCreator() {
         const pythPriceAccount = parsePublicKey(reserveInput.pythPriceAccount);
         const switchboardFeed = parsePublicKey(reserveInput.switchboardFeed, NULL_ORACLE);
 
-      const mintInfo = await getMint(connection, liquidityMint);
+      // Verificar se o mint existe
+      let mintInfo;
+      try {
+        mintInfo = await getMint(connection, liquidityMint);
+      } catch (error) {
+        throw new Error(`Mint inválido ou não encontrado: ${liquidityMint.toBase58()}. Certifique-se de que o token foi criado na devnet.`);
+      }
+
       const liquidityAmount = decimalToBN(reserveInput.initialLiquidity, mintInfo.decimals);
 
+      // Verificar se a ATA existe e tem saldo
       const sourceLiquidity = await getAssociatedTokenAddress(liquidityMint, wallet.publicKey, true);
-      const sourceAccount = await getAccount(connection, sourceLiquidity);
-        if (sourceAccount.amount < BigInt(liquidityAmount.toString())) {
-          throw new Error('Saldo insuficiente na conta de liquidez especificada para provisionar o pool');
-        }
+
+      let sourceAccount;
+      try {
+        sourceAccount = await getAccount(connection, sourceLiquidity);
+      } catch (error) {
+        throw new Error(
+          `Você não possui uma conta de token para ${liquidityMint.toBase58()}. ` +
+          `Crie uma ATA (Associated Token Account) e deposite pelo menos ${reserveInput.initialLiquidity} tokens antes de criar o pool. ` +
+          `Use: spl-token create-account ${liquidityMint.toBase58()} && spl-token mint ${liquidityMint.toBase58()} ${reserveInput.initialLiquidity}`
+        );
+      }
+
+      if (sourceAccount.amount < BigInt(liquidityAmount.toString())) {
+        throw new Error(
+          `Saldo insuficiente. Você tem ${sourceAccount.amount.toString()} tokens mas precisa de ${liquidityAmount.toString()} para provisionar o pool. ` +
+          `Deposite mais tokens na sua conta: ${sourceLiquidity.toBase58()}`
+        );
+      }
 
         const liquidityFeeReceiver = reserveInput.feeReceiver
           ? new PublicKey(reserveInput.feeReceiver)
@@ -386,7 +408,7 @@ export function useSolendPoolCreator() {
           BigInt(liquidityAmount.toString())
         );
 
-        const initReserveIx = initReserveIx(
+        const initReserveInstruction = initReserveIx(
           liquidityAmount,
           reserveConfig,
           sourceLiquidity,
@@ -408,7 +430,7 @@ export function useSolendPoolCreator() {
 
         const revokeIx = createRevokeInstruction(sourceLiquidity, wallet.publicKey);
 
-        const txInitReserve = new Transaction().add(approveIx, initReserveIx, revokeIx);
+        const txInitReserve = new Transaction().add(approveIx, initReserveInstruction, revokeIx);
 
         const signatures: string[] = [];
         signatures.push(
