@@ -9,7 +9,7 @@ export const PROGRAM_IDS = {
   identityClaims: "AuUzmKAAVyvR6NvDdd56SDjXHSE8dUePEnC5moECw9mE",
   complianceModules: "GD3ArP1GPKN9sWYPxiPia2i3iAKKsnbXxpcoB1gQK5D",
   offeringPool: "4D54H4NBA9Q7WtsAy2yaFs9BjEdT8DcdmXekKsf7n6KP",
-  yieldAdapter: "qSDUx7334aHWP44csqnJV61AmzC9vNmUKusJX4GQnor",
+  yieldAdapter: "4RrVh2CZKUiU3g7uD2qVtVMYbXSvMQ1oSz2S8RnuHpEv",
   valuationOracle: "C4sJ1phqCh2MxFJJqVHZuddXbp6hWfvz29N4CkscPpaW",
   cashflowEngine: "4ySjU9NzSwg457oxWCVgaH3fqqrhh7iDQco7Db1Zq4Di",
   purchaseOrder: "EdyLMn3iUrF16Z4VPyTfv9hC9G7eqxsHQVxnsNcsAT3Z",

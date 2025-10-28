@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { TokenSelect } from './TokenSelect';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
+import { useRaydiumPools } from '@/hooks/solana/useRaydiumPools';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import {
   getAssociatedTokenAddressSync,
@@ -73,6 +74,7 @@ type PoolInfoExtended = {
 export function RaydiumPoolCreator() {
   const { connection } = useConnection();
   const wallet = useWallet();
+  const { registerPool } = useRaydiumPools();
   const [form, setForm] = useState<FormState>(DEFAULT_FORM_STATE);
   const [loading, setLoading] = useState(false);
   const [loadingPool, setLoadingPool] = useState(false);
@@ -555,6 +557,22 @@ export function RaydiumPoolCreator() {
       });
 
       toast.success('Pool Raydium criado com sucesso!');
+
+      // Register pool on-chain in yield_adapter program
+      try {
+        toast.info('Registrando pool on-chain...');
+        const poolIdPubkey = new PublicKey(poolId);
+        const tokenMintPubkey = new PublicKey(form.tokenAMint);
+        const baseMintPubkey = new PublicKey(form.tokenBMint);
+
+        await registerPool(poolIdPubkey, tokenMintPubkey, baseMintPubkey);
+
+        toast.success('Pool registrada on-chain! Agora ela aparecerá automaticamente no dashboard.');
+        console.log('[RaydiumPoolCreator] Pool registered on-chain');
+      } catch (registerError: any) {
+        console.error('[RaydiumPoolCreator] Failed to register pool on-chain:', registerError);
+        toast.warning('Pool criada com sucesso, mas falha ao registrar on-chain: ' + registerError.message);
+      }
 
       // Reset form
       setForm({

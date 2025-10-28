@@ -1,5 +1,5 @@
 {
-  "address": "8xBNucLz1R72p8TMCzXGH1W1L65E9jHPKEXwSwC1jCot",
+  "address": "4RrVh2CZKUiU3g7uD2qVtVMYbXSvMQ1oSz2S8RnuHpEv",
   "metadata": {
     "name": "yield_adapter",
     "version": "0.1.0",
@@ -60,6 +60,78 @@
       ]
     },
     {
+      "name": "register_raydium_pool",
+      "docs": [
+        "Register a new Raydium pool as a separate account"
+      ],
+      "discriminator": [
+        239,
+        226,
+        16,
+        53,
+        68,
+        60,
+        166,
+        161
+      ],
+      "accounts": [
+        {
+          "name": "pool_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  97,
+                  121,
+                  100,
+                  105,
+                  117,
+                  109,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "token_mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "token_mint",
+          "docs": [
+            "The SRWA token mint that will be paired in the pool"
+          ]
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "pool_id",
+          "type": "pubkey"
+        },
+        {
+          "name": "base_mint",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
       "name": "skim_yield",
       "discriminator": [
         90,
@@ -79,6 +151,68 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "update_pool_status",
+      "docs": [
+        "Update pool status (active/inactive)"
+      ],
+      "discriminator": [
+        130,
+        87,
+        108,
+        6,
+        46,
+        224,
+        117,
+        123
+      ],
+      "accounts": [
+        {
+          "name": "pool_account",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  97,
+                  121,
+                  100,
+                  105,
+                  117,
+                  109,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pool_account.token_mint",
+                "account": "RaydiumPoolAccount"
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true,
+          "relations": [
+            "pool_account"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "is_active",
+          "type": "bool"
+        }
+      ]
     },
     {
       "name": "withdraw_marginfi",
@@ -131,6 +265,94 @@
           "type": "u64"
         }
       ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "RaydiumPoolAccount",
+      "discriminator": [
+        8,
+        239,
+        106,
+        96,
+        32,
+        143,
+        77,
+        154
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "pool_id",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "base_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "is_active",
+            "type": "bool"
+          }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "Unauthorized",
+      "msg": "Unauthorized"
+    }
+  ],
+  "types": [
+    {
+      "name": "RaydiumPoolAccount",
+      "docs": [
+        "Account for each registered Raydium pool"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "pool_id",
+            "type": "pubkey"
+          },
+          {
+            "name": "token_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "base_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "is_active",
+            "type": "bool"
+          }
+        ]
+      }
     }
   ]
 }

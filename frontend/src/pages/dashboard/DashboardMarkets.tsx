@@ -30,11 +30,12 @@ import { useBlendPools } from '@/hooks/markets/useBlendPools';
 import { useEnhancedPoolData } from '@/hooks/markets/useDefIndexData';
 import { useSRWAMarkets } from '@/hooks/markets/useSRWAMarkets';
 import { useDeployedTokens } from '@/hooks/solana/useDeployedTokens';
-import { usePurchaseOrders } from '@/hooks/solana';
+import { usePurchaseOrders, useRaydiumPools } from '@/hooks/solana';
 import type { DeployedToken } from '@/hooks/solana/useDeployedTokens';
+import { RaydiumPoolOperations } from '@/components/raydium/RaydiumPoolOperations';
 
 // Icons
-import { Plus, Zap, Loader2, RefreshCw, TrendingUp, DollarSign, Users, Activity, ArrowUpRight, Search, SlidersHorizontal, Grid3x3, List } from "lucide-react";
+import { Plus, Zap, Loader2, RefreshCw, TrendingUp, DollarSign, Users, Activity, ArrowUpRight, Search, SlidersHorizontal, Grid3x3, List, ExternalLink, Copy } from "lucide-react";
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 
@@ -268,11 +269,20 @@ export default function DashboardMarkets() {
 
   const purchaseOrders = usePurchaseOrders();
 
+  // Fetch Raydium pools registered on-chain
+  const {
+    pools: raydiumPools,
+    loading: raydiumPoolsLoading,
+    error: raydiumPoolsError,
+    refresh: refreshRaydiumPools
+  } = useRaydiumPools();
+
   // State for new UI
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('tvl');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedToken, setSelectedToken] = useState<DeployedToken | null>(null);
+  const [selectedRaydiumPoolId, setSelectedRaydiumPoolId] = useState<string | null>(null);
   const [purchaseQuantity, setPurchaseQuantity] = useState('');
   const [buyLoading, setBuyLoading] = useState(false);
 
@@ -282,7 +292,7 @@ export default function DashboardMarkets() {
 
   // Navigation handlers
   const handleViewPoolDetails = (poolAddress: string) => {
-    navigate(`/pool/${poolAddress}`);
+    setSelectedRaydiumPoolId(poolAddress);
   };
 
   const handleSupply = (poolAddress: string) => {
@@ -518,6 +528,152 @@ export default function DashboardMarkets() {
         </div>
       </DashboardSection>
 
+      {/* Raydium Pools Section */}
+      <DashboardSection
+        title="Raydium Liquidity Pools"
+        description="Pools de liquidez CPMM criadas no Raydium com tokens SRWA"
+        decorativeColor="cyan"
+      >
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary" className="rounded-full px-3 py-1">
+                {raydiumPools.length} pools registradas
+              </Badge>
+            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={refreshRaydiumPools}
+              disabled={raydiumPoolsLoading}
+            >
+              <RefreshCw className={`h-5 w-5 ${raydiumPoolsLoading ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
+
+          {raydiumPoolsLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-cyan-400" />
+            </div>
+          ) : raydiumPoolsError ? (
+            <Card className="border-red-500/30">
+              <CardContent className="p-6 text-center">
+                <p className="text-sm text-red-400">{raydiumPoolsError}</p>
+              </CardContent>
+            </Card>
+          ) : raydiumPools.length === 0 ? (
+            <Card className="border-border/50">
+              <CardContent className="p-8 text-center">
+                <Activity className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
+                <p className="text-base font-medium text-muted-foreground">
+                  Nenhuma pool Raydium registrada ainda
+                </p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Crie uma pool no painel admin para vê-la aqui
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {raydiumPools.map((pool, index) => {
+                const tokenInfo = deployedTokens.find(t => t.mint.toBase58() === pool.tokenMint.toBase58());
+
+                return (
+                  <motion.div
+                    key={pool.publicKey.toBase58()}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                  >
+                    <Card className="border-cyan-500/30 bg-background hover:border-cyan-500/50 transition-all hover:shadow-lg hover:shadow-cyan-500/10">
+                      <CardContent className="p-5">
+                        <div className="space-y-4">
+                          {/* Header */}
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h3 className="text-base font-bold mb-1">
+                                {tokenInfo?.symbol || 'SRWA'} / SOL
+                              </h3>
+                              <p className="text-xs text-muted-foreground">
+                                {tokenInfo?.name || 'SRWA Token'}
+                              </p>
+                            </div>
+                            <Badge variant="outline" className="text-xs bg-cyan-500/10 text-cyan-400 border-cyan-500/30">
+                              CPMM
+                            </Badge>
+                          </div>
+
+                          {/* Pool Info */}
+                          <div className="space-y-2 text-xs">
+                            <div className="flex items-center justify-between">
+                              <span className="text-muted-foreground">Pool ID:</span>
+                              <span className="font-mono text-[10px]">
+                                {pool.poolId.toBase58().slice(0, 4)}...{pool.poolId.toBase58().slice(-4)}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-muted-foreground">Token:</span>
+                              <span className="font-mono text-[10px]">
+                                {pool.tokenMint.toBase58().slice(0, 4)}...{pool.tokenMint.toBase58().slice(-4)}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-muted-foreground">Base:</span>
+                              <span className="font-mono text-[10px]">
+                                {pool.baseMint.toBase58().slice(0, 4)}...{pool.baseMint.toBase58().slice(-4)}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-muted-foreground">Created:</span>
+                              <span className="text-[10px]">
+                                {new Date(pool.createdAt * 1000).toLocaleDateString()}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="flex gap-2 pt-2 border-t border-border/30">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 h-8 text-xs"
+                              onClick={() => handleViewPoolDetails(pool.poolId.toBase58())}
+                            >
+                              Ver Pool
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => {
+                                window.open(`https://raydium.io/clmm/pools/?pool_id=${pool.poolId.toBase58()}&cluster=devnet`, '_blank');
+                              }}
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => {
+                                navigator.clipboard.writeText(pool.poolId.toBase58());
+                                toast.success('Pool ID copiado!');
+                              }}
+                            >
+                              <Copy className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </DashboardSection>
+
       {/* Markets Tab Content */}
       <DashboardSection
         title={
@@ -542,6 +698,24 @@ export default function DashboardMarkets() {
           onBorrow={handleBorrow}
         />
       </DashboardSection>
+
+      {/* Raydium Pool Dialog */}
+      <Dialog
+        open={!!selectedRaydiumPoolId}
+        onOpenChange={(open) => !open && setSelectedRaydiumPoolId(null)}
+      >
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Operações Raydium</DialogTitle>
+            <DialogDescription>
+              Execute swaps ou gerencie liquidez para o pool selecionado diretamente da dashboard.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedRaydiumPoolId && (
+            <RaydiumPoolOperations poolId={selectedRaydiumPoolId} />
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Purchase Dialog */}
       <Dialog open={!!selectedToken} onOpenChange={(open) => !open && setSelectedToken(null)}>

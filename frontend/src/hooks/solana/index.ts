@@ -30,3 +30,7 @@ export { useAdminRegistry } from './useAdminRegistry';
 export { usePurchaseOrders } from './usePurchaseOrders';
 export type { PurchaseOrderAccount, PurchaseOrderStatus } from './usePurchaseOrders';
 export { useWalletTokenBalances } from './useWalletTokenBalances';
+export { useRaydiumPools } from './useRaydiumPools';
+export type { RaydiumPoolAccount } from './useRaydiumPools';
+export { useRaydiumCpmm } from '../raydium/useRaydiumCpmm';
+export type { RaydiumPoolDisplay, SwapDirection } from '../raydium/useRaydiumCpmm';
