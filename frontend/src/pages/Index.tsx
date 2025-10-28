@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { MarketChart } from "@/components/ui/market-chart";
 import { HeroButton } from "@/components/ui/hero-button";
-import { LaunchCountdownButton } from "@/components/ui/launch-countdown-button";
+import { useNavigate } from "react-router-dom";
 import { Globe as GlobeComponent } from "@/components/ui/globe";
 import { RoadmapSection } from "@/components/sections/RoadmapSection";
 import { FlowDiagram } from "@/components/FlowDiagram";
@@ -115,8 +115,8 @@ const Index = () => {
     return () => clearInterval(interval);
   }, [rotatingPhrases.length]);
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const handleLaunchApp = () => {
+    navigate('/dashboard');
   };
 
   return (
@@ -387,12 +387,14 @@ const Index = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.8 }}
             >
-              <LaunchCountdownButton
+              <HeroButton
+                onClick={handleLaunchApp}
+                variant="brand"
                 className="w-full sm:w-auto"
-                buttonClassName="w-full sm:w-auto"
                 icon={<ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />}
-                onLaunch={scrollToTop}
-              />
+              >
+                Launch App
+              </HeroButton>
             </motion.div>
 
           </motion.div>
@@ -952,7 +954,7 @@ const Index = () => {
                       <Button
                         variant="gradient"
                         className={`group w-full shadow-[0_18px_45px_rgba(153,69,255,0.25)] ${!isMobile && "transition-all duration-500"} hover:shadow-[0_28px_60px_rgba(255,107,53,0.35)]`}
-                        onClick={scrollToTop}
+                        onClick={handleLaunchApp}
                       >
                         View Details
                         <ArrowRight className={`ml-2 h-4 w-4 group-hover:translate-x-1 ${!isMobile && "transition-transform"}`} />
@@ -977,11 +979,14 @@ const Index = () => {
           transition={{ duration: 0.6, delay: 0.8 }}
           viewport={viewportConfig}
         >
-          <LaunchCountdownButton
-            icon={<ArrowRight className="h-5 w-5" />}
-            onLaunch={scrollToTop}
+          <HeroButton
+            onClick={handleLaunchApp}
+            variant="brand"
             className="w-full sm:w-auto mx-auto"
-          />
+            icon={<ArrowRight className="h-5 w-5" />}
+          >
+            Launch App
+          </HeroButton>
         </motion.div>
         </div>
       </section>

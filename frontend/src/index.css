@@ -800,16 +800,48 @@
   }
 }
 
+/* Dashboard Navigation Animations */
+@keyframes gradient {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes shine {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.animate-gradient {
+  animation: gradient 3s ease infinite;
+  background-size: 200% 200%;
+}
+
+.animate-shine {
+  animation: shine 3s linear infinite;
+}
+
+.drop-shadow-glow {
+  filter: drop-shadow(0 0 10px currentColor);
+}
+
 /* High contrast mode support */
 @media (prefers-contrast: high) {
   .card-institutional {
     border-width: 2px;
   }
-  
+
   .btn-primary {
     border: 2px solid hsl(var(--primary));
   }
-  
+
   .text-fg-secondary,
   .text-fg-muted {
     color: hsl(var(--fg-primary));

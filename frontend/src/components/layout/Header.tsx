@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo, type MouseEvent } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Plus, Shield, Building2 } from "lucide-react";
 import { SolanaWalletButton } from "@/components/wallet/SolanaWalletButton";
 import { ROUTES, SRWA_ROUTES } from "@/lib/constants";
 import { FEATURES } from "@/lib/constants/features";
@@ -11,6 +11,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useUserRegistry } from "@/hooks/solana";
 import { UserRole } from "@/types/srwa-contracts";
 import { useWallet } from "@/contexts/wallet/WalletContext";
+import { cn } from "@/lib/utils";
 
 interface HeaderProps {
   disableDashboardLink?: boolean;
@@ -18,6 +19,7 @@ interface HeaderProps {
 }
 
 export function Header({ disableDashboardLink = false, onDashboardLinkClick }: HeaderProps) {
+  const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -100,9 +102,14 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
   };
 
   return (
-    <header className={`sticky top-0 z-50 w-full border-b border-stroke-line bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-transform duration-300 ${
+    <header className={cn(
+      "sticky top-0 z-50 w-full",
+      "border-b border-brand-500/20",
+      "bg-black/80 backdrop-blur-xl",
+      "transition-all duration-300",
+      "shadow-[0_2px_20px_rgba(0,0,0,0.3)]",
       isVisible ? 'translate-y-0' : '-translate-y-full'
-    }`}>
+    )}>
       <div className="container mx-auto flex h-14 sm:h-16 max-w-7xl items-center px-4 sm:px-6">
 
         {/* Logo */}
@@ -116,23 +123,84 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
         {/* Desktop Navigation */}
         <div className="hidden md:flex flex-none items-center justify-center px-4">
           <nav className="flex items-center space-x-4 lg:space-x-6">
-            <Link to={ROUTES.HOME} className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group">
+            <Link
+              to={ROUTES.HOME}
+              className={cn(
+                "text-sm lg:text-body-2 transition-all duration-300 relative group",
+                isActive(ROUTES.HOME)
+                  ? "text-brand-400 font-semibold"
+                  : "text-fg-secondary hover:text-brand-400"
+              )}
+            >
               Home
-              <span className="absolute bottom-0 left-0 w-0 h-px bg-brand-400 group-hover:w-full transition-all duration-300" />
+              <span className={cn(
+                "absolute -bottom-[2px] left-0 h-[2px] transition-all duration-300",
+                isActive(ROUTES.HOME)
+                  ? "w-full bg-gradient-to-r from-brand-400 to-orange-400"
+                  : "w-0 bg-brand-400 group-hover:w-full"
+              )} />
             </Link>
             {FEATURES.DASHBOARD && (
               <Link
                 to={disableDashboardLink ? "#" : ROUTES.DASHBOARD}
                 onClick={handleDashboardLink}
-                className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group font-medium"
+                className={cn(
+                  "text-sm lg:text-body-2 transition-all duration-300 relative group font-medium",
+                  isActive(ROUTES.DASHBOARD)
+                    ? "text-brand-400 font-semibold"
+                    : "text-fg-secondary hover:text-brand-400"
+                )}
               >
                 Dashboard
+                <span className={cn(
+                  "absolute -bottom-[2px] left-0 h-[2px] transition-all duration-300",
+                  isActive(ROUTES.DASHBOARD)
+                    ? "w-full bg-gradient-to-r from-brand-400 to-orange-400"
+                    : "w-0 bg-brand-400 group-hover:w-full"
+                )} />
+              </Link>
+            )}
+
+            {/* Issuer: Create SRWA */}
+            {userRegistry?.role === UserRole.Issuer && (
+              <Link
+                to={ISSUER_ROUTES.CREATE_SRWA}
+                className="text-sm lg:text-body-2 text-blue-400 hover:text-blue-300 transition-colors relative group font-semibold flex items-center gap-1"
+              >
+                <Plus className="w-3 h-3" />
+                Create SRWA
+                <span className="absolute bottom-0 left-0 w-0 h-px bg-blue-400 group-hover:w-full transition-all duration-300" />
+              </Link>
+            )}
+
+            {/* Issuer: My Tokens */}
+            {userRegistry?.role === UserRole.Issuer && (
+              <Link
+                to={ISSUER_ROUTES.MY_TOKENS}
+                className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group flex items-center gap-1"
+              >
+                <Building2 className="w-3 h-3" />
+                My Tokens
                 <span className="absolute bottom-0 left-0 w-0 h-px bg-brand-400 group-hover:w-full transition-all duration-300" />
               </Link>
             )}
+
+            {/* Admin: Admin Panel */}
+            {userRegistry?.role === UserRole.Admin && (
+              <Link
+                to={ADMIN_ROUTES.DASHBOARD}
+                className="text-sm lg:text-body-2 text-purple-400 hover:text-purple-300 transition-colors relative group font-semibold flex items-center gap-1"
+              >
+                <Shield className="w-3 h-3" />
+                Admin Panel
+                <span className="absolute bottom-0 left-0 w-0 h-px bg-purple-400 group-hover:w-full transition-all duration-300" />
+              </Link>
+            )}
+
             <a href={ROUTES.DOCS} target="_blank" rel="noopener noreferrer" className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group">
+
               Documentation
-              <span className="absolute bottom-0 left-0 w-0 h-px bg-brand-400 group-hover:w-full transition-all duration-300" />
+              <span className="absolute -bottom-[2px] left-0 w-0 h-[2px] bg-brand-400 group-hover:w-full transition-all duration-300" />
             </a>
             {shouldShowRegister && (
               <Link
@@ -219,6 +287,41 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
                     Dashboard
                   </Link>
                 )}
+
+                {/* Issuer Menu Items */}
+                {userRegistry?.role === UserRole.Issuer && (
+                  <>
+                    <Link
+                      to={ISSUER_ROUTES.CREATE_SRWA}
+                      className="block py-2 text-sm sm:text-body-2 text-blue-400 hover:text-blue-300 transition-colors font-semibold flex items-center gap-2"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Plus className="w-4 h-4" />
+                      Create SRWA
+                    </Link>
+                    <Link
+                      to={ISSUER_ROUTES.MY_TOKENS}
+                      className="block py-2 text-sm sm:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors flex items-center gap-2"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Building2 className="w-4 h-4" />
+                      My Tokens
+                    </Link>
+                  </>
+                )}
+
+                {/* Admin Menu Items */}
+                {userRegistry?.role === UserRole.Admin && (
+                  <Link
+                    to={ADMIN_ROUTES.DASHBOARD}
+                    className="block py-2 text-sm sm:text-body-2 text-purple-400 hover:text-purple-300 transition-colors font-semibold flex items-center gap-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Shield className="w-4 h-4" />
+                    Admin Panel
+                  </Link>
+                )}
+
                 <a
                   href={ROUTES.DOCS}
                   target="_blank"

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { MarketsDashboard } from '@/components/markets/MarketsDashboard';
 import { DeployedTokensGrid } from '@/components/srwa/DeployedTokensGrid';
+import MarketsHeroSection from '@/components/markets/MarketsHeroSection';
 import { useBlendPools } from '@/hooks/markets/useBlendPools';
 import { useEnhancedPoolData } from '@/hooks/markets/useDefIndexData';
 import { useSRWAMarkets } from '@/hooks/markets/useSRWAMarkets';
@@ -90,34 +91,49 @@ export default function Markets() {
 
   return (
     <ErrorBoundary FallbackComponent={ErrorFallback}>
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-primary">
         <Header />
-        
+
         <main className="container mx-auto max-w-7xl px-6 py-8 space-y-8">
-          {/* Header Section */}
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold text-gray-900">
-              Lending Markets
-            </h1>
-            <p className="text-lg text-gray-600">
-              Discover and interact with Blend Protocol lending pools on Stellar.
-            </p>
-          </div>
+          {/* Hero Section with Metrics */}
+          <MarketsHeroSection />
 
           {/* Markets Dashboard */}
-          <MarketsDashboard
-            pools={enhancedPools}
-            srwaMarkets={srwaMarkets}
-            loading={loading}
-            error={error}
-            onRefresh={handleRefresh}
-            onViewPoolDetails={handleViewPoolDetails}
-            onSupply={handleSupply}
-            onBorrow={handleBorrow}
-          />
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <h2 className="text-2xl font-semibold text-primary">
+                Available Markets
+              </h2>
+              <Button
+                onClick={handleRefresh}
+                variant="outline"
+                size="sm"
+                className="bg-glass border-glass hover:bg-elev-1"
+              >
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
+            </div>
+
+            <MarketsDashboard
+              pools={enhancedPools}
+              srwaMarkets={srwaMarkets}
+              loading={loading}
+              error={error}
+              onRefresh={handleRefresh}
+              onViewPoolDetails={handleViewPoolDetails}
+              onSupply={handleSupply}
+              onBorrow={handleBorrow}
+            />
+          </div>
 
           {/* Deployed SRWA Tokens */}
-          <DeployedTokensGrid />
+          <div className="space-y-4">
+            <h2 className="text-2xl font-semibold text-primary">
+              Deployed RWA Tokens
+            </h2>
+            <DeployedTokensGrid />
+          </div>
         </main>
       </div>
     </ErrorBoundary>

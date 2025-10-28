@@ -44,12 +44,31 @@ export const POOL_ROUTES = {
 } as const;
 
 /**
- * SRWA ROUTES
+ * ISSUER ROUTES (Role-Protected)
+ */
+export const ISSUER_ROUTES = {
+  DASHBOARD: '/issuer',
+  CREATE_SRWA: '/issuer/create-srwa',
+  MY_TOKENS: '/issuer/my-tokens',
+  CREATE_POOL: '/issuer/create-pool',
+} as const;
+
+/**
+ * INVESTOR ROUTES (Role-Protected)
+ */
+export const INVESTOR_ROUTES = {
+  DASHBOARD: '/investor',
+  INVESTMENTS: '/investor/investments',
+  KYC: '/investor/kyc',
+} as const;
+
+/**
+ * SRWA ROUTES (Legacy - kept for backward compatibility)
  */
 export const SRWA_ROUTES = {
   DEMO: '/srwa-demo',
   CONTRACTS: '/srwa-contracts',
-  ISSUANCE: '/srwa-issuance',
+  ISSUANCE: '/srwa-issuance', // Legacy - redirects to /issuer/create-srwa
   TEST_FORM: '/srwa-test-form',
 } as const;
 
@@ -63,14 +82,16 @@ export const USER_ROUTES = {
 } as const;
 
 /**
- * ADMIN ROUTES
+ * ADMIN ROUTES (Tag-Protected - requires on-chain authorization)
  */
 export const ADMIN_ROUTES = {
   DASHBOARD: '/admin',
+  TOKEN_REQUESTS: '/admin/token-requests',
+  ALLOWLIST: '/admin/allowlist',
+  ANALYTICS: '/admin/analytics',
   USERS: '/admin/users',
   POOLS: '/admin/pools',
   TRANSACTIONS: '/admin/transactions',
-  ANALYTICS: '/admin/analytics',
   SETTINGS: '/admin/settings',
 } as const;
 

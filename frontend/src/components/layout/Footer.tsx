@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { SolanaWalletButton } from "@/components/wallet/SolanaWalletButton";
 import { HeroButton } from "@/components/ui/hero-button";
-import { LaunchCountdownButton } from "@/components/ui/launch-countdown-button";
 import { ROUTES } from "@/lib/constants";
 import { FEATURES } from "@/lib/constants/features";
 import Logo from "@/assets/logo.png";
@@ -119,12 +118,14 @@ export function Footer({
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0 sm:items-center md:items-end">
                   {connected ? (
-                    <LaunchCountdownButton
-                      className="w-full sm:w-auto items-center md:items-end text-center md:text-right"
-                      buttonClassName="!px-6 !py-3 !text-sm"
+                    <HeroButton
+                      onClick={handleCtaAction}
+                      variant="brand"
+                      className="!px-6 !py-3 !text-sm"
                       icon={<ArrowRight className="h-4 w-4" />}
-                      onLaunch={handleCtaAction}
-                    />
+                    >
+                      Get Started
+                    </HeroButton>
                   ) : (
                     <SolanaWalletButton className="w-full sm:w-auto !px-6 !py-3 !text-sm" />
                   )}

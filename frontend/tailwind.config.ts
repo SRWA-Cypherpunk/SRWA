@@ -153,6 +153,26 @@ export default {
             backgroundPosition: "0% 50%",
           },
         },
+        "fade-in": {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(10px)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0)",
+          },
+        },
+        "scale-in": {
+          "0%": {
+            opacity: "0",
+            transform: "scale(0.8)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "scale(1)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -160,6 +180,11 @@ export default {
         orbit: "orbit calc(var(--duration)*1s) linear infinite",
         shimmer: "shimmer 2s ease-in-out infinite",
         "gradient-pan": "gradient-pan 5s ease-in-out infinite",
+        "fade-in": "fade-in 0.6s ease-out",
+        "scale-in": "scale-in 0.3s ease-out",
+      },
+      scale: {
+        "102": "1.02",
       },
     },
   },
