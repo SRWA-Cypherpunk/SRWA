@@ -6,13 +6,9 @@ import { useUserRegistry, useInvestor, useDeployedTokens, usePurchaseOrders, use
 import { useProgramsSafe } from '@/contexts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { KYCRegistrationForm } from '@/components/kyc/KYCRegistrationForm';
-import { TokenSelect } from '@/components/srwa/admin/TokenSelect';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import {
@@ -21,22 +17,19 @@ import {
   AlertCircle,
   Loader2,
   Wallet,
+  RefreshCw,
   TrendingUp,
-  FileCheck,
   DollarSign,
-  ShoppingCart,
   ExternalLink,
-  RefreshCw
+  Activity
 } from 'lucide-react';
 
 export function InvestorDashboard() {
   const { publicKey } = useWallet();
   const { userRegistry } = useUserRegistry();
   const { programs, loading: programsLoading, hasPrograms } = useProgramsSafe();
-  const { adminRegistry, loading: adminLoading } = useAdminRegistry();
   const { registerIdentity, isVerified, subscribe, getSubscription, claimTokens } = useInvestor();
   const { tokens: deployedTokens, loading: tokensLoading, refresh: refreshTokens } = useDeployedTokens();
-  const { createOrder, orders: purchaseOrders, getOrdersByInvestor } = usePurchaseOrders();
   const {
     tokens: walletTokens,
     loading: walletTokensLoading,
@@ -56,18 +49,8 @@ export function InvestorDashboard() {
   );
 
   const [showKYCForm, setShowKYCForm] = useState(false);
-  const [verified, setVerified] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const [poolAddress, setPoolAddress] = useState('');
-  const [subscriptionAmount, setSubscriptionAmount] = useState('');
-  const [subscription, setSubscription] = useState<any>(null);
-
-  // Purchase state
-  const [selectedToken, setSelectedToken] = useState<any>(null);
-  const [purchaseQuantity, setPurchaseQuantity] = useState('');
-  const [showPurchaseDialog, setShowPurchaseDialog] = useState(false);
 
   // Check if user has completed KYC
   const hasCompletedKYC = userRegistry?.kyc_completed || false;
@@ -77,97 +60,31 @@ export function InvestorDashboard() {
     toast.success('KYC completado com sucesso!');
   };
 
-  const handlePurchase = async () => {
-    if (!selectedToken || !purchaseQuantity || !publicKey) return;
+  // Calculate total value
+  const totalValue = walletTokenHoldings.reduce((sum, token) => {
+    return sum + (token.uiAmount * 0.01); // 0.01 SOL per token
+  }, 0);
 
-    // Prevent double-click / double execution
-    if (loading) {
-      console.log('[InvestorDashboard] Already processing, skipping...');
-      return;
+  const formatCurrency = (value: number) => {
+    if (value >= 1_000_000) {
+      return `$${(value / 1_000_000).toFixed(2)}M`;
     }
-
-    if (!adminRegistry || adminRegistry.authorizedAdmins.length === 0) {
-      toast.error('Admin registry não encontrado. Por favor, tente novamente.');
-      return;
+    if (value >= 1_000) {
+      return `$${(value / 1_000).toFixed(2)}K`;
     }
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const quantity = parseFloat(purchaseQuantity);
-      const pricePerTokenSOL = 0.01; // 0.01 SOL por token (temporário para devnet)
-      const pricePerTokenLamports = Math.floor(pricePerTokenSOL * 1_000_000_000); // Converter para lamports
-      const totalSol = quantity * pricePerTokenSOL;
-
-      // Admin vault (primeiro admin autorizado)
-      const adminVault = adminRegistry.authorizedAdmins[0];
-
-      // Criar purchase order on-chain
-      const { signature, purchaseOrderPda } = await createOrder({
-        mint: selectedToken.mint,
-        quantity: Math.floor(quantity), // Quantidade em unidades base
-        pricePerTokenLamports,
-        adminVault,
-      });
-
-      toast.success('Purchase Order Criada!', {
-        description: `Você pagou ${totalSol.toFixed(4)} SOL. Aguardando aprovação do admin para receber ${quantity} ${selectedToken.symbol}.`,
-      });
-
-      console.log('[InvestorDashboard] Purchase order criada:', {
-        signature,
-        purchaseOrderPda: purchaseOrderPda.toBase58(),
-      });
-
-      setShowPurchaseDialog(false);
-      setPurchaseQuantity('');
-      setSelectedToken(null);
-    } catch (err: any) {
-      setError(err.message);
-      toast.error('Erro ao criar purchase order: ' + err.message);
-      console.error('[InvestorDashboard] Erro:', err);
-    } finally {
-      setLoading(false);
-    }
+    return `$${value.toFixed(2)}`;
   };
 
-  const handleSubscribe = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const mint = new PublicKey(poolAddress);
-      const amount = new BN(parseFloat(subscriptionAmount) * 10 ** 6);
-
-      const result = await subscribe(mint, amount);
-      toast.success('Subscribed successfully!');
-
-      const sub = await getSubscription(mint);
-      setSubscription(sub);
-    } catch (err: any) {
-      setError(err.message);
-      toast.error(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleClaimTokens = async () => {
-    if (!subscription) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const mint = new PublicKey(poolAddress);
-      await claimTokens(mint);
-      toast.success('Tokens claimed successfully!');
-    } catch (err: any) {
-      setError(err.message);
-      toast.error(err.message);
-    } finally {
-      setLoading(false);
+  const getProtocolBadgeColor = (protocol: string) => {
+    switch (protocol.toLowerCase()) {
+      case 'marginfi':
+        return 'bg-purple-500/10 text-purple-400 border-purple-500/30';
+      case 'solend':
+        return 'bg-blue-500/10 text-blue-400 border-blue-500/30';
+      case 'raydium':
+        return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30';
+      default:
+        return 'bg-gray-500/10 text-gray-400 border-gray-500/30';
     }
   };
 
@@ -209,7 +126,7 @@ export function InvestorDashboard() {
     <div className="max-w-6xl mx-auto p-6 space-y-8">
       <div className="text-center space-y-2">
         <h1 className="text-display-1 font-semibold text-fg-primary">Investor Dashboard</h1>
-        <p className="text-body-1 text-fg-secondary">Manage your identity and participate in offerings</p>
+        <p className="text-body-1 text-fg-secondary">Manage your identity and view your tokens</p>
       </div>
 
       {error && (
@@ -250,15 +167,57 @@ export function InvestorDashboard() {
         </CardContent>
       </Card>
 
-      {/* Wallet Tokens */}
+      {/* Wallet Overview Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="border-border/50 bg-background">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-2">
+              <Wallet className="h-5 w-5 text-purple-400" />
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Total Tokens
+              </p>
+            </div>
+            <p className="text-3xl font-bold">{walletTokenHoldings.length}</p>
+            <p className="text-xs text-muted-foreground mt-1">Tipos diferentes</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/50 bg-background">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-2">
+              <DollarSign className="h-5 w-5 text-purple-400" />
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Valor Estimado
+              </p>
+            </div>
+            <p className="text-3xl font-bold text-purple-400">{formatCurrency(totalValue)}</p>
+            <p className="text-xs text-muted-foreground mt-1">≈ {totalValue.toFixed(4)} SOL</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-border/50 bg-background">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-3 mb-2">
+              <Activity className="h-5 w-5 text-purple-400" />
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Status
+              </p>
+            </div>
+            <p className="text-3xl font-bold text-green-400">Active</p>
+            <p className="text-xs text-muted-foreground mt-1">Portfolio ativo</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Wallet Tokens - Enhanced Cards */}
       <Card className="card-institutional">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Wallet className="h-6 w-6 text-brand-400" />
               <div>
-                <CardTitle>Seus Tokens</CardTitle>
-                <CardDescription>Saldo atual na carteira conectada</CardDescription>
+                <CardTitle>Seus Tokens SRWA</CardTitle>
+                <CardDescription>Tokens que você possui na carteira conectada</CardDescription>
               </div>
             </div>
             <Button
@@ -267,33 +226,42 @@ export function InvestorDashboard() {
               onClick={refreshWalletTokens}
               disabled={!publicKey || walletTokensLoading}
             >
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className={`h-4 w-4 ${walletTokensLoading ? 'animate-spin' : ''}`} />
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           {!publicKey ? (
-            <div className="text-center py-8">
-              <Wallet className="h-10 w-10 text-fg-muted mx-auto mb-2 opacity-50" />
+            <div className="text-center py-12">
+              <Wallet className="h-12 w-12 text-fg-muted mx-auto mb-4 opacity-50" />
               <p className="text-sm text-fg-muted">
                 Conecte sua carteira para visualizar seus tokens SRWA.
               </p>
             </div>
           ) : walletTokensLoading ? (
-            <div className="text-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto text-brand-400" />
-              <p className="text-sm text-fg-muted mt-2">Carregando tokens da carteira...</p>
+            <div className="text-center py-12">
+              <Loader2 className="h-10 w-10 animate-spin mx-auto text-purple-400" />
+              <p className="text-sm text-fg-muted mt-4">Carregando tokens da carteira...</p>
             </div>
           ) : walletTokenHoldings.length === 0 ? (
-            <div className="text-center py-8">
-              <Wallet className="h-10 w-10 text-fg-muted mx-auto mb-2 opacity-50" />
-              <p className="text-sm text-fg-muted">
+            <div className="text-center py-12">
+              <Wallet className="h-12 w-12 text-fg-muted mx-auto mb-4 opacity-50" />
+              <p className="text-base font-medium text-fg-primary mb-2">
+                Nenhum Token Encontrado
+              </p>
+              <p className="text-sm text-fg-muted mb-6">
                 Você ainda não possui tokens SRWA na carteira conectada.
               </p>
+              <Button
+                variant="outline"
+                onClick={() => window.location.href = '/dashboard/markets'}
+              >
+                Explorar Mercados
+              </Button>
             </div>
           ) : (
-            <div className="space-y-3">
-              {walletTokenHoldings.map((token) => {
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {walletTokenHoldings.map((token, index) => {
                 const mint = token.mint;
                 const mintShort =
                   mint && mint.length > 8 ? `${mint.slice(0, 4)}...${mint.slice(-4)}` : mint || '---';
@@ -308,23 +276,161 @@ export function InvestorDashboard() {
                     })
                   : token.uiAmountString;
 
+                const value = token.uiAmount * 0.01; // 0.01 SOL per token
+                const supplyApy = token.metadata?.supplyAPY || 0;
+                const protocol = token.metadata?.yieldConfig?.protocol || 'Unknown';
+                const estimatedYearlyReturn = value * (supplyApy / 100);
+
                 return (
-                  <div
+                  <motion.div
                     key={token.accountAddress}
-                    className="flex items-center justify-between rounded-lg border border-border bg-muted/20 px-4 py-3"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: index * 0.1 }}
                   >
-                    <div>
-                      <p className="text-sm font-semibold text-fg-primary">{displayName}</p>
-                      <p className="text-xs text-fg-muted font-mono">
-                        {displaySymbol}
-                        {token.metadata?.symbol ? ` • ${mintShort}` : ''}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-lg font-semibold text-fg-primary">{formattedAmount}</p>
-                      <p className="text-xs text-fg-muted">Quantidade</p>
-                    </div>
-                  </div>
+                    <Card className="group relative overflow-hidden border-purple-500/30 bg-background transition-all hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/20">
+                      <CardContent className="p-6">
+                        {/* Header */}
+                        <div className="flex items-start justify-between mb-6">
+                          <div className="flex-1">
+                            <h3 className="text-xl font-bold mb-2">{displayName}</h3>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Badge
+                                variant="outline"
+                                className="text-xs text-blue-400 border-blue-500/30 bg-blue-500/10"
+                              >
+                                ✓ Official
+                              </Badge>
+                              {token.metadata && (
+                                <Badge
+                                  variant="secondary"
+                                  className={`text-xs border ${getProtocolBadgeColor(protocol)}`}
+                                >
+                                  {protocol}
+                                </Badge>
+                              )}
+                              <span className="text-xs text-muted-foreground font-mono">
+                                {displaySymbol}
+                              </span>
+                            </div>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              window.open(`https://solscan.io/token/${mint}?cluster=devnet`, '_blank');
+                            }}
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                          </Button>
+                        </div>
+
+                        {/* Balance Display */}
+                        <div className="mb-5">
+                          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
+                            Saldo
+                          </p>
+                          <div className="flex items-end gap-3">
+                            <p className="text-3xl font-bold text-purple-400">
+                              {formattedAmount}
+                            </p>
+                            <p className="text-lg text-fg-secondary font-mono mb-1">
+                              {displaySymbol}
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Stats Grid */}
+                        <div className="mb-5 grid grid-cols-2 gap-4">
+                          <div>
+                            <div className="mb-1 flex items-center text-[11px] text-muted-foreground">
+                              <DollarSign className="h-3 w-3 mr-1" />
+                              <span className="font-medium uppercase tracking-wide">Valor Estimado</span>
+                            </div>
+                            <p className="text-lg font-semibold">
+                              {formatCurrency(value)}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              ≈ {value.toFixed(4)} SOL
+                            </p>
+                          </div>
+
+                          {token.metadata && (
+                            <div>
+                              <div className="mb-1 flex items-center text-[11px] text-muted-foreground">
+                                <TrendingUp className="h-3 w-3 mr-1" />
+                                <span className="font-medium uppercase tracking-wide">Supply APY</span>
+                              </div>
+                              <p className="text-lg font-semibold text-purple-400">
+                                {supplyApy.toFixed(2)}%
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Retorno anual
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Additional Info */}
+                        {token.metadata && (
+                          <div className="mb-5 grid grid-cols-2 gap-4 border-t border-border/30 pt-4">
+                            <div>
+                              <p className="text-[11px] text-muted-foreground uppercase tracking-wide mb-1">
+                                TVL Total
+                              </p>
+                              <p className="text-sm font-semibold">
+                                {formatCurrency(token.metadata.tvl)}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-[11px] text-muted-foreground uppercase tracking-wide mb-1">
+                                Protocolo
+                              </p>
+                              <p className="text-sm font-semibold capitalize">
+                                {protocol}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Estimated Earnings */}
+                        {token.metadata && (
+                          <div className="rounded-lg bg-purple-500/10 border border-purple-500/30 p-3 mb-5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-xs text-muted-foreground">Ganho anual estimado:</span>
+                              <span className="text-sm font-semibold text-purple-400">
+                                {formatCurrency(estimatedYearlyReturn)}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Actions */}
+                        <div className="flex gap-3">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => window.location.href = '/dashboard/markets'}
+                          >
+                            <Activity className="h-4 w-4 mr-2" />
+                            Ver Mercados
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => {
+                              window.open(`https://solscan.io/token/${mint}?cluster=devnet`, '_blank');
+                            }}
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" />
+                            Solscan
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 );
               })}
             </div>
@@ -337,261 +443,6 @@ export function InvestorDashboard() {
           )}
         </CardContent>
       </Card>
-
-      {/* Available Tokens */}
-      {hasCompletedKYC && (
-        <Card className="card-institutional">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <ShoppingCart className="h-6 w-6 text-brand-400" />
-                <div>
-                  <CardTitle>Available Tokens</CardTitle>
-                  <CardDescription>Compre tokens SRWA com SOL (Devnet POC)</CardDescription>
-                </div>
-              </div>
-              <Button variant="outline" size="sm" onClick={refreshTokens}>
-                <RefreshCw className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {tokensLoading ? (
-              <div className="text-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin mx-auto text-brand-400" />
-                <p className="text-sm text-fg-muted mt-2">Carregando tokens...</p>
-              </div>
-            ) : deployedTokens.length === 0 ? (
-              <div className="text-center py-8">
-                <ShoppingCart className="h-12 w-12 text-fg-muted mx-auto mb-2 opacity-50" />
-                <p className="text-sm text-fg-muted">Nenhum token disponível ainda</p>
-              </div>
-            ) : (
-              <div className="grid gap-4">
-                {deployedTokens.map((token) => (
-                  <Card key={token.mint.toBase58()} className="hover-lift">
-                    <CardContent className="pt-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-semibold text-fg-primary">{token.name}</h3>
-                          <p className="text-sm text-fg-muted font-mono">{token.symbol}</p>
-                        </div>
-                        <Badge variant="outline" className="text-green-400 border-green-500/30 bg-green-500/10">
-                          Disponível
-                        </Badge>
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-4 mb-4">
-                        <div>
-                          <p className="text-xs text-fg-muted">Yield APY</p>
-                          <p className="text-sm font-semibold text-fg-primary">{token.supplyAPY}%</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-fg-muted">Protocolo</p>
-                          <p className="text-sm font-semibold text-fg-primary capitalize">{token.yieldConfig.protocol}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs text-fg-muted">Preço</p>
-                          <p className="text-sm font-semibold text-fg-primary">0.01 SOL</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Button
-                          onClick={() => {
-                            setSelectedToken(token);
-                            setShowPurchaseDialog(true);
-                          }}
-                          className="flex-1 btn-primary"
-                          size="sm"
-                        >
-                          <ShoppingCart className="mr-2 h-4 w-4" />
-                          Comprar
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          asChild
-                        >
-                          <a
-                            href={`https://explorer.solana.com/address/${token.mint.toBase58()}?cluster=devnet`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                          </a>
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Purchase Dialog */}
-      <Dialog open={showPurchaseDialog} onOpenChange={setShowPurchaseDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Comprar {selectedToken?.symbol}</DialogTitle>
-            <DialogDescription>
-              Pague com SOL e receba tokens SRWA (POC para Devnet)
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Quantidade de {selectedToken?.symbol}</Label>
-              <Input
-                type="number"
-                placeholder="100"
-                value={purchaseQuantity}
-                onChange={(e) => setPurchaseQuantity(e.target.value)}
-              />
-            </div>
-
-            {purchaseQuantity && (
-              <div className="p-3 bg-muted/30 rounded-lg">
-                <div className="flex justify-between text-sm">
-                  <span className="text-fg-muted">Total a pagar:</span>
-                  <span className="font-semibold text-fg-primary">
-                    {(parseFloat(purchaseQuantity) * 0.01).toFixed(4)} SOL
-                  </span>
-                </div>
-              </div>
-            )}
-
-            <Alert>
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="text-xs">
-                Você está pagando SOL para o admin. Os tokens {selectedToken?.symbol} serão
-                enviados para sua carteira pelo admin em breve.
-              </AlertDescription>
-            </Alert>
-
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={() => setShowPurchaseDialog(false)}
-              >
-                Cancelar
-              </Button>
-              <Button
-                className="flex-1 btn-primary"
-                onClick={handlePurchase}
-                disabled={loading || !purchaseQuantity}
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processando...
-                  </>
-                ) : (
-                  `Pagar ${(parseFloat(purchaseQuantity || '0') * 0.01).toFixed(4)} SOL`
-                )}
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      {/* Subscribe (método antigo com pool) */}
-      {hasCompletedKYC && false && (
-        <Card className="card-institutional">
-          <CardHeader>
-            <div className="flex items-center space-x-3">
-              <DollarSign className="h-6 w-6 text-brand-400" />
-              <div>
-                <CardTitle>Subscribe to Offering</CardTitle>
-                <CardDescription>Commit capital to a token offering</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label>Token SRWA</Label>
-              <TokenSelect
-                value={poolAddress}
-                onValueChange={setPoolAddress}
-                placeholder="Selecione um token SRWA"
-                disabled={loading}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Amount (USDC)</Label>
-              <Input
-                type="number"
-                placeholder="1000"
-                value={subscriptionAmount}
-                onChange={(e) => setSubscriptionAmount(e.target.value)}
-              />
-            </div>
-
-            <Button
-              onClick={handleSubscribe}
-              disabled={loading || !poolAddress || !subscriptionAmount}
-              className="w-full btn-primary"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Subscribing...
-                </>
-              ) : (
-                <>
-                  <TrendingUp className="mr-2 h-4 w-4" />
-                  Subscribe
-                </>
-              )}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Subscription Status */}
-      {subscription && (
-        <Card className="card-institutional">
-          <CardHeader>
-            <div className="flex items-center space-x-3">
-              <FileCheck className="h-6 w-6 text-brand-400" />
-              <div>
-                <CardTitle>Your Subscription</CardTitle>
-                <CardDescription>Manage your commitment</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-micro text-fg-muted">Amount</p>
-                <p className="text-h3 text-fg-primary">{subscription.amount.toString()} USDC</p>
-              </div>
-              <div>
-                <p className="text-micro text-fg-muted">Status</p>
-                <Badge variant={subscription.claimed ? 'default' : 'outline'}>
-                  {subscription.claimed ? 'Claimed' : 'Pending'}
-                </Badge>
-              </div>
-            </div>
-
-            {!subscription.claimed && (
-              <Button onClick={handleClaimTokens} disabled={loading} className="w-full btn-primary">
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Claiming...
-                  </>
-                ) : (
-                  'Claim Tokens'
-                )}
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      )}
     </div>
   );
 }

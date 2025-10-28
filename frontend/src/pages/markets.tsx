@@ -1,13 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import '@/styles/features/dashboard.css';
-import { DashboardLayout, DashboardSection } from "@/components/layout";
-import { HeroButton } from "@/components/ui/hero-button";
-import { MarketsDashboard } from '@/components/markets/MarketsDashboard';
-import { DashboardNav } from "@/components/dashboard/DashboardNav";
-import { Button } from "@/components/ui/button";
+import { useDeployedTokens } from '@/hooks/solana/useDeployedTokens';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -24,18 +19,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-
-// Hooks
-import { useBlendPools } from '@/hooks/markets/useBlendPools';
-import { useEnhancedPoolData } from '@/hooks/markets/useDefIndexData';
-import { useSRWAMarkets } from '@/hooks/markets/useSRWAMarkets';
-import { useDeployedTokens } from '@/hooks/solana/useDeployedTokens';
-import { usePurchaseOrders } from '@/hooks/solana';
-import type { DeployedToken } from '@/hooks/solana/useDeployedTokens';
-
-// Icons
-import { Plus, Zap, Loader2, RefreshCw, TrendingUp, DollarSign, Users, Activity, ArrowUpRight, Search, SlidersHorizontal, Grid3x3, List } from "lucide-react";
+import {
+  TrendingUp,
+  TrendingDown,
+  ArrowUpRight,
+  DollarSign,
+  Users,
+  Activity,
+  RefreshCw,
+  SlidersHorizontal,
+  Grid3x3,
+  List,
+  Search,
+  Loader2,
+} from 'lucide-react';
 import { motion } from 'framer-motion';
+import type { DeployedToken } from '@/hooks/solana/useDeployedTokens';
+import { usePurchaseOrders } from '@/hooks/solana';
 import { toast } from 'sonner';
 
 const formatCurrency = (value: number) => {
@@ -62,6 +62,7 @@ const getProtocolBadgeColor = (protocol: string) => {
 };
 
 function TokenCard({ token, onBuy }: { token: DeployedToken; onBuy: (token: DeployedToken) => void }) {
+  // Mock data
   const mockData = {
     supplyApy: token.supplyAPY,
     borrowApy: 0.06,
@@ -70,6 +71,7 @@ function TokenCard({ token, onBuy }: { token: DeployedToken; onBuy: (token: Depl
     volume24h: 0,
     available: token.tvl,
     riskLevel: 'Low' as const,
+    performance24h: 2.5,
     status: 'paused' as const,
   };
 
@@ -233,71 +235,15 @@ function TokenCard({ token, onBuy }: { token: DeployedToken; onBuy: (token: Depl
   );
 }
 
-export default function DashboardMarkets() {
-  const navigate = useNavigate();
-
-  // Fetch Blend pools data
-  const {
-    pools: blendPools,
-    loading: poolsLoading,
-    error: poolsError,
-    refetch: refetchPools
-  } = useBlendPools();
-
-  // Enhance pools with DefIndex analytics
-  const {
-    enhancedPools,
-    loading: analyticsLoading,
-    error: analyticsError
-  } = useEnhancedPoolData(blendPools);
-
-  // Fetch SRWA markets from deployed tokens
-  const {
-    srwaMarkets,
-    loading: srwaLoading,
-    error: srwaError,
-    refetch: refetchSRWA
-  } = useSRWAMarkets();
-
-  const {
-    tokens: deployedTokens,
-    loading: deployedTokensLoading,
-    error: deployedTokensError,
-    refresh: refreshDeployedTokens
-  } = useDeployedTokens();
-
+export default function MarketsPage() {
+  const { tokens, loading, refresh } = useDeployedTokens();
   const purchaseOrders = usePurchaseOrders();
-
-  // State for new UI
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('tvl');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [selectedToken, setSelectedToken] = useState<DeployedToken | null>(null);
   const [purchaseQuantity, setPurchaseQuantity] = useState('');
   const [buyLoading, setBuyLoading] = useState(false);
-
-  // Combined loading and error states
-  const loading = poolsLoading || analyticsLoading || srwaLoading;
-  const error = poolsError?.message || analyticsError?.message || srwaError?.message || null;
-
-  // Navigation handlers
-  const handleViewPoolDetails = (poolAddress: string) => {
-    navigate(`/pool/${poolAddress}`);
-  };
-
-  const handleSupply = (poolAddress: string) => {
-    navigate(`/pool/${poolAddress}?action=supply`);
-  };
-
-  const handleBorrow = (poolAddress: string) => {
-    navigate(`/pool/${poolAddress}?action=borrow`);
-  };
-
-  const handleRefresh = () => {
-    refetchPools();
-    refetchSRWA();
-    refreshDeployedTokens();
-  };
 
   const handleBuy = async () => {
     if (!selectedToken || !purchaseQuantity) {
@@ -314,6 +260,7 @@ export default function DashboardMarkets() {
         return;
       }
 
+      // Create purchase order
       await purchaseOrders.createOrder(selectedToken.mint, quantity);
 
       toast.success(`Purchase order criada! ${quantity} tokens de ${selectedToken.symbol}`);
@@ -327,221 +274,164 @@ export default function DashboardMarkets() {
     }
   };
 
-  const filteredTokens = deployedTokens.filter((token) =>
+  const filteredTokens = tokens.filter((token) =>
     token.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     token.symbol.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   // Calculate totals
-  const totalTVL = deployedTokens.reduce((sum, t) => sum + t.tvl, 0);
-  const avgSupplyAPY = deployedTokens.length > 0
-    ? deployedTokens.reduce((sum, t) => sum + t.supplyAPY, 0) / deployedTokens.length
+  const totalTVL = tokens.reduce((sum, t) => sum + t.tvl, 0);
+  const avgSupplyAPY = tokens.length > 0
+    ? tokens.reduce((sum, t) => sum + t.supplyAPY, 0) / tokens.length
     : 0;
 
   return (
-    <DashboardLayout>
-      {/* Header with Create SRWA Button */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
-        <div className="w-full sm:w-auto">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-400 via-purple-300 to-orange-400 bg-clip-text text-transparent">
-            Lending Markets
-          </h1>
-          <p className="text-base sm:text-lg text-fg-secondary mt-2">
-            Discover and interact with lending pools on Solana
-          </p>
-        </div>
-
-        <div className="w-full sm:w-auto">
-          <HeroButton
-            onClick={() => window.location.href = '/srwa-issuance'}
-            variant="brand"
-            className="w-full sm:w-auto"
-            icon={<Plus className="h-4 w-4" />}
-          >
-            Create SRWA
-          </HeroButton>
-        </div>
-      </div>
-
-      {/* Dashboard Navigation */}
-      <DashboardNav />
-
-      {/* SRWA Tokens Section with New UI */}
-      <DashboardSection
-        title="Tokens SRWA disponíveis"
-        description="Compre tokens SRWA com SOL (Devnet POC)"
-        decorativeColor="orange"
-      >
-        <div className="space-y-6">
-          {/* Stats Cards */}
-          <div className="grid gap-4 md:grid-cols-4">
-            <Card className="border-border/50 bg-background">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-2">
-                  <DollarSign className="h-5 w-5 text-purple-400" />
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Total TVL
-                  </p>
-                </div>
-                <p className="text-3xl font-bold">{formatCurrency(totalTVL)}</p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border/50 bg-background">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-2">
-                  <TrendingUp className="h-5 w-5 text-purple-400" />
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Avg Supply APY
-                  </p>
-                </div>
-                <p className="text-3xl font-bold text-purple-400">{avgSupplyAPY.toFixed(2)}%</p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border/50 bg-background">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-2">
-                  <Activity className="h-5 w-5 text-purple-400" />
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    24h Volume
-                  </p>
-                </div>
-                <p className="text-3xl font-bold">$0.0K</p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-border/50 bg-background">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-2">
-                  <Users className="h-5 w-5 text-purple-400" />
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Active Markets
-                  </p>
-                </div>
-                <p className="text-3xl font-bold">
-                  0/{deployedTokens.length}
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto p-6 max-w-7xl">
+        {/* Stats Cards */}
+        <div className="mb-8 grid gap-4 md:grid-cols-4">
+          <Card className="border-border/50 bg-background">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-2">
+                <DollarSign className="h-5 w-5 text-purple-400" />
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Total TVL
                 </p>
-                <p className="text-sm text-muted-foreground mt-1">3 Blend • 0 SRWA</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Activity className="h-6 w-6 text-purple-400" />
-              <h2 className="text-2xl font-bold">Lending Pools</h2>
-              <Badge variant="secondary" className="rounded-full px-3 py-1">
-                {deployedTokens.length}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={refreshDeployedTokens}
-                disabled={deployedTokensLoading}
-              >
-                <RefreshCw className={`h-5 w-5 ${deployedTokensLoading ? 'animate-spin' : ''}`} />
-              </Button>
-              <Button variant="ghost" size="icon">
-                <SlidersHorizontal className="h-5 w-5" />
-              </Button>
-              <div className="flex items-center gap-0 rounded-lg bg-muted p-1">
-                <Button
-                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
-                  size="icon"
-                  className="h-9 w-9"
-                  onClick={() => setViewMode('grid')}
-                >
-                  <Grid3x3 className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant={viewMode === 'list' ? 'default' : 'ghost'}
-                  size="icon"
-                  className="h-9 w-9"
-                  onClick={() => setViewMode('list')}
-                >
-                  <List className="h-4 w-4" />
-                </Button>
               </div>
-            </div>
-          </div>
+              <p className="text-3xl font-bold">{formatCurrency(totalTVL)}</p>
+            </CardContent>
+          </Card>
 
-          {/* Filters */}
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search pools..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[200px]">
-                <SelectValue placeholder="Sort by" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="tvl">Total Value Locked</SelectItem>
-                <SelectItem value="apy">APY</SelectItem>
-                <SelectItem value="name">Name</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          <Card className="border-border/50 bg-background">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-2">
+                <TrendingUp className="h-5 w-5 text-purple-400" />
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Avg Supply APY
+                </p>
+              </div>
+              <p className="text-3xl font-bold text-purple-400">{avgSupplyAPY.toFixed(2)}%</p>
+            </CardContent>
+          </Card>
 
-          {/* Tokens Grid */}
-          {deployedTokensLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
-            </div>
-          ) : filteredTokens.length === 0 ? (
-            <div className="rounded-lg border border-border/50 bg-muted/20 p-12 text-center">
-              <Activity className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-              <p className="text-lg font-medium text-muted-foreground">
-                {searchQuery ? 'Nenhum token encontrado' : 'Nenhum token disponível'}
+          <Card className="border-border/50 bg-background">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-2">
+                <Activity className="h-5 w-5 text-purple-400" />
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  24h Volume
+                </p>
+              </div>
+              <p className="text-3xl font-bold">$0.0K</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/50 bg-background">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-2">
+                <Users className="h-5 w-5 text-purple-400" />
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Active Markets
+                </p>
+              </div>
+              <p className="text-3xl font-bold">
+                0/{tokens.length}
+                <span className="ml-2 text-sm text-muted-foreground">3 Blend • 0 SRWA</span>
               </p>
-            </div>
-          ) : (
-            <div className={`grid gap-6 ${viewMode === 'grid' ? 'md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
-              {filteredTokens.map((token) => (
-                <TokenCard
-                  key={token.mint.toBase58()}
-                  token={token}
-                  onBuy={setSelectedToken}
-                />
-              ))}
-            </div>
-          )}
+            </CardContent>
+          </Card>
         </div>
-      </DashboardSection>
 
-      {/* Markets Tab Content */}
-      <DashboardSection
-        title={
-          <>
-            Available Lending Pools
-            <span className="inline-block ml-2">
-              <Zap className="h-5 w-5 sm:h-6 sm:w-6 text-purple-400 inline" />
-            </span>
-          </>
-        }
-        description="Supply assets to earn interest or borrow against your collateral"
-        decorativeColor="purple"
-      >
-        <MarketsDashboard
-          pools={enhancedPools}
-          srwaMarkets={srwaMarkets}
-          loading={loading}
-          error={error}
-          onRefresh={handleRefresh}
-          onViewPoolDetails={handleViewPoolDetails}
-          onSupply={handleSupply}
-          onBorrow={handleBorrow}
-        />
-      </DashboardSection>
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Activity className="h-6 w-6 text-purple-400" />
+            <h1 className="text-2xl font-bold">Lending Pools</h1>
+            <Badge variant="secondary" className="rounded-full px-3 py-1">
+              {tokens.length}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={refresh}
+              disabled={loading}
+            >
+              <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button variant="ghost" size="icon">
+              <SlidersHorizontal className="h-5 w-5" />
+              <span className="sr-only">Filters</span>
+            </Button>
+            <div className="flex items-center gap-0 rounded-lg bg-muted p-1">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => setViewMode('grid')}
+              >
+                <Grid3x3 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === 'list' ? 'default' : 'ghost'}
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => setViewMode('list')}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="mb-6 flex items-center gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search pools..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="tvl">Total Value Locked</SelectItem>
+              <SelectItem value="apy">APY</SelectItem>
+              <SelectItem value="name">Name</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Tokens Grid */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
+          </div>
+        ) : filteredTokens.length === 0 ? (
+          <div className="rounded-lg border border-border/50 bg-muted/20 p-12 text-center">
+            <Activity className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
+            <p className="text-lg font-medium text-muted-foreground">
+              {searchQuery ? 'Nenhum token encontrado' : 'Nenhum token disponível'}
+            </p>
+          </div>
+        ) : (
+          <div className={`grid gap-6 ${viewMode === 'grid' ? 'md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
+            {filteredTokens.map((token) => (
+              <TokenCard
+                key={token.mint.toBase58()}
+                token={token}
+                onBuy={setSelectedToken}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Purchase Dialog */}
       <Dialog open={!!selectedToken} onOpenChange={(open) => !open && setSelectedToken(null)}>
@@ -615,6 +505,6 @@ export default function DashboardMarkets() {
           </div>
         </DialogContent>
       </Dialog>
-    </DashboardLayout>
+    </div>
   );
 }

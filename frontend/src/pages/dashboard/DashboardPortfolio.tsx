@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { HeroButton } from "@/components/ui/hero-button";
 import { DashboardNav } from "@/components/dashboard/DashboardNav";
-import { DeployedTokensGrid } from '@/components/srwa/DeployedTokensGrid';
 import { mockUserPositions, type UserPosition } from "@/lib/mock-data";
 
 // Hooks
@@ -531,18 +530,6 @@ export default function DashboardPortfolio() {
               </section>
             )}
 
-            <section className="rounded-3xl border border-border/60 bg-card/80 shadow-[0_12px_35px_rgba(12,10,18,0.45)] p-6 sm:p-8 space-y-6">
-              <div className="space-y-2">
-                <span className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
-                  Catálogo SRWA
-                </span>
-                <h2 className="text-2xl font-bold text-fg-primary">Tokens em produção</h2>
-                <p className="text-sm text-fg-secondary">
-                  Acompanhe o desempenho das emissões ativas e compartilhe com o time.
-                </p>
-              </div>
-              <DeployedTokensGrid />
-            </section>
           </>
         )}
       </main>

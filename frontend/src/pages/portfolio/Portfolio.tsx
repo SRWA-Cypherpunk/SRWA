@@ -1,224 +1,359 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Header } from "@/components/layout/Header";
 import { KPICard } from "@/components/ui/kpi-card";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { mockUserPositions, type UserPosition } from "@/lib/mock-data";
-import { 
-  DollarSign, 
-  TrendingUp, 
-  Shield, 
-  BarChart3, 
+import { useWalletTokenBalances } from "@/hooks/solana/useWalletTokenBalances";
+import { useDeployedTokens } from "@/hooks/solana/useDeployedTokens";
+import type { DeployedToken } from "@/hooks/solana/useDeployedTokens";
+import {
+  DollarSign,
+  TrendingUp,
+  Shield,
+  BarChart3,
   Activity,
-  AlertTriangle,
-  Plus,
-  Minus
+  Wallet,
+  RefreshCw,
+  ArrowUpRight,
+  ExternalLink
 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+
+interface TokenPosition {
+  token: DeployedToken;
+  balance: number;
+  balanceString: string;
+  value: number;
+}
+
+const formatCurrency = (value: number) => {
+  if (value >= 1_000_000) {
+    return `$${(value / 1_000_000).toFixed(2)}M`;
+  }
+  if (value >= 1_000) {
+    return `$${(value / 1_000).toFixed(2)}K`;
+  }
+  return `$${value.toFixed(2)}`;
+};
+
+const getProtocolBadgeColor = (protocol: string) => {
+  switch (protocol.toLowerCase()) {
+    case 'marginfi':
+      return 'bg-purple-500/10 text-purple-400 border-purple-500/30';
+    case 'solend':
+      return 'bg-blue-500/10 text-blue-400 border-blue-500/30';
+    case 'raydium':
+      return 'bg-cyan-500/10 text-cyan-400 border-cyan-500/30';
+    default:
+      return 'bg-gray-500/10 text-gray-400 border-gray-500/30';
+  }
+};
 
 export default function Portfolio() {
-  const [selectedPosition, setSelectedPosition] = useState<UserPosition | null>(null);
+  // Fetch wallet token balances
+  const {
+    tokens: walletTokens,
+    loading: walletLoading,
+    error: walletError,
+    refresh: refreshWallet
+  } = useWalletTokenBalances();
+
+  // Fetch deployed SRWA tokens
+  const {
+    tokens: deployedTokens,
+    loading: deployedLoading,
+    error: deployedError,
+    refresh: refreshDeployed
+  } = useDeployedTokens();
+
+  // Match wallet tokens with deployed SRWA tokens
+  const positions = useMemo<TokenPosition[]>(() => {
+    if (!walletTokens.length || !deployedTokens.length) {
+      return [];
+    }
+
+    const tokenPositions: TokenPosition[] = [];
+
+    walletTokens.forEach((walletToken) => {
+      // Find matching deployed token
+      const deployedToken = deployedTokens.find(
+        (dt) => dt.mint.toBase58() === walletToken.mint
+      );
+
+      if (deployedToken) {
+        // Calculate value (assuming 0.01 SOL per token for POC)
+        const value = walletToken.uiAmount * 0.01;
+
+        tokenPositions.push({
+          token: deployedToken,
+          balance: walletToken.uiAmount,
+          balanceString: walletToken.uiAmountString,
+          value: value
+        });
+      }
+    });
+
+    return tokenPositions;
+  }, [walletTokens, deployedTokens]);
 
   // Calculate portfolio totals
-  const totalSupplied = mockUserPositions.reduce((acc, pos) => 
-    acc + parseFloat(pos.supplied.replace(/[$M,K]/g, '')), 0
-  );
-  const totalBorrowed = mockUserPositions.reduce((acc, pos) => 
-    acc + parseFloat(pos.borrowed.replace(/[$M,K]/g, '')), 0
-  );
-  const avgHealthFactor = mockUserPositions.reduce((acc, pos) => 
-    acc + parseFloat(pos.healthFactor), 0
-  ) / mockUserPositions.length;
-  const netApy = "3.78%"; // Calculated weighted average
+  const totalValue = positions.reduce((sum, pos) => sum + pos.value, 0);
+  const totalTokens = positions.reduce((sum, pos) => sum + pos.balance, 0);
+  const avgSupplyAPY = positions.length > 0
+    ? positions.reduce((sum, pos) => sum + pos.token.supplyAPY, 0) / positions.length
+    : 0;
+  const estimatedYearlyReturn = totalValue * (avgSupplyAPY / 100);
 
-  const getHealthFactorColor = (hf: string) => {
-    const value = parseFloat(hf);
-    if (value >= 2.0) return "text-emerald-400";
-    if (value >= 1.5) return "text-amber-400";
-    return "text-red-400";
-  };
+  const loading = walletLoading || deployedLoading;
+  const error = walletError || deployedError;
 
-  const getHealthFactorStatus = (hf: string) => {
-    const value = parseFloat(hf);
-    if (value >= 2.0) return "Healthy";
-    if (value >= 1.5) return "Moderate";
-    return "At Risk";
+  const handleRefresh = () => {
+    refreshWallet();
+    refreshDeployed();
   };
 
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      
+
       <main className="container mx-auto max-w-7xl px-6 py-8 space-y-8">
         {/* Header Section */}
-        <div className="space-y-2 animate-fade-in">
-          <h1 className="text-h1 font-semibold text-fg-primary">Portfolio</h1>
-          <p className="text-body-1 text-fg-secondary">
-            Monitor your RWA lending positions, health factors, and performance metrics.
-          </p>
+        <div className="flex items-start justify-between animate-fade-in">
+          <div className="space-y-2">
+            <h1 className="text-h1 font-semibold text-fg-primary">Meu Portfolio</h1>
+            <p className="text-body-1 text-fg-secondary">
+              Tokens SRWA que você possui na sua carteira
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={loading}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+            Atualizar
+          </Button>
         </div>
 
         {/* Portfolio Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-slide-up">
           <KPICard
-            title="Total Supplied"
-            value={`$${totalSupplied.toFixed(1)}M`}
+            title="Valor Total"
+            value={formatCurrency(totalValue)}
             icon={DollarSign}
-            trend="up"
-            trendValue="+5.2%"
+            subtitle={`${totalTokens.toFixed(2)} tokens`}
           />
           <KPICard
-            title="Total Borrowed"
-            value={`$${totalBorrowed.toFixed(1)}M`}
+            title="Total de Tokens"
+            value={positions.length.toString()}
+            icon={Wallet}
+            subtitle="Tipos diferentes"
+          />
+          <KPICard
+            title="APY Médio"
+            value={`${avgSupplyAPY.toFixed(2)}%`}
             icon={TrendingUp}
-            subtitle="Active positions"
-          />
-          <KPICard
-            title="Net APY"
-            value={netApy}
-            icon={BarChart3}
             trend="up"
-            trendValue="+0.15%"
+            trendValue="Supply APY"
           />
           <KPICard
-            title="Avg Health Factor"
-            value={avgHealthFactor.toFixed(2)}
-            icon={Shield}
-            trend="neutral"
-            trendValue="Stable"
+            title="Retorno Anual Estimado"
+            value={formatCurrency(estimatedYearlyReturn)}
+            icon={BarChart3}
+            subtitle="Baseado no APY"
           />
         </div>
 
         {/* Main Content */}
         <Tabs defaultValue="positions" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 lg:w-96">
-            <TabsTrigger value="positions">Positions</TabsTrigger>
-            <TabsTrigger value="activity">Activity</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 lg:w-96">
+            <TabsTrigger value="positions">Meus Tokens</TabsTrigger>
+            <TabsTrigger value="activity">Atividade</TabsTrigger>
           </TabsList>
 
           {/* Positions Tab */}
           <TabsContent value="positions" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {mockUserPositions.map((position, index) => (
-                <Card key={position.marketId} className="card-institutional hover-lift animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
-                  <div className="space-y-6">
-                    {/* Header */}
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <h3 className="text-h3 font-semibold text-fg-primary">
-                          {position.marketName}
-                        </h3>
-                        <div className="flex items-center gap-2">
-                          <Badge 
-                            variant="outline" 
-                            className={getHealthFactorColor(position.healthFactor)}
-                          >
-                            HF: {position.healthFactor}
-                          </Badge>
-                          <span className="text-micro text-fg-muted">
-                            {getHealthFactorStatus(position.healthFactor)}
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
+              </div>
+            ) : error ? (
+              <Card className="card-institutional">
+                <div className="text-center py-12">
+                  <Activity className="h-12 w-12 text-red-400 mx-auto mb-4" />
+                  <h3 className="text-h3 text-fg-primary mb-2">Erro ao carregar portfolio</h3>
+                  <p className="text-body-2 text-fg-muted mb-6">{error}</p>
+                  <Button variant="outline" onClick={handleRefresh}>
+                    Tentar Novamente
+                  </Button>
+                </div>
+              </Card>
+            ) : positions.length === 0 ? (
+              <Card className="card-institutional">
+                <div className="text-center py-12">
+                  <Wallet className="h-12 w-12 text-fg-muted mx-auto mb-4" />
+                  <h3 className="text-h3 text-fg-primary mb-2">Nenhum Token Encontrado</h3>
+                  <p className="text-body-2 text-fg-muted mb-6">
+                    Você ainda não possui tokens SRWA na sua carteira.
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => window.location.href = '/dashboard/markets'}
+                  >
+                    Explorar Mercados
+                  </Button>
+                </div>
+              </Card>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {positions.map((position, index) => (
+                  <Card
+                    key={position.token.mint.toBase58()}
+                    className="card-institutional hover-lift animate-fade-in border-purple-500/30 hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/20"
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
+                    <div className="space-y-6">
+                      {/* Header */}
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-2 flex-1">
+                          <h3 className="text-h3 font-semibold text-fg-primary">
+                            {position.token.name}
+                          </h3>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Badge
+                              variant="outline"
+                              className="text-xs text-blue-400 border-blue-500/30 bg-blue-500/10"
+                            >
+                              ✓ Official
+                            </Badge>
+                            <Badge
+                              variant="secondary"
+                              className={`text-xs border ${getProtocolBadgeColor(position.token.yieldConfig.protocol)}`}
+                            >
+                              {position.token.yieldConfig.protocol}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground font-mono">
+                              {position.token.symbol}
+                            </span>
+                          </div>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            window.open(`https://solscan.io/token/${position.token.mint.toBase58()}?cluster=devnet`, '_blank');
+                          }}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      </div>
+
+                      {/* Balance Display */}
+                      <div className="space-y-1">
+                        <p className="text-micro text-fg-muted uppercase tracking-wide">Saldo</p>
+                        <div className="flex items-end gap-3">
+                          <p className="text-3xl font-bold text-purple-400">
+                            {position.balance.toLocaleString('pt-BR', {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 6
+                            })}
+                          </p>
+                          <p className="text-body-1 text-fg-secondary font-mono mb-1">
+                            {position.token.symbol}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Position Details */}
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <p className="text-micro text-fg-muted uppercase tracking-wide flex items-center gap-1">
+                            <DollarSign className="h-3 w-3" />
+                            Valor Estimado
+                          </p>
+                          <p className="text-body-1 font-semibold text-fg-primary tabular-nums">
+                            {formatCurrency(position.value)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            ≈ {position.value.toFixed(4)} SOL
+                          </p>
+                        </div>
+
+                        <div className="space-y-1">
+                          <p className="text-micro text-fg-muted uppercase tracking-wide flex items-center gap-1">
+                            <TrendingUp className="h-3 w-3" />
+                            Supply APY
+                          </p>
+                          <p className="text-body-1 font-semibold text-purple-400 tabular-nums">
+                            {position.token.supplyAPY.toFixed(2)}%
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Retorno anual
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Additional Info */}
+                      <div className="grid grid-cols-2 gap-4 border-t border-border/30 pt-4">
+                        <div className="space-y-1">
+                          <p className="text-micro text-fg-muted uppercase tracking-wide">
+                            TVL Total
+                          </p>
+                          <p className="text-body-2 text-fg-secondary tabular-nums">
+                            {formatCurrency(position.token.tvl)}
+                          </p>
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-micro text-fg-muted uppercase tracking-wide">
+                            Protocolo
+                          </p>
+                          <p className="text-body-2 text-fg-secondary capitalize">
+                            {position.token.yieldConfig.protocol}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Estimated Earnings */}
+                      <div className="rounded-lg bg-purple-500/10 border border-purple-500/30 p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">Ganho anual estimado:</span>
+                          <span className="text-sm font-semibold text-purple-400">
+                            {formatCurrency(position.value * (position.token.supplyAPY / 100))}
                           </span>
                         </div>
                       </div>
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        onClick={() => setSelectedPosition(position)}
-                      >
-                        <Activity className="h-4 w-4" />
-                      </Button>
-                    </div>
 
-                    {/* Position Details */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-micro text-fg-muted uppercase tracking-wide">Supplied</p>
-                          <p className="text-body-1 font-semibold text-fg-primary tabular-nums">
-                            {position.supplied}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-micro text-fg-muted uppercase tracking-wide">Collateral Value</p>
-                          <p className="text-body-2 text-fg-secondary tabular-nums">
-                            {position.collateralValue}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-micro text-fg-muted uppercase tracking-wide">Borrowed</p>
-                          <p className="text-body-1 font-semibold text-fg-primary tabular-nums">
-                            {position.borrowed}
-                          </p>
-                        </div>
-                        <div>
-                          <p className="text-micro text-fg-muted uppercase tracking-wide">Net APY</p>
-                          <p className="text-body-2 text-brand-400 font-medium tabular-nums">
-                            {position.netApy}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Health Factor Bar */}
-                    <div className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-micro text-fg-muted">Health Factor</span>
-                        <span className={`text-micro font-medium ${getHealthFactorColor(position.healthFactor)}`}>
-                          {position.healthFactor}
-                        </span>
-                      </div>
-                      <div className="w-full bg-bg-elev-2 rounded-full h-2">
-                        <div 
-                          className={`h-2 rounded-full transition-all duration-300 ${
-                            parseFloat(position.healthFactor) >= 2.0 ? 'bg-emerald-400' :
-                            parseFloat(position.healthFactor) >= 1.5 ? 'bg-amber-400' : 'bg-red-400'
-                          }`}
-                          style={{ 
-                            width: `${Math.min((parseFloat(position.healthFactor) / 3) * 100, 100)}%` 
+                      {/* Actions */}
+                      <div className="flex gap-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => window.location.href = '/dashboard/markets'}
+                        >
+                          <Activity className="h-4 w-4 mr-2" />
+                          Ver Mercados
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => {
+                            window.open(`https://solscan.io/token/${position.token.mint.toBase58()}?cluster=devnet`, '_blank');
                           }}
-                        />
+                        >
+                          <ArrowUpRight className="h-4 w-4 mr-2" />
+                          Solscan
+                        </Button>
                       </div>
                     </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-3">
-                      <Button variant="outline" size="sm" className="flex-1">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Supply
-                      </Button>
-                      <Button variant="outline" size="sm" className="flex-1">
-                        <Minus className="h-4 w-4 mr-2" />
-                        Withdraw
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-
-            {/* Risk Alerts */}
-            <Card className="card-institutional">
-              <div className="flex items-start space-x-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10">
-                  <AlertTriangle className="h-5 w-5 text-amber-400" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-h3 font-semibold text-fg-primary">Risk Management</h3>
-                  <p className="text-body-2 text-fg-secondary">
-                    Monitor health factors closely. Consider adding collateral or reducing borrowed amounts 
-                    when health factor approaches 1.5.
-                  </p>
-                  <Button variant="outline" size="sm">
-                    View Risk Guidelines
-                  </Button>
-                </div>
+                  </Card>
+                ))}
               </div>
-            </Card>
+            )}
           </TabsContent>
 
           {/* Activity Tab */}
@@ -226,60 +361,23 @@ export default function Portfolio() {
             <Card className="card-institutional">
               <div className="text-center py-12">
                 <Activity className="h-12 w-12 text-fg-muted mx-auto mb-4" />
-                <h3 className="text-h3 text-fg-primary mb-2">Transaction History</h3>
+                <h3 className="text-h3 text-fg-primary mb-2">Histórico de Transações</h3>
                 <p className="text-body-2 text-fg-muted mb-6">
-                  Your transaction history will appear here as you interact with markets.
+                  Seu histórico de transações aparecerá aqui conforme você interage com os mercados.
                 </p>
-                <Button variant="outline">
-                  View All Transactions
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    if (positions.length > 0) {
+                      window.open('https://solscan.io/account/' + positions[0].token.mint.toBase58() + '?cluster=devnet', '_blank');
+                    }
+                  }}
+                  disabled={positions.length === 0}
+                >
+                  Ver no Solscan
                 </Button>
               </div>
             </Card>
-          </TabsContent>
-
-          {/* Analytics Tab */}
-          <TabsContent value="analytics" className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card className="card-institutional">
-                <div className="space-y-4">
-                  <h3 className="text-h3 font-semibold text-fg-primary">Performance Overview</h3>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-body-2 text-fg-secondary">Total Returns (30d)</span>
-                      <span className="text-body-2 font-semibold text-emerald-400">+$24,580</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-body-2 text-fg-secondary">Interest Earned</span>
-                      <span className="text-body-2 font-semibold text-fg-primary">$18,950</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-body-2 text-fg-secondary">Interest Paid</span>
-                      <span className="text-body-2 font-semibold text-fg-primary">$5,630</span>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-
-              <Card className="card-institutional">
-                <div className="space-y-4">
-                  <h3 className="text-h3 font-semibold text-fg-primary">Risk Metrics</h3>
-                  <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                      <span className="text-body-2 text-fg-secondary">Portfolio Health</span>
-                      <span className="text-body-2 font-semibold text-emerald-400">Healthy</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-body-2 text-fg-secondary">Liquidation Risk</span>
-                      <span className="text-body-2 font-semibold text-fg-primary">Low</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-body-2 text-fg-secondary">Diversification Score</span>
-                      <span className="text-body-2 font-semibold text-brand-400">8.5/10</span>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            </div>
           </TabsContent>
         </Tabs>
       </main>

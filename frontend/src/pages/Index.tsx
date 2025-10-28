@@ -13,6 +13,7 @@ import { FlowDiagram } from "@/components/FlowDiagram";
 import { SolanaWalletButton } from "@/components/wallet/SolanaWalletButton";
 import { useBlendPools } from "@/hooks/markets/useBlendPools";
 import { useEnhancedPoolData } from "@/hooks/markets/useDefIndexData";
+import { useDeployedTokens } from "@/hooks/solana/useDeployedTokens";
 import { useWallet } from '@solana/wallet-adapter-react';
 import { mockMarketStats, mockMarkets, mockMarketCharts } from "@/lib/mock-data";
 import { ROUTES, COLORS, PARTNERS } from "@/lib/constants";
@@ -47,8 +48,30 @@ import {
   BookOpen,
   Mail,
   MessageCircle,
-  Wallet
+  Wallet,
+  ExternalLink
 } from "lucide-react";
+
+const shortenAddress = (address: string, chars = 4) => {
+  if (!address) return "";
+  return address.length <= chars * 2 ? address : `${address.slice(0, chars)}...${address.slice(-chars)}`;
+};
+
+const formatCompactCurrency = (value: number) => {
+  if (!value) {
+    return "$0";
+  }
+  if (value >= 1_000_000_000) {
+    return `$${(value / 1_000_000_000).toFixed(1)}B`;
+  }
+  if (value >= 1_000_000) {
+    return `$${(value / 1_000_000).toFixed(1)}M`;
+  }
+  if (value >= 1_000) {
+    return `$${(value / 1_000).toFixed(1)}K`;
+  }
+  return `$${value.toLocaleString()}`;
+};
 
 const Index = () => {
   const navigate = useNavigate();
@@ -62,6 +85,9 @@ const Index = () => {
 
   const topMarkets = enhancedPools.slice(0, 3);
   const isLoading = poolsLoading || analyticsLoading;
+  const { tokens: srwaTokens, loading: srwaTokensLoading } = useDeployedTokens();
+  const displayedTokens = srwaTokens.slice(0, 3);
+  const isMarketsLoading = srwaTokensLoading || (displayedTokens.length === 0 && isLoading);
 
   // Detect mobile to disable heavy animations
   // Initialize with actual window size to prevent flash
@@ -786,7 +812,7 @@ const Index = () => {
           animate={isMarketsInView ? { opacity: 1 } : { opacity: 0 }}
           transition={{ duration: 0.8, staggerChildren: 0.15 }}
         >
-{isLoading ? (
+{isMarketsLoading ? (
             // Loading state
             [...Array(3)].map((_, index) => (
               <motion.div
@@ -820,6 +846,140 @@ const Index = () => {
                 </Card>
               </motion.div>
             ))
+          ) : displayedTokens.length > 0 ? (
+            displayedTokens.map((token, index) => {
+              const mintAddress = token.mint.toBase58();
+              const protocolLabel = token.yieldConfig?.protocol
+                ? token.yieldConfig.protocol.charAt(0).toUpperCase() + token.yieldConfig.protocol.slice(1)
+                : "Custom";
+              const apyDisplay = `${(token.supplyAPY ?? 0).toFixed(2)}%`;
+              const tvlDisplay = formatCompactCurrency(token.tvl ?? 0);
+              return (
+                <motion.div
+                  key={mintAddress}
+                  initial={isMobile ? { opacity: 1 } : { opacity: 0, y: 30 }}
+                  whileInView={isMobile ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  viewport={viewportConfigWithMargin}
+                  whileHover={isMobile ? {} : { y: -8, scale: 1.02 }}
+                  className="group"
+                >
+                  <Card className={`card-institutional hover-lift h-full relative overflow-hidden border-brand-500/30 group-hover:border-brand-400/50 ${!isMobile && "transition-all duration-300"}`}>
+                    <div className={`absolute inset-0 bg-gradient-to-br from-brand-500/5 via-transparent to-green-500/5 opacity-0 group-hover:opacity-100 ${!isMobile && "transition-opacity duration-500"}`} />
+
+                    <div className="space-y-6 relative z-10">
+                      <div className="flex items-center justify-between">
+                        <motion.div whileHover={{ scale: 1.05 }}>
+                          <Badge
+                            variant="gradient"
+                            className="text-micro px-3 py-1 shadow-[0_12px_32px_rgba(153,69,255,0.25)]"
+                          >
+                            {token.symbol?.slice(0, 6) ?? "SRWA"}
+                          </Badge>
+                        </motion.div>
+                        <Badge variant="secondary" className="text-micro bg-green-500/10 text-green-400 border-green-500/20">
+                          <motion.div
+                            className="w-2 h-2 bg-green-400 rounded-full mr-1"
+                            animate={isMobile ? {} : { opacity: [0.6, 1, 0.6] }}
+                            transition={isMobile ? {} : { duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                          />
+                          Disponível
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-3">
+                        <h3 className={`text-h3 font-semibold text-fg-primary group-hover:text-brand-300 ${!isMobile && "transition-colors"}`}>
+                          {token.name}
+                        </h3>
+                        <p className={`text-body-2 text-fg-muted group-hover:text-fg-secondary ${!isMobile && "transition-colors"}`}>
+                          Estratégia de yield:{" "}
+                          <span className="bg-gradient-to-r from-brand-500 via-brand-400 to-orange-400 bg-clip-text text-transparent font-medium">
+                            {protocolLabel}
+                          </span>
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-6">
+                        <motion.div
+                          className="relative overflow-hidden rounded-xl p-[1px] shadow-[0_18px_45px_rgba(153,69,255,0.25)]"
+                          whileHover={{ scale: 1.02 }}
+                          animate={isMobile ? {} : { backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+                          transition={isMobile ? {} : { duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                          style={{
+                            backgroundSize: "200% 200%",
+                            backgroundImage: "linear-gradient(135deg, #6D28D9 0%, #8B5CF6 50%, #FF6B35 100%)",
+                          }}
+                        >
+                          <div
+                            className={`flex flex-col items-center gap-1 bg-bg-elev-2/95 px-4 py-3 text-center ${!isMobile && "transition-colors duration-300"} group-hover:bg-bg-elev-2/80`}
+                            style={{ borderRadius: "calc(0.75rem - 2px)" }}
+                          >
+                            <p className="text-micro text-fg-muted uppercase tracking-wide">Target APY</p>
+                            <AnimatedCounter
+                              value={apyDisplay}
+                              className="text-h3 font-semibold text-fg-primary tabular-nums"
+                            />
+                          </div>
+                        </motion.div>
+                        <motion.div
+                          className="relative overflow-hidden rounded-xl p-[1px] shadow-[0_18px_45px_rgba(153,69,255,0.25)]"
+                          whileHover={{ scale: 1.02 }}
+                          animate={isMobile ? {} : { backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }}
+                          transition={isMobile ? {} : { duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
+                          style={{
+                            backgroundSize: "200% 200%",
+                            backgroundImage: "linear-gradient(135deg, #6D28D9 0%, #8B5CF6 50%, #FF6B35 100%)",
+                          }}
+                        >
+                          <div
+                            className={`flex flex-col items-center gap-1 bg-bg-elev-2/95 px-4 py-3 text-center ${!isMobile && "transition-colors duration-300"} group-hover:bg-bg-elev-2/80`}
+                            style={{ borderRadius: "calc(0.75rem - 2px)" }}
+                          >
+                            <p className="text-micro text-fg-muted uppercase tracking-wide">Target TVL</p>
+                            <div className="text-h3 font-semibold text-fg-primary tabular-nums">
+                              {tvlDisplay}
+                            </div>
+                          </div>
+                        </motion.div>
+                      </div>
+
+                      <div className="rounded-xl border border-border/60 bg-bg-elev-2/70 px-4 py-3 space-y-3">
+                        <div className="flex items-center justify-between text-micro text-fg-muted uppercase tracking-wide">
+                          <span>Mint address</span>
+                          <span className="font-mono text-fg-secondary">{shortenAddress(mintAddress)}</span>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          asChild
+                          className="w-full justify-center gap-2"
+                        >
+                          <a
+                            href={`https://explorer.solana.com/address/${mintAddress}?cluster=devnet`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            Ver no explorer
+                            <ExternalLink className="h-4 w-4" />
+                          </a>
+                        </Button>
+                      </div>
+
+                      <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                        <Button
+                          variant="gradient"
+                          className={`group w-full shadow-[0_18px_45px_rgba(153,69,255,0.25)] ${!isMobile && "transition-all duration-500"} hover:shadow-[0_28px_60px_rgba(255,107,53,0.35)]`}
+                          onClick={() => navigate('/investor')}
+                        >
+                          Investir agora
+                          <ArrowRight className={`ml-2 h-4 w-4 group-hover:translate-x-1 ${!isMobile && "transition-transform"}`} />
+                        </Button>
+                      </motion.div>
+                    </div>
+                  </Card>
+                </motion.div>
+              );
+            })
           ) : topMarkets.length > 0 ? (
             topMarkets.map((market, index) => (
               <motion.div
@@ -963,11 +1123,12 @@ const Index = () => {
               </motion.div>
             ))
           ) : (
-            // No markets state
+            // No SRWA tokens state
             <div className="col-span-3 text-center py-12">
-              <p className="text-body-1 text-fg-muted">No markets available</p>
+              <p className="text-body-1 text-fg-muted">Nenhum token SRWA disponível no momento.</p>
             </div>
           )}
+
         </motion.div>
 
         <motion.div
