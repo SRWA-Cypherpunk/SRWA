@@ -11,6 +11,8 @@ import { useBlendPools } from '@/hooks/markets/useBlendPools';
 import { useEnhancedPoolData } from '@/hooks/markets/useDefIndexData';
 import { useSRWAMarkets } from '@/hooks/markets/useSRWAMarkets';
 import { useWallet } from '@/contexts/wallet/WalletContext';
+import { useUserRegistry } from '@/hooks/solana';
+import { UserRole } from '@/types/srwa-contracts';
 
 // Icons
 import { Plus, BarChart3 } from "lucide-react";
@@ -42,6 +44,9 @@ export default function DashboardOverview() {
     error: srwaError,
     refetch: refetchSRWA
   } = useSRWAMarkets();
+
+  const { userRegistry } = useUserRegistry();
+  const isIssuer = userRegistry?.role === UserRole.Issuer || userRegistry?.role === UserRole.Admin;
 
   const loading = poolsLoading || analyticsLoading || srwaLoading;
   const error = poolsError?.message || analyticsError?.message || srwaError?.message || null;
@@ -102,16 +107,18 @@ export default function DashboardOverview() {
               </p>
             </div>
 
-            <div className="w-full sm:w-auto">
-              <HeroButton
-                onClick={() => window.location.href = '/srwa-issuance'}
-                variant="brand"
-                className="w-full sm:w-auto"
-                icon={<Plus className="h-4 w-4" />}
-              >
-                Create SRWA
-              </HeroButton>
-            </div>
+            {isIssuer && (
+              <div className="w-full sm:w-auto">
+                <HeroButton
+                  onClick={() => window.location.href = '/srwa-issuance'}
+                  variant="brand"
+                  className="w-full sm:w-auto"
+                  icon={<Plus className="h-4 w-4" />}
+                >
+                  Create SRWA
+                </HeroButton>
+              </div>
+            )}
           </div>
 
           {/* Dashboard Navigation */}

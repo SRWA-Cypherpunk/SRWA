@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useWallet } from '@/contexts/wallet/WalletContext';
 import { RegistrationWizard } from '@/components/auth/RegistrationWizard';
@@ -13,10 +13,26 @@ export default function Register() {
   const { userRegistry, isLoading } = useUserRegistry();
   const navigate = useNavigate();
 
+  const roleRoute = useMemo(() => {
+    if (!userRegistry) return null;
+
+    if (userRegistry.role === UserRole.Issuer) return '/srwa-issuance';
+    if (userRegistry.role === UserRole.Investor) return '/investor';
+    if (userRegistry.role === UserRole.Admin) return '/admin';
+    return '/dashboard';
+  }, [userRegistry]);
+
   // Log state for debugging
   useEffect(() => {
     console.log('[Register] State:', { connected, isLoading, userRegistry });
   }, [connected, isLoading, userRegistry]);
+
+  // Redirect registered users automatically to their dashboard
+  useEffect(() => {
+    if (roleRoute) {
+      navigate(roleRoute, { replace: true });
+    }
+  }, [roleRoute, navigate]);
 
   // Mostrar loading enquanto carrega
   if (isLoading) {
@@ -57,14 +73,7 @@ export default function Register() {
   }
 
   // Se o usuário já estiver registrado, mostrar mensagem
-  if (userRegistry) {
-    const getRolePage = () => {
-      if (userRegistry.role === UserRole.Issuer) return '/srwa-issuance';
-      if (userRegistry.role === UserRole.Investor) return '/investor';
-      if (userRegistry.role === UserRole.Admin) return '/admin';
-      return '/dashboard';
-    };
-
+  if (roleRoute) {
     return (
       <div className="flex items-center justify-center min-h-screen p-4">
         <Card className="max-w-md w-full">
@@ -76,16 +85,16 @@ export default function Register() {
               Você já está registrado!
             </CardTitle>
             <CardDescription className="text-center text-base">
-              Seu tipo de conta: <strong>{userRegistry.role}</strong>
+              Seu tipo de conta: <strong>{userRegistry?.role}</strong>
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground text-center">
-              Registrado em: {new Date(userRegistry.registered_at * 1000).toLocaleDateString('pt-BR')}
+              Registrado em: {userRegistry ? new Date(userRegistry.registered_at * 1000).toLocaleDateString('pt-BR') : '—'}
             </p>
             <div className="flex gap-2">
               <Button asChild className="flex-1">
-                <Link to={getRolePage()}>Ir para minha página</Link>
+                <Link to={roleRoute}>Ir para minha página</Link>
               </Button>
               <Button asChild variant="outline" className="flex-1">
                 <Link to="/dashboard">Ver Dashboard</Link>

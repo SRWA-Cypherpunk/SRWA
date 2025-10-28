@@ -1,16 +1,19 @@
 import { Header } from '@/components/layout/Header';
+import { RaydiumPoolManager } from '@/components/srwa/pool/RaydiumPoolManager';
 
 export default function Pools() {
 	return (
-		<div>
+		<div className="min-h-screen bg-background">
 			<Header />
-			<div className="container mx-auto max-w-6xl p-6 space-y-4">
-				<h1 className="text-2xl font-semibold">Pools</h1>
-				<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-					<div className="border rounded-md p-4">Pool A</div>
-					<div className="border rounded-md p-4">Pool B</div>
-					<div className="border rounded-md p-4">Pool C</div>
+			<div className="container mx-auto max-w-7xl p-6 space-y-6">
+				<div className="space-y-2">
+					<h1 className="text-3xl font-bold">Raydium Liquidity Pools</h1>
+					<p className="text-muted-foreground">
+						Gerencie seus pools de liquidez: faça swaps, adicione ou remova liquidez
+					</p>
 				</div>
+
+				<RaydiumPoolManager />
 			</div>
 		</div>
 	);

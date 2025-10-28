@@ -10,9 +10,11 @@ import {
 } from '@solana/spl-token';
 import { useProgramsSafe } from '@/contexts';
 import { toast } from 'sonner';
+import { getConfig, MarginfiClient } from '@mrgnlabs/marginfi-client-v2';
 
 const PURCHASE_ORDER_SEED = 'purchase_order';
 const PROGRAM_ID = new PublicKey('EdyLMn3iUrF16Z4VPyTfv9hC9G7eqxsHQVxnsNcsAT3Z');
+const WSOL_MINT_DEVNET = new PublicKey('So11111111111111111111111111111111111111112');
 
 export interface PurchaseOrderAccount {
   publicKey: PublicKey;
@@ -267,6 +269,53 @@ export function usePurchaseOrders() {
         }
 
         console.log('[usePurchaseOrders] Order approved:', tx);
+
+        // After approval, deposit SOL received into MarginFi
+        try {
+          toast.info('Depositando SOL recebido no MarginFi...');
+
+          // Calculate SOL amount received (in lamports)
+          const solAmountLamports = orderAccount.totalLamports.toNumber();
+          const solAmount = solAmountLamports / 1e9; // Convert lamports to SOL
+
+          console.log(`[usePurchaseOrders] Depositing ${solAmount} SOL to MarginFi`);
+
+          // Initialize MarginFi client
+          const config = getConfig('dev');
+          const marginfiClient = await MarginfiClient.fetch(config, wallet as any, connection);
+
+          // Get or create MarginFi account
+          const accounts = await marginfiClient.getMarginfiAccountsForAuthority(wallet.publicKey);
+          let marginfiAccount;
+
+          if (accounts.length > 0) {
+            marginfiAccount = accounts[0];
+            console.log('[usePurchaseOrders] Using existing MarginFi account');
+          } else {
+            marginfiAccount = await marginfiClient.createMarginfiAccount();
+            console.log('[usePurchaseOrders] Created new MarginFi account');
+          }
+
+          // Find wSOL bank
+          const banks = marginfiClient.banks;
+          const solBank = Array.from(banks.values()).find(
+            (bank) => bank.mint.equals(WSOL_MINT_DEVNET)
+          );
+
+          if (!solBank) {
+            throw new Error('Banco wSOL não encontrado no MarginFi');
+          }
+
+          // Deposit SOL to MarginFi
+          await marginfiAccount.deposit(solAmount, solBank.address);
+
+          console.log('[usePurchaseOrders] SOL deposited to MarginFi successfully');
+          toast.success(`${solAmount.toFixed(4)} SOL depositado no MarginFi!`);
+        } catch (marginfiError: any) {
+          console.error('[usePurchaseOrders] Error depositing to MarginFi:', marginfiError);
+          toast.error(`Compra aprovada, mas falha ao depositar no MarginFi: ${marginfiError.message}`);
+          // Don't throw - the purchase was already approved successfully
+        }
 
         // Refresh orders asynchronously (don't block on this)
         fetchOrders().catch(err => console.error('[usePurchaseOrders] Error refreshing orders:', err));

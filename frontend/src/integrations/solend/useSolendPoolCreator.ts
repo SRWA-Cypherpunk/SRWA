@@ -81,6 +81,7 @@ export function useSolendPoolCreator() {
       }
 
       console.group('[useSolendPoolCreator.send]');
+      let simulationTx: Transaction | null = null;
 
       transaction.feePayer = wallet.publicKey;
       const latestBlockhash = await connection.getLatestBlockhash(CONFIRMATION);
@@ -89,6 +90,13 @@ export function useSolendPoolCreator() {
       if (signers.length > 0) {
         transaction.partialSign(...signers);
       }
+
+      simulationTx = Transaction.from(
+        transaction.serialize({
+          requireAllSignatures: false,
+          verifySignatures: false,
+        })
+      );
 
       console.log('[useSolendPoolCreator.send] Prepared transaction', {
         feePayer: transaction.feePayer.toBase58(),
@@ -118,6 +126,42 @@ export function useSolendPoolCreator() {
         console.groupEnd();
         return signature;
       } catch (error) {
+        let transformedError: unknown = error;
+        try {
+          const simulation = await connection.simulateTransaction(
+            simulationTx ?? transaction
+          );
+          const logs = simulation.value.logs ?? [];
+          console.error(
+            '[useSolendPoolCreator.send] Simulation logs\n' + logs.map((log) => `  • ${log}`).join('\n')
+          );
+          console.error('[useSolendPoolCreator.send] Simulation error', simulation.value.err);
+          if (logs.some((log) => log.includes('Liquidation threshold must be in range [LTV, 100]'))) {
+            transformedError = new Error(
+              'A Solend rejeitou a configuração: a liquidation threshold precisa ser maior ou igual ao Loan to Value (LTV).'
+            );
+          }
+          if (logs.some((log) => log.includes('Pyth oracle price is stale'))) {
+            transformedError = new Error(
+              'O preço da Pyth está desatualizado na devnet. Atualize o feed manualmente (pyth push) ou use um feed Switchboard ativo.'
+            );
+          }
+          if (logs.some((log) => log.includes('Null oracle config'))) {
+            transformedError = new Error(
+              'Nenhum oráculo válido foi aceito. Verifique se a conta Pyth está ativa ou forneça um feed Switchboard válido.'
+            );
+          }
+          if (logs.some((log) => log.includes('Pyth product account provided is not a valid Pyth product account'))) {
+            transformedError = new Error(
+              'A conta de produto da Pyth informada não é válida para o programa selecionado. Confira se está usando o endereço correto na devnet.'
+            );
+          }
+        } catch (simulationError) {
+          console.error('[useSolendPoolCreator.send] Simulation failed', simulationError);
+          if (simulationError instanceof Error) {
+            transformedError = simulationError;
+          }
+        }
         console.error('[useSolendPoolCreator.send] Failed to send transaction', {
           error,
           name: (error as any)?.name,
@@ -126,7 +170,7 @@ export function useSolendPoolCreator() {
           code: (error as any)?.code,
         });
         console.groupEnd();
-        throw error;
+        throw transformedError;
       }
     },
     [wallet, connection]
@@ -257,6 +301,7 @@ export function useSolendPoolCreator() {
     async (
       market: PublicKey,
       marketAuthority: PublicKey,
+      oracleProgramId: PublicKey,
       input: SolendReserveRiskConfigInput,
       reserveInput: CreateSolendPoolInput['reserve']
     ): Promise<{
@@ -278,8 +323,35 @@ export function useSolendPoolCreator() {
 
         const programId = SOLEND_DEVNET_PROGRAM_ID;
         const liquidityMint = new PublicKey(reserveInput.liquidityMint);
+        const pythProductAccount = parsePublicKey(reserveInput.pythProductAccount);
         const pythPriceAccount = parsePublicKey(reserveInput.pythPriceAccount);
         const switchboardFeed = parsePublicKey(reserveInput.switchboardFeed, NULL_ORACLE);
+
+        // Pular validação de oráculos se estiver usando NULL_ORACLE (modo teste)
+        const isUsingNullOracle = pythProductAccount.equals(NULL_ORACLE) && pythPriceAccount.equals(NULL_ORACLE);
+
+        if (!isUsingNullOracle) {
+          const [pythProductInfo, pythPriceInfo] = await Promise.all([
+            connection.getAccountInfo(pythProductAccount),
+            connection.getAccountInfo(pythPriceAccount),
+          ]);
+
+          if (!pythProductInfo) {
+            throw new Error('Conta de produto da Pyth não encontrada no cluster selecionado.');
+          }
+          if (!pythPriceInfo) {
+            throw new Error('Conta de preço da Pyth não encontrada no cluster selecionado.');
+          }
+
+          if (!pythProductInfo.owner.equals(oracleProgramId)) {
+            throw new Error('Conta de produto informada não pertence ao programa Pyth selecionado.');
+          }
+          if (!pythPriceInfo.owner.equals(oracleProgramId)) {
+            throw new Error('Conta de preço informada não pertence ao programa Pyth selecionado.');
+          }
+        } else {
+          console.warn('[useSolendPoolCreator] ⚠️ Modo teste ativo - usando NULL_ORACLE (validações de oráculo desabilitadas)');
+        }
 
       // Verificar se o mint existe
       let mintInfo;
@@ -408,6 +480,13 @@ export function useSolendPoolCreator() {
           BigInt(liquidityAmount.toString())
         );
 
+        console.log('[useSolendPoolCreator.createReserve] InitReserve params:', {
+          market: market.toBase58(),
+          marketAuthority: marketAuthority.toBase58(),
+          marketOwner: wallet.publicKey.toBase58(),
+          transferAuthority: transferAuthority.publicKey.toBase58(),
+        });
+
         const initReserveInstruction = initReserveIx(
           liquidityAmount,
           reserveConfig,
@@ -419,6 +498,7 @@ export function useSolendPoolCreator() {
           liquidityFeeReceiver,
           collateralMintKeypair.publicKey,
           collateralSupplyKeypair.publicKey,
+          pythProductAccount,
           pythPriceAccount,
           switchboardFeed,
           market,
@@ -501,10 +581,13 @@ export function useSolendPoolCreator() {
         let marketAuthority: PublicKey;
         const collectedSignatures: string[] = [];
 
+        const oracleProgramPk = new PublicKey(
+          input.market.oracleProgramId || PYTH_DEVNET_PROGRAM_ID.toBase58()
+        );
         if (input.market.createNewMarket) {
           const { market, authority, signature } = await createLendingMarket(
             input.market.quoteCurrency,
-            input.market.oracleProgramId || PYTH_DEVNET_PROGRAM_ID.toBase58(),
+            oracleProgramPk.toBase58(),
             input.market.switchboardProgramId || SWITCHBOARD_DEVNET_PROGRAM_ID.toBase58()
           );
           marketPubkey = market;
@@ -524,6 +607,7 @@ export function useSolendPoolCreator() {
         const { reservePubkey, accounts, signatures } = await createReserve(
           marketPubkey,
           marketAuthority,
+          oracleProgramPk,
           input.reserve.riskConfig,
           input.reserve
         );
