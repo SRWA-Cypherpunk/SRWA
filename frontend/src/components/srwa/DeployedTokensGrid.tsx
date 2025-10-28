@@ -1,30 +1,43 @@
 import { useDeployedTokens } from '@/hooks/solana/useDeployedTokens';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'sonner';
-import { Coins, TrendingUp, DollarSign, RefreshCw, ExternalLink, Shield } from 'lucide-react';
+import { Coins, TrendingUp, DollarSign, RefreshCw, Copy, Shield, ArrowUpRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+
+const formatCurrency = (value: number) => {
+  if (value >= 1_000_000) {
+    return `$${(value / 1_000_000).toFixed(1)}M`;
+  }
+  if (value >= 1_000) {
+    return `$${(value / 1_000).toFixed(1)}K`;
+  }
+  return `$${value.toFixed(0)}`;
+};
+
+const truncateAddress = (address: string, start = 8, end = 6) => {
+  return `${address.slice(0, start)}...${address.slice(-end)}`;
+};
 
 export function DeployedTokensGrid() {
   const { tokens, loading, error, refresh } = useDeployedTokens();
 
   if (loading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-10 w-24" />
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-10 w-28" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <Card key={i} className="card-institutional">
-              <CardHeader>
-                <Skeleton className="h-6 w-32" />
-                <Skeleton className="h-4 w-24 mt-2" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-20 w-full" />
+            <Card key={i} className="border-border/50">
+              <CardContent className="p-6 space-y-4">
+                <Skeleton className="h-6 w-3/4" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-24 w-full" />
               </CardContent>
             </Card>
           ))}
@@ -35,11 +48,11 @@ export function DeployedTokensGrid() {
 
   if (error) {
     return (
-      <Card className="card-institutional">
-        <CardContent className="py-12 text-center">
-          <Shield className="h-12 w-12 text-red-400 mx-auto mb-4" />
-          <p className="text-body-1 text-fg-secondary">{error}</p>
-          <Button onClick={refresh} variant="outline" className="mt-4">
+      <Card className="border-red-500/30 bg-red-500/5">
+        <CardContent className="flex flex-col items-center justify-center py-12">
+          <Shield className="h-12 w-12 text-red-400 mb-4" />
+          <p className="text-red-400 mb-4">{error}</p>
+          <Button onClick={refresh} variant="outline" className="border-red-500/30">
             <RefreshCw className="h-4 w-4 mr-2" />
             Try Again
           </Button>
@@ -50,20 +63,15 @@ export function DeployedTokensGrid() {
 
   if (tokens.length === 0) {
     return (
-      <Card className="card-institutional">
-        <CardHeader>
-          <CardTitle className="text-h2 flex items-center gap-2">
-            <Coins className="h-6 w-6 text-brand-400" />
-            Created SRWA Tokens
-          </CardTitle>
-          <CardDescription>No tokens deployed yet</CardDescription>
-        </CardHeader>
-        <CardContent className="py-12 text-center">
-          <Coins className="h-16 w-16 text-fg-muted mx-auto mb-4 opacity-50" />
-          <p className="text-body-1 text-fg-muted mb-4">
-            No SRWA tokens have been deployed yet
+      <Card className="border-border/50 bg-gradient-to-br from-background to-muted/20">
+        <CardContent className="flex flex-col items-center justify-center py-16">
+          <Coins className="h-20 w-20 text-muted-foreground/30 mb-6" />
+          <h3 className="text-xl font-semibold mb-2">No tokens deployed yet</h3>
+          <p className="text-muted-foreground mb-6 text-center max-w-md">
+            Get started by creating your first SRWA token using the Token Wizard
           </p>
           <Button onClick={() => window.location.href = '/srwa-issuance'} className="btn-primary">
+            <Coins className="h-4 w-4 mr-2" />
             Create Your First Token
           </Button>
         </CardContent>
@@ -73,104 +81,159 @@ export function DeployedTokensGrid() {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-h1 font-semibold text-fg-primary flex items-center gap-2">
-            <Coins className="h-8 w-8 text-brand-400" />
-            Created SRWA Tokens
+          <h2 className="text-2xl font-bold flex items-center gap-3">
+            <div className="rounded-xl bg-brand-400/10 p-2">
+              <Coins className="h-6 w-6 text-brand-400" />
+            </div>
+            SRWA Tokens
+            <Badge variant="secondary" className="text-sm">
+              {tokens.length} {tokens.length === 1 ? 'Token' : 'Tokens'}
+            </Badge>
           </h2>
-          <p className="text-body-1 text-fg-secondary mt-2">
-            {tokens.length} token{tokens.length > 1 ? 's' : ''} deployed on-chain
+          <p className="text-muted-foreground mt-1">
+            Manage and monitor your deployed tokenized assets
           </p>
         </div>
-        <Button onClick={refresh} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 mr-2" />
+        <Button onClick={refresh} variant="outline" size="sm" className="gap-2">
+          <RefreshCw className="h-4 w-4" />
           Refresh
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {tokens.map((token) => (
-          <Card key={token.mint.toBase58()} className="card-institutional hover-lift group">
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle className="text-h3 flex items-center gap-2">
-                    {token.name}
-                    <Badge variant="outline" className="text-green-400 border-green-500/30 bg-green-500/10">
-                      Live
+      {/* Tokens Grid */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {tokens.map((token, index) => (
+          <motion.div
+            key={token.mint.toBase58()}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+          >
+            <Card className="group relative overflow-hidden border-border/50 bg-gradient-to-br from-background to-muted/20 transition-all hover:border-brand-400/50 hover:shadow-lg hover:shadow-brand-400/10">
+              <CardContent className="p-6">
+                {/* Header */}
+                <div className="mb-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <h3 className="text-lg font-semibold leading-tight mb-1">
+                        {token.name}
+                      </h3>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs font-mono">
+                          {token.symbol}
+                        </Badge>
+                        <Badge variant="outline" className="text-xs text-green-400 border-green-500/30 bg-green-500/10">
+                          Live
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="rounded-lg bg-brand-400/10 p-2">
+                      <Coins className="h-5 w-5 text-brand-400" />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mint Address */}
+                <div className="mb-4 rounded-lg bg-muted/50 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+                    Mint Address
+                  </p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-mono text-xs text-foreground">
+                      {truncateAddress(token.mint.toBase58())}
+                    </p>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-6 w-6 hover:bg-brand-400/20"
+                      onClick={() => {
+                        navigator.clipboard.writeText(token.mint.toBase58());
+                        toast.success('Address copied!');
+                      }}
+                    >
+                      <Copy className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* TVL & APY */}
+                <div className="mb-4 grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="mb-1 flex items-center gap-1 text-xs text-muted-foreground">
+                      <DollarSign className="h-3 w-3" />
+                      <span className="font-medium uppercase">Target TVL</span>
+                    </div>
+                    <p className="text-2xl font-bold text-foreground">
+                      {formatCurrency(token.tvl)}
+                    </p>
+                  </div>
+                  <div>
+                    <div className="mb-1 flex items-center gap-1 text-xs text-muted-foreground">
+                      <TrendingUp className="h-3 w-3" />
+                      <span className="font-medium uppercase">Target APY</span>
+                    </div>
+                    <p className="text-2xl font-bold text-brand-400">
+                      {token.supplyAPY.toFixed(2)}%
+                    </p>
+                  </div>
+                </div>
+
+                {/* Yield Strategy */}
+                <div className="mb-4 rounded-lg border border-border/30 bg-muted/30 p-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium uppercase text-muted-foreground mb-1">
+                        Yield Strategy
+                      </p>
+                      <p className="text-sm font-semibold capitalize text-foreground">
+                        {token.yieldConfig.protocol}
+                      </p>
+                    </div>
+                    <Badge variant="outline" className="text-xs">
+                      {token.yieldConfig.protocol === 'none' ? 'No Strategy' : 'Active'}
                     </Badge>
-                  </CardTitle>
-                  <CardDescription className="font-mono text-xs mt-1">
-                    {token.symbol}
-                  </CardDescription>
-                </div>
-                <Coins className="h-8 w-8 text-brand-400" />
-              </div>
-            </CardHeader>
-
-            <CardContent className="space-y-4">
-              {/* Mint Address */}
-              <div className="p-3 bg-bg-elev-2 rounded-lg">
-                <p className="text-micro text-fg-muted mb-1">Mint Address</p>
-                <p className="font-mono text-xs text-fg-primary break-all">
-                  {token.mint.toBase58()}
-                </p>
-              </div>
-
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1">
-                    <DollarSign className="h-3 w-3 text-fg-muted" />
-                    <p className="text-micro text-fg-muted">Target TVL</p>
                   </div>
-                  <p className="text-body-1 font-semibold text-fg-primary">
-                    ${(token.tvl / 1_000_000).toFixed(1)}M
+                </div>
+
+                {/* Issuer */}
+                <div className="mb-4 rounded-lg bg-muted/30 p-3">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+                    Issuer
+                  </p>
+                  <p className="font-mono text-xs text-foreground">
+                    {truncateAddress(token.issuer.toBase58())}
                   </p>
                 </div>
 
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1">
-                    <TrendingUp className="h-3 w-3 text-fg-muted" />
-                    <p className="text-micro text-fg-muted">Target APY</p>
-                  </div>
-                  <p className="text-body-1 font-semibold text-brand-400">
-                    {token.supplyAPY.toFixed(2)}%
-                  </p>
+                {/* Actions */}
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    className="flex-1 hover:bg-brand-400/10 hover:border-brand-400/50 hover:text-brand-400"
+                    onClick={() => {
+                      // Navigate to token details
+                      window.location.href = `/token/${token.mint.toBase58()}`;
+                    }}
+                  >
+                    View Details
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="hover:bg-brand-400/10 hover:border-brand-400/50 hover:text-brand-400"
+                    onClick={() => {
+                      window.open(`https://solscan.io/token/${token.mint.toBase58()}?cluster=devnet`, '_blank');
+                    }}
+                  >
+                    <ArrowUpRight className="h-4 w-4" />
+                  </Button>
                 </div>
-              </div>
-
-              {/* Yield Strategy */}
-              <div className="p-3 bg-bg-elev-2 rounded-lg">
-                <p className="text-micro text-fg-muted mb-1">Yield Strategy</p>
-                <p className="text-body-2 text-fg-primary capitalize">
-                  {token.yieldConfig.protocol}
-                </p>
-              </div>
-
-              {/* Issuer */}
-              <div className="space-y-1">
-                <p className="text-micro text-fg-muted">Issuer</p>
-                <p className="font-mono text-xs text-fg-primary">
-                  {token.issuer.toBase58().slice(0, 16)}...
-                </p>
-              </div>
-
-              {/* Action Button */}
-              <Button
-                onClick={() => {
-                  navigator.clipboard.writeText(token.mint.toBase58());
-                  toast.success('Mint address copied!');
-                }}
-                variant="outline"
-                className="w-full group-hover:bg-brand-500/10 group-hover:border-brand-500/30 transition-all"
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Copy Mint Address
-              </Button>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </motion.div>
         ))}
       </div>
     </div>

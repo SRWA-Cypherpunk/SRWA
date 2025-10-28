@@ -30,7 +30,8 @@ import {
   Send,
   ShoppingCart
 } from 'lucide-react';
-import { SolendPoolCreator } from '@/components/srwa/admin/SolendPoolCreator';
+import { PoolManager } from '@/components/srwa/admin/PoolManager';
+import { PoolsOverview } from '@/components/srwa/admin/PoolsOverview';
 
 function mapStatus(status: any): RequestStatus {
   if (!status) return 'pending';
@@ -208,13 +209,21 @@ export function AdminPanel() {
       }
     };
 
+    const isDeployed = status === 'deployed';
+
     return (
       <>
-        <Card className="card-institutional hover-lift">
+        <Card
+          className={
+            isDeployed
+              ? 'group relative overflow-hidden border border-brand-500/30 bg-gradient-to-br from-background to-muted/20 transition-all hover:-translate-y-1 hover:border-brand-400/60 hover:shadow-lg hover:shadow-brand-400/20'
+              : 'card-institutional hover-lift'
+          }
+        >
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <CardTitle className="text-h3">{request.account.name}</CardTitle>
+                <CardTitle className="text-h3 text-foreground">{request.account.name}</CardTitle>
                 <CardDescription className="font-mono text-xs">
                   {request.account.symbol} • {request.account.issuer?.toBase58?.()?.slice(0, 8)}...
                 </CardDescription>
@@ -239,9 +248,15 @@ export function AdminPanel() {
             </div>
           </CardHeader>
 
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-5">
             {/* Token Info */}
-            <div className="grid grid-cols-2 gap-4 text-body-2">
+            <div
+              className={
+                isDeployed
+                  ? 'grid grid-cols-2 gap-4 rounded-xl border border-border/40 bg-background/50 p-4 text-body-2'
+                  : 'grid grid-cols-2 gap-4 text-body-2'
+              }
+            >
               <div>
                 <p className="text-fg-muted text-micro">Mint</p>
                 <p className="font-mono text-xs text-fg-primary break-all">
@@ -256,9 +271,15 @@ export function AdminPanel() {
 
             {/* Token Explorer Link */}
             {mintCreated && (
-              <div className="p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+              <div
+                className={
+                  isDeployed
+                    ? 'rounded-xl border border-brand-400/40 bg-brand-400/10 p-4'
+                    : 'p-3 rounded-lg border border-brand-400/30 bg-brand-400/10'
+                }
+              >
                 <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-semibold text-blue-400 flex items-center gap-1">
+                  <p className="text-xs font-semibold text-brand-300 flex items-center gap-1">
                     <Wallet className="h-3 w-3" />
                     Token na Devnet
                   </p>
@@ -266,7 +287,7 @@ export function AdminPanel() {
                     href={`https://explorer.solana.com/address/${effectiveMint.toBase58()}?cluster=devnet`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1"
+                    className="text-xs text-brand-300 hover:text-brand-200 flex items-center gap-1 transition"
                   >
                     Ver no Explorer
                     <ExternalLink className="h-3 w-3" />
@@ -276,7 +297,7 @@ export function AdminPanel() {
                   {effectiveMint.toBase58()}
                 </p>
                 {status === 'deployed' && (
-                  <p className="text-xs text-green-400 mt-2">
+                  <p className="text-xs text-brand-300 mt-2">
                     ✓ Tokens mintados para o issuer
                   </p>
                 )}
@@ -321,14 +342,24 @@ export function AdminPanel() {
             )}
 
             {/* View Full Details Button */}
-            <Dialog open={showDetails} onOpenChange={setShowDetails}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="w-full">
-                  <FileText className="mr-2 h-4 w-4" />
-                  Ver Todos os Detalhes
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+              <Dialog open={showDetails} onOpenChange={setShowDetails}>
+                <DialogTrigger asChild>
+                  {isDeployed ? (
+                    <button
+                      type="button"
+                      className="flex w-full items-center justify-start gap-2 text-sm font-medium text-brand-400 transition hover:text-brand-300"
+                    >
+                      <FileText className="h-4 w-4" />
+                      Ver Todos os Detalhes
+                    </button>
+                  ) : (
+                    <Button variant="outline" className="w-full">
+                      <FileText className="mr-2 h-4 w-4" />
+                      Ver Todos os Detalhes
+                    </Button>
+                  )}
+                </DialogTrigger>
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="text-2xl">{request.account.name} ({request.account.symbol})</DialogTitle>
                   <DialogDescription>Informações completas do token</DialogDescription>
@@ -579,8 +610,8 @@ export function AdminPanel() {
 
             {/* Deployed Info */}
             {status === 'deployed' && request.account.srwaConfig && (
-              <div className="p-3 bg-green-500/10 rounded-lg border border-green-500/20">
-                <p className="text-body-2 text-green-400 font-semibold mb-2 flex items-center">
+              <div className="rounded-xl border border-brand-400/40 bg-brand-400/10 p-4">
+                <p className="text-body-2 text-brand-300 font-semibold mb-2 flex items-center">
                   <CheckCircle className="h-4 w-4 mr-2" />
                   Successfully Deployed
                 </p>
@@ -589,7 +620,7 @@ export function AdminPanel() {
                     <p>Config: {request.account.srwaConfig.toBase58().slice(0, 24)}...</p>
                     <p>Offering: {request.account.offeringState?.toBase58?.()?.slice(0, 24) ?? '—'}...</p>
                   </div>
-                  <div className="pt-2 border-t border-green-500/20">
+                  <div className="pt-2 border-t border-brand-400/20">
                     <p className="text-xs text-fg-muted mb-1">Supply do Admin:</p>
                     <p className="text-xs text-fg-secondary">
                       Os tokens foram mintados para sua carteira de admin. Você gerencia o supply e vende aos investidores conforme recebe pagamentos em SOL.
@@ -734,7 +765,7 @@ export function AdminPanel() {
 
       {/* Tabs */}
       <Tabs defaultValue="pending" className="space-y-6">
-        <TabsList className="grid w-full max-w-3xl grid-cols-5">
+        <TabsList className="grid w-full max-w-6xl grid-cols-6">
           <TabsTrigger value="pending">
             Pending ({grouped.pending.length})
           </TabsTrigger>
@@ -745,10 +776,13 @@ export function AdminPanel() {
             Rejected ({grouped.rejected.length})
           </TabsTrigger>
           <TabsTrigger value="purchases">
-            Process Purchases
+            Purchases
           </TabsTrigger>
-          <TabsTrigger value="solend">
-            Solend Pools
+          <TabsTrigger value="pools-overview">
+            Pools Overview
+          </TabsTrigger>
+          <TabsTrigger value="pools">
+            Pool Manager
           </TabsTrigger>
         </TabsList>
 
@@ -939,8 +973,12 @@ export function AdminPanel() {
           )}
         </TabsContent>
 
-        <TabsContent value="solend">
-          <SolendPoolCreator />
+        <TabsContent value="pools-overview">
+          <PoolsOverview />
+        </TabsContent>
+
+        <TabsContent value="pools">
+          <PoolManager />
         </TabsContent>
       </Tabs>
     </div>

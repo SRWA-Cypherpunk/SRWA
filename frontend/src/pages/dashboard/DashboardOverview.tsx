@@ -55,6 +55,9 @@ export default function DashboardOverview() {
     refetch: refetchSRWA
   } = useSRWAMarkets();
 
+  const { userRegistry } = useUserRegistry();
+  const isIssuer = userRegistry?.role === UserRole.Issuer || userRegistry?.role === UserRole.Admin;
+
   const loading = poolsLoading || analyticsLoading || srwaLoading;
   const error = poolsError || analyticsError || srwaError || null;
 

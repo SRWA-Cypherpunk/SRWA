@@ -36,6 +36,7 @@ export interface SolendReserveRiskConfigInput {
 export interface SolendReserveInput {
   liquidityMint: string;
   initialLiquidity: string;
+  pythProductAccount: string;
   pythPriceAccount: string;
   switchboardFeed: string;
   feeReceiver?: string;

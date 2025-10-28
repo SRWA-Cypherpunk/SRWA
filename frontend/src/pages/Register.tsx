@@ -19,6 +19,13 @@ export default function Register() {
     }
   }, [userRegistry, navigate]);
 
+  // Redirect registered users automatically to their dashboard
+  useEffect(() => {
+    if (roleRoute) {
+      navigate(roleRoute, { replace: true });
+    }
+  }, [roleRoute, navigate]);
+
   // Mostrar loading enquanto carrega
   if (isLoading) {
     return (
@@ -97,14 +104,7 @@ export default function Register() {
   }
 
   // Se o usuário já estiver registrado, mostrar mensagem
-  if (userRegistry) {
-    const getRolePage = () => {
-      if (userRegistry.role === UserRole.Issuer) return '/srwa-issuance';
-      if (userRegistry.role === UserRole.Investor) return '/investor';
-      if (userRegistry.role === UserRole.Admin) return '/admin';
-      return '/dashboard';
-    };
-
+  if (roleRoute) {
     return (
       <div className="relative min-h-screen overflow-hidden">
         {/* Glassdoor Background */}

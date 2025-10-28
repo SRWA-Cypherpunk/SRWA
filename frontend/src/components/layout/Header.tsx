@@ -1,15 +1,16 @@
-import { useState, useEffect, type MouseEvent } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useState, useEffect, useMemo, type MouseEvent } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Plus, Shield, Building2 } from "lucide-react";
 import { SolanaWalletButton } from "@/components/wallet/SolanaWalletButton";
-import { ROUTES, ISSUER_ROUTES, ADMIN_ROUTES } from "@/lib/constants/routes";
+import { ROUTES, SRWA_ROUTES } from "@/lib/constants";
 import { FEATURES } from "@/lib/constants/features";
 import Logo from "@/assets/logo.png";
 import SRWALetters from "@/assets/srwa_letters.png";
 import { AnimatePresence, motion } from "framer-motion";
 import { useUserRegistry } from "@/hooks/solana";
 import { UserRole } from "@/types/srwa-contracts";
+import { useWallet } from "@/contexts/wallet/WalletContext";
 import { cn } from "@/lib/utils";
 
 interface HeaderProps {
@@ -23,14 +24,39 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const { userRegistry } = useUserRegistry();
+  const { connected } = useWallet();
 
-  // Helper function to check if route is active
-  const isActive = (path: string) => {
-    if (path === ROUTES.HOME) {
-      return location.pathname === path;
+  const roleNavItems = useMemo(() => {
+    if (!userRegistry) return [];
+
+    switch (userRegistry.role) {
+      case UserRole.Issuer:
+        return [
+          {
+            label: "Issuer",
+            href: SRWA_ROUTES.ISSUANCE,
+          },
+        ];
+      case UserRole.Investor:
+        return [
+          {
+            label: "Investor",
+            href: "/investor",
+          },
+        ];
+      case UserRole.Admin:
+        return [
+          {
+            label: "Admin",
+            href: ROUTES.ADMIN,
+          },
+        ];
+      default:
+        return [];
     }
-    return location.pathname.startsWith(path);
-  };
+  }, [userRegistry]);
+
+  const shouldShowRegister = connected && !userRegistry;
 
   useEffect(() => {
     const controlNavbar = () => {
@@ -176,6 +202,25 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
               Documentation
               <span className="absolute -bottom-[2px] left-0 w-0 h-[2px] bg-brand-400 group-hover:w-full transition-all duration-300" />
             </a>
+            {shouldShowRegister && (
+              <Link
+                to="/register"
+                className="text-sm lg:text-body-2 text-brand-400 hover:text-brand-300 transition-colors relative group font-medium"
+              >
+                Register
+                <span className="absolute bottom-0 left-0 w-0 h-px bg-brand-400 group-hover:w-full transition-all duration-300" />
+              </Link>
+            )}
+            {roleNavItems.map((item) => (
+              <Link
+                key={item.href}
+                to={item.href}
+                className="text-sm lg:text-body-2 text-brand-400 hover:text-brand-300 transition-colors relative group font-medium"
+              >
+                {item.label}
+                <span className="absolute bottom-0 left-0 w-0 h-px bg-brand-400 group-hover:w-full transition-all duration-300" />
+              </Link>
+            ))}
           </nav>
         </div>
 
@@ -286,6 +331,25 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
                 >
                   Documentation
                 </a>
+                {shouldShowRegister && (
+                  <Link
+                    to="/register"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block py-2 text-sm sm:text-body-2 text-brand-400 hover:text-brand-300 transition-colors font-medium"
+                  >
+                    Register
+                  </Link>
+                )}
+                {roleNavItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block py-2 text-sm sm:text-body-2 text-brand-400 hover:text-brand-300 transition-colors font-medium"
+                  >
+                    {item.label}
+                  </Link>
+                ))}
                 {/* Mobile Wallet Button */}
                 <div className="pt-2 border-t border-stroke-line">
                   <SolanaWalletButton />

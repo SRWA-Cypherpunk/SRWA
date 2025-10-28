@@ -1,4 +1,4 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{prelude::*, system_program};
 use crate::state::*;
 use crate::errors::*;
 
@@ -24,7 +24,10 @@ pub struct RejectPurchaseOrder<'info> {
 
     /// Vault do admin que retornará o SOL
     /// CHECK: Deve ser a mesma conta que recebeu o SOL originalmente
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = admin_vault.key() == admin.key() @ PurchaseOrderError::AdminVaultMismatch
+    )]
     pub admin_vault: UncheckedAccount<'info>,
 
     /// Investor que receberá o reembolso
@@ -33,7 +36,7 @@ pub struct RejectPurchaseOrder<'info> {
         mut,
         constraint = investor.key() == purchase_order.investor
     )]
-    pub investor: UncheckedAccount<'info>,
+    pub investor: SystemAccount<'info>,
 
     pub system_program: Program<'info, System>,
 }
@@ -46,10 +49,19 @@ pub fn handler(ctx: Context<RejectPurchaseOrder>, reason: String) -> Result<()> 
 
     let purchase_order = &mut ctx.accounts.purchase_order;
     let clock = Clock::get()?;
+    let refund_amount = purchase_order.total_lamports;
 
-    // Reembolsar SOL do admin vault para o investor
-    **ctx.accounts.admin_vault.try_borrow_mut_lamports()? -= purchase_order.total_lamports;
-    **ctx.accounts.investor.try_borrow_mut_lamports()? += purchase_order.total_lamports;
+    // Reembolsar SOL utilizando transferência do System Program
+    system_program::transfer(
+        CpiContext::new(
+            ctx.accounts.system_program.to_account_info(),
+            system_program::Transfer {
+                from: ctx.accounts.admin.to_account_info(),
+                to: ctx.accounts.investor.to_account_info(),
+            },
+        ),
+        refund_amount,
+    )?;
 
     // Atualizar purchase order
     purchase_order.status = PurchaseOrderStatus::Rejected;

@@ -28,4 +28,7 @@ pub enum PurchaseOrderError {
 
     #[msg("Overflow no cálculo do total")]
     MathOverflow,
+
+    #[msg("Admin vault precisa ser a mesma conta que recebeu o SOL")]
+    AdminVaultMismatch,
 }

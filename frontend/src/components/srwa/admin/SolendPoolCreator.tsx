@@ -8,9 +8,11 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { useSolendPoolCreator } from '@/integrations/solend/useSolendPoolCreator';
+import { TokenSelect } from './TokenSelect';
 import {
   NULL_ORACLE,
   PYTH_DEVNET_PROGRAM_ID,
+  PYTH_SOL_USD_DEVNET,
   SWITCHBOARD_DEVNET_PROGRAM_ID,
   SOLEND_DEVNET_PROGRAM_ID,
 } from '@/integrations/solend/constants';
@@ -54,11 +56,16 @@ type FormState = {
     liquidityMint: string;
     initialLiquidity: string;
     pythPriceAccount: string;
+    pythProductAccount: string;
     switchboardFeed: string;
     feeReceiver: string;
+    useNullOracle: boolean;
     risk: RiskFormState;
   };
 };
+
+// HARDCODED: wSOL (Wrapped SOL) como token de teste na devnet
+const WSOL_MINT_DEVNET = 'So11111111111111111111111111111111111111112';
 
 const DEFAULT_FORM_STATE: FormState = {
   market: {
@@ -69,11 +76,13 @@ const DEFAULT_FORM_STATE: FormState = {
     existingMarket: '',
   },
   reserve: {
-    liquidityMint: '',
-    initialLiquidity: '100',
-    pythPriceAccount: '',
-    switchboardFeed: '',
+    liquidityMint: WSOL_MINT_DEVNET, // HARDCODED: wSOL
+    initialLiquidity: '0.1', // HARDCODED: 0.1 SOL inicial (menor para teste)
+    pythProductAccount: NULL_ORACLE.toBase58(), // NULL
+    pythPriceAccount: NULL_ORACLE.toBase58(), // NULL
+    switchboardFeed: '', // SERÁ PREENCHIDO: Você precisa criar um feed com o script
     feeReceiver: '',
+    useNullOracle: false, // Usar Switchboard feed
     risk: {
       optimalUtilizationRate: '80',
       maxUtilizationRate: '95',
@@ -151,10 +160,10 @@ export function SolendPoolCreator() {
       toast.error('Informe o montante inicial de liquidez a ser depositado');
       return;
     }
-    if (!form.reserve.pythPriceAccount.trim()) {
-      toast.error('Informe a conta de preço da Pyth para o ativo subjacente');
-      return;
-    }
+
+    // HARDCODED: Usar NULL_ORACLE (modo teste)
+    toast.info('✅ Usando NULL_ORACLE (modo teste - pool sem validação de preço)');
+
     if (!form.market.createNewMarket && !form.market.existingMarket.trim()) {
       toast.error('Informe o endereço do lending market que deseja reutilizar');
       return;
@@ -162,6 +171,38 @@ export function SolendPoolCreator() {
 
     try {
       const risk = form.reserve.risk;
+
+      const parsedRiskConfig = {
+        optimalUtilizationRate: parsePercentage('Optimal Utilization', risk.optimalUtilizationRate, { min: 0, max: 100 }),
+        maxUtilizationRate: parsePercentage('Max Utilization', risk.maxUtilizationRate, { min: 0, max: 100 }),
+        loanToValueRatio: parsePercentage('Loan to Value', risk.loanToValueRatio, { min: 0, max: 99 }),
+        liquidationThreshold: parsePercentage('Liquidation Threshold', risk.liquidationThreshold, { min: 1, max: 100 }),
+        maxLiquidationThreshold: parsePercentage('Max Liquidation Threshold', risk.maxLiquidationThreshold, { min: 1, max: 100 }),
+        liquidationBonus: parsePercentage('Liquidation Bonus', risk.liquidationBonus, { min: 0, max: 100 }),
+        maxLiquidationBonus: parsePercentage('Max Liquidation Bonus', risk.maxLiquidationBonus, { min: 0, max: 100 }),
+        minBorrowRate: parsePercentage('Min Borrow Rate', risk.minBorrowRate, { min: 0, max: 100 }),
+        optimalBorrowRate: parsePercentage('Optimal Borrow Rate', risk.optimalBorrowRate, { min: 0, max: 150 }),
+        maxBorrowRate: parsePercentage('Max Borrow Rate', risk.maxBorrowRate, { min: 0, max: 300 }),
+        superMaxBorrowRate: parsePercentage('Super Max Borrow Rate', risk.superMaxBorrowRate, { min: 0 }),
+        protocolLiquidationFee: parsePercentage('Protocol Liquidation Fee', risk.protocolLiquidationFee, { min: 0, max: 100 }),
+        protocolTakeRate: parsePercentage('Protocol Take Rate', risk.protocolTakeRate, { min: 0, max: 100 }),
+        addedBorrowWeightBps: risk.addedBorrowWeightBps.trim() || '0',
+        scaledPriceOffsetBps: risk.scaledPriceOffsetBps.trim() || '0',
+        extraOracle: risk.extraOracle.trim() || undefined,
+        attributedBorrowLimitOpen: risk.attributedBorrowLimitOpen.trim() || '0',
+        attributedBorrowLimitClose: risk.attributedBorrowLimitClose.trim() || '0',
+        depositLimit: risk.depositLimit.trim() || U64_MAX.toString(),
+        borrowLimit: risk.borrowLimit.trim() || U64_MAX.toString(),
+      };
+
+      if (parsedRiskConfig.liquidationThreshold < parsedRiskConfig.loanToValueRatio) {
+        toast.error('A liquidation threshold deve ser maior ou igual ao Loan to Value (LTV).');
+        return;
+      }
+      if (parsedRiskConfig.maxLiquidationThreshold < parsedRiskConfig.liquidationThreshold) {
+        toast.error('A max liquidation threshold deve ser maior ou igual à liquidation threshold.');
+        return;
+      }
 
       const payload: CreateSolendPoolInput = {
         market: {
@@ -176,31 +217,11 @@ export function SolendPoolCreator() {
         reserve: {
           liquidityMint: form.reserve.liquidityMint.trim(),
           initialLiquidity: form.reserve.initialLiquidity.trim(),
-          pythPriceAccount: form.reserve.pythPriceAccount.trim(),
-          switchboardFeed: form.reserve.switchboardFeed.trim(),
-          feeReceiver: form.reserve.feeReceiver.trim() || undefined,
-          riskConfig: {
-            optimalUtilizationRate: parsePercentage('Optimal Utilization', risk.optimalUtilizationRate, { min: 0, max: 100 }),
-            maxUtilizationRate: parsePercentage('Max Utilization', risk.maxUtilizationRate, { min: 0, max: 100 }),
-            loanToValueRatio: parsePercentage('Loan to Value', risk.loanToValueRatio, { min: 0, max: 99 }),
-            liquidationThreshold: parsePercentage('Liquidation Threshold', risk.liquidationThreshold, { min: 1, max: 100 }),
-            maxLiquidationThreshold: parsePercentage('Max Liquidation Threshold', risk.maxLiquidationThreshold, { min: 1, max: 100 }),
-            liquidationBonus: parsePercentage('Liquidation Bonus', risk.liquidationBonus, { min: 0, max: 100 }),
-            maxLiquidationBonus: parsePercentage('Max Liquidation Bonus', risk.maxLiquidationBonus, { min: 0, max: 100 }),
-            minBorrowRate: parsePercentage('Min Borrow Rate', risk.minBorrowRate, { min: 0, max: 100 }),
-            optimalBorrowRate: parsePercentage('Optimal Borrow Rate', risk.optimalBorrowRate, { min: 0, max: 150 }),
-            maxBorrowRate: parsePercentage('Max Borrow Rate', risk.maxBorrowRate, { min: 0, max: 300 }),
-            superMaxBorrowRate: parsePercentage('Super Max Borrow Rate', risk.superMaxBorrowRate, { min: 0 }),
-            protocolLiquidationFee: parsePercentage('Protocol Liquidation Fee', risk.protocolLiquidationFee, { min: 0, max: 100 }),
-            protocolTakeRate: parsePercentage('Protocol Take Rate', risk.protocolTakeRate, { min: 0, max: 100 }),
-            addedBorrowWeightBps: risk.addedBorrowWeightBps.trim() || '0',
-            scaledPriceOffsetBps: risk.scaledPriceOffsetBps.trim() || '0',
-            extraOracle: risk.extraOracle.trim() || undefined,
-            attributedBorrowLimitOpen: risk.attributedBorrowLimitOpen.trim() || '0',
-            attributedBorrowLimitClose: risk.attributedBorrowLimitClose.trim() || '0',
-            depositLimit: risk.depositLimit.trim() || U64_MAX.toString(),
-            borrowLimit: risk.borrowLimit.trim() || U64_MAX.toString(),
-          },
+          pythProductAccount: NULL_ORACLE.toBase58(), // HARDCODED: NULL_ORACLE
+          pythPriceAccount: NULL_ORACLE.toBase58(), // HARDCODED: NULL_ORACLE
+          switchboardFeed: NULL_ORACLE.toBase58(), // HARDCODED: NULL_ORACLE
+          feeReceiver: form.reserve.feeReceiver?.trim() || undefined,
+          riskConfig: parsedRiskConfig,
         },
       };
 
@@ -228,19 +249,6 @@ export function SolendPoolCreator() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <Alert>
-            <AlertDescription className="space-y-2 text-sm">
-              <p>
-                Certifique-se de que a carteira administradora possui saldo em USDC/SOL e tokens SRWA
-                suficientes para provisionar a liquidez inicial do pool.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="outline">Solend Program: {SOLEND_DEVNET_PROGRAM_ID.toBase58()}</Badge>
-                <Badge variant="outline">Pyth Oracle padrão: {PYTH_DEVNET_PROGRAM_ID.toBase58()}</Badge>
-              </div>
-            </AlertDescription>
-          </Alert>
-
           <form onSubmit={handleSubmit} className="space-y-8">
             <section className="space-y-4">
               <div className="flex items-start justify-between rounded-lg border border-border/50 bg-muted/30 p-4">
@@ -309,12 +317,16 @@ export function SolendPoolCreator() {
 
             <section className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label>Mint do token SRWA</Label>
-                <Input
-                  placeholder="Mint do token SRWA (PublicKey)"
+                <Label>Token SRWA</Label>
+                <TokenSelect
                   value={form.reserve.liquidityMint}
-                  onChange={(event) => updateReserve({ liquidityMint: event.target.value })}
+                  onValueChange={(value) => updateReserve({ liquidityMint: value })}
+                  placeholder="Selecione um token SRWA"
+                  disabled={loading}
                 />
+                <p className="text-xs text-muted-foreground">
+                  Selecione qual token RWA você quer listar no pool de lending
+                </p>
               </div>
               <div className="space-y-2">
                 <Label>Liquidez inicial (tokens)</Label>
@@ -329,23 +341,38 @@ export function SolendPoolCreator() {
                   Quantidade de tokens SRWA que será depositada na reserva ao criar o pool.
                 </p>
               </div>
+              
               <div className="space-y-2">
                 <Label>Pyth Price Account</Label>
                 <Input
-                  placeholder="Conta de preço Pyth"
-                  value={form.reserve.pythPriceAccount}
+                  placeholder={form.reserve.useNullOracle ? NULL_ORACLE.toBase58() + " (NULL ORACLE)" : "Conta de preço Pyth"}
+                  value={form.reserve.useNullOracle ? NULL_ORACLE.toBase58() : form.reserve.pythPriceAccount}
                   onChange={(event) => updateReserve({ pythPriceAccount: event.target.value })}
+                  disabled={form.reserve.useNullOracle}
                 />
+              </div>
+              <div className="space-y-2">
+                <Label>Pyth Product Account</Label>
+                <Input
+                  placeholder={form.reserve.useNullOracle ? NULL_ORACLE.toBase58() + " (NULL ORACLE)" : "Conta de produto Pyth associada"}
+                  value={form.reserve.useNullOracle ? NULL_ORACLE.toBase58() : form.reserve.pythProductAccount}
+                  onChange={(event) => updateReserve({ pythProductAccount: event.target.value })}
+                  disabled={form.reserve.useNullOracle}
+                />
+                <p className="text-xs text-muted-foreground">
+                  {form.reserve.useNullOracle ? 'Oráculos desabilitados - usando NULL ORACLE para testes' : 'Contas de produto e preço estão documentadas no repositório da Pyth para devnet/mainnet.'}
+                </p>
               </div>
               <div className="space-y-2">
                 <Label>Switchboard Feed (opcional)</Label>
                 <Input
-                  placeholder={switchboardPlaceholder}
-                  value={form.reserve.switchboardFeed}
+                  placeholder={form.reserve.useNullOracle ? NULL_ORACLE.toBase58() + " (NULL ORACLE)" : switchboardPlaceholder}
+                  value={form.reserve.useNullOracle ? NULL_ORACLE.toBase58() : form.reserve.switchboardFeed}
                   onChange={(event) => updateReserve({ switchboardFeed: event.target.value })}
+                  disabled={form.reserve.useNullOracle}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Caso não utilize Switchboard, deixe em branco (usaremos {NULL_ORACLE.toBase58()}).
+                  {form.reserve.useNullOracle ? 'Switchboard desabilitado - usando NULL ORACLE para testes' : `Caso não utilize Switchboard, deixe em branco (usaremos ${NULL_ORACLE.toBase58()}).`}
                 </p>
               </div>
               <div className="space-y-2 md:col-span-2">
@@ -493,14 +520,18 @@ export function SolendPoolCreator() {
             </section>
 
             <div className="flex flex-wrap gap-3">
-              <Button type="submit" className="btn-primary" disabled={loading}>
+              <Button
+                type="submit"
+                className="btn-primary w-full text-lg py-6"
+                disabled={loading}
+              >
                 {loading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Implantando...
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Criando Pool na Solend Devnet...
                   </>
                 ) : (
-                  'Criar pool Solend'
+                  '🚀 Criar Pool Solend (wSOL - Modo Teste)'
                 )}
               </Button>
               <Button type="button" variant="outline" onClick={resetForm} disabled={loading}>

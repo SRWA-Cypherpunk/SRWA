@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { KYCRegistrationForm } from '@/components/kyc/KYCRegistrationForm';
+import { TokenSelect } from '@/components/srwa/admin/TokenSelect';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import {
@@ -391,11 +392,12 @@ export function InvestorDashboard() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label>Token Mint Address</Label>
-              <Input
-                placeholder="Enter token mint public key"
+              <Label>Token SRWA</Label>
+              <TokenSelect
                 value={poolAddress}
-                onChange={(e) => setPoolAddress(e.target.value)}
+                onValueChange={setPoolAddress}
+                placeholder="Selecione um token SRWA"
+                disabled={loading}
               />
             </div>
 

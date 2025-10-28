@@ -1,5 +1,5 @@
 import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
-import { PublicKey, SYSVAR_CLOCK_PUBKEY, SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js';
+import { PublicKey, SYSVAR_RENT_PUBKEY, TransactionInstruction } from '@solana/web3.js';
 import BN from 'bn.js';
 import * as BufferLayout from 'buffer-layout';
 import { int64, publicKey, uint64, uint128 } from './layout';
@@ -92,6 +92,7 @@ export const initReserveIx = (
   liquidityFeeReceiver: PublicKey,
   collateralMint: PublicKey,
   collateralSupply: PublicKey,
+  pythProduct: PublicKey,
   pythPrice: PublicKey,
   switchboardFeed: PublicKey,
   lendingMarket: PublicKey,
@@ -104,14 +105,12 @@ export const initReserveIx = (
     BufferLayout.u8('instruction'),
     uint64('liquidityAmount'),
     BufferLayout.u8('optimalUtilizationRate'),
-    BufferLayout.u8('maxUtilizationRate'),
     BufferLayout.u8('loanToValueRatio'),
     BufferLayout.u8('liquidationBonus'),
     BufferLayout.u8('liquidationThreshold'),
     BufferLayout.u8('minBorrowRate'),
     BufferLayout.u8('optimalBorrowRate'),
     BufferLayout.u8('maxBorrowRate'),
-    uint64('superMaxBorrowRate'),
     uint64('borrowFeeWad'),
     uint64('flashLoanFeeWad'),
     BufferLayout.u8('hostFeePercentage'),
@@ -122,6 +121,8 @@ export const initReserveIx = (
     BufferLayout.u8('protocolTakeRate'),
     uint64('addedBorrowWeightBPS'),
     BufferLayout.u8('reserveType'),
+    BufferLayout.u8('maxUtilizationRate'),
+    uint64('superMaxBorrowRate'),
     BufferLayout.u8('maxLiquidationBonus'),
     BufferLayout.u8('maxLiquidationThreshold'),
     int64('scaledPriceOffsetBPS'),
@@ -131,7 +132,12 @@ export const initReserveIx = (
   ];
 
   if (config.extraOracle) {
-    dataAccounts.splice(25, 0, publicKey('extraOraclePubkey'));
+    const extraOracleIndex = dataAccounts.findIndex(
+      (entry: any) => 'property' in entry && entry.property === 'extraOracle'
+    );
+    if (extraOracleIndex >= 0) {
+      dataAccounts.splice(extraOracleIndex + 1, 0, publicKey('extraOraclePubkey'));
+    }
   }
 
   const dataLayout = BufferLayout.struct(dataAccounts);
@@ -141,14 +147,12 @@ export const initReserveIx = (
       instruction: LendingInstruction.InitReserve,
       liquidityAmount: new BN(liquidityAmount),
       optimalUtilizationRate: config.optimalUtilizationRate,
-      maxUtilizationRate: config.maxUtilizationRate,
       loanToValueRatio: config.loanToValueRatio,
       liquidationBonus: config.liquidationBonus,
       liquidationThreshold: config.liquidationThreshold,
       minBorrowRate: config.minBorrowRate,
       optimalBorrowRate: config.optimalBorrowRate,
       maxBorrowRate: config.maxBorrowRate,
-      superMaxBorrowRate: config.superMaxBorrowRate,
       borrowFeeWad: config.fees.borrowFeeWad,
       flashLoanFeeWad: config.fees.flashLoanFeeWad,
       hostFeePercentage: config.fees.hostFeePercentage,
@@ -159,6 +163,8 @@ export const initReserveIx = (
       protocolTakeRate: config.protocolTakeRate,
       addedBorrowWeightBPS: config.addedBorrowWeightBPS,
       reserveType: config.reserveType,
+      maxUtilizationRate: config.maxUtilizationRate,
+      superMaxBorrowRate: config.superMaxBorrowRate,
       maxLiquidationBonus: config.maxLiquidationBonus,
       maxLiquidationThreshold: config.maxLiquidationThreshold,
       scaledPriceOffsetBPS: config.scaledPriceOffsetBPS,
@@ -179,14 +185,13 @@ export const initReserveIx = (
     { pubkey: liquidityFeeReceiver, isSigner: false, isWritable: true },
     { pubkey: collateralMint, isSigner: false, isWritable: true },
     { pubkey: collateralSupply, isSigner: false, isWritable: true },
-    { pubkey: pythPrice, isSigner: false, isWritable: false },
+    { pubkey: pythProduct, isSigner: false, isWritable: false },
     { pubkey: pythPrice, isSigner: false, isWritable: false },
     { pubkey: switchboardFeed, isSigner: false, isWritable: false },
     { pubkey: lendingMarket, isSigner: false, isWritable: true },
     { pubkey: lendingMarketAuthority, isSigner: false, isWritable: false },
     { pubkey: lendingMarketOwner, isSigner: true, isWritable: false },
     { pubkey: transferAuthority, isSigner: true, isWritable: false },
-    { pubkey: SYSVAR_CLOCK_PUBKEY, isSigner: false, isWritable: false },
     { pubkey: SYSVAR_RENT_PUBKEY, isSigner: false, isWritable: false },
     { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
   ];

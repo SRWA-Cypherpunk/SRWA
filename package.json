@@ -7,7 +7,13 @@
     "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
   },
   "dependencies": {
-    "@coral-xyz/anchor": "^0.31.1"
+    "@coral-xyz/anchor": "^0.31.1",
+    "@pythnetwork/client": "^2.22.1",
+    "@pythnetwork/hermes-client": "^2.0.0",
+    "@pythnetwork/pyth-ton-js": "^0.2.0",
+    "@ton/core": "^0.62.0",
+    "@ton/crypto": "^3.3.0",
+    "@ton/ton": "^16.0.0"
   },
   "devDependencies": {
     "@types/bn.js": "^5.1.0",
