@@ -16,17 +16,17 @@ Traditional RWA wrappers lack enforceable rules, accountability, and on-chain au
 
 ### Key Benefits
 
-- **🔒 Built-in Compliance**: Transfer hooks enforce KYC/AML at the token level
-- **🏦 Institutional Grade**: Designed for regulated financial institutions
-- **⚡ Lightning Fast**: Leverages Solana's 400ms block time and low fees
-- **🔗 DeFi Compatible**: Works seamlessly with MarginFi, Solend, Jupiter, and more
-- **🛡️ On-chain Governance**: Transparent, auditable, and programmable
+- 🔒 **Built-in Compliance**: Transfer hooks enforce KYC/AML at the token level
+- 🏦 **Institutional Grade**: Designed for regulated financial institutions  
+- ⚡ **Lightning Fast**: Leverages Solana's 400ms block time and low fees
+- 🔗 **DeFi Compatible**: Works seamlessly with MarginFi, Solend, Jupiter, and more
+- 🛡️ **On-chain Governance**: Transparent, auditable, and programmable
 
 ---
 
 ## 📦 Repository Structure
 
-\`\`\`
+```
 programs/              # Anchor smart contracts (SRWA standard)
   ├── srwa_factory/        # Token factory with SPL Token-2022
   ├── identity_claims/     # KYC/AML identity registry
@@ -46,7 +46,7 @@ frontend/              # React + Vite institutional dashboard
 
 tests/                 # Anchor integration tests
 examples/              # End-to-end scripts
-\`\`\`
+```
 
 ---
 
@@ -54,24 +54,24 @@ examples/              # End-to-end scripts
 
 ### Smart Contract Stack
 
-All programs are written in Rust with Anchor. Program IDs are configured in \`Anchor.toml\` and loaded dynamically in the frontend.
+All programs are written in Rust with Anchor. Program IDs are configured in `Anchor.toml` and loaded dynamically in the frontend.
 
 | Program | Purpose | Key Instructions |
 |---------|---------|------------------|
-| **srwa_factory** | Token factory for SPL Token-2022 with transfer hooks, metadata, offering state | \`create_srwa\`, \`request_srwa\`, \`approve_srwa\`, \`register_user\` |
-| **identity_claims** | Identity registry with topic-based claims (KYC, AML, Accredited) | \`register_identity\`, \`add_claim\`, \`revoke_claim\`, \`is_verified\` |
-| **compliance_modules** | Pluggable policies: jurisdictions, sanctions, lockups, investor limits | \`configure_jurisdiction\`, \`set_sanctions\`, \`set_lockup\` |
-| **srwa_controller** | Token-2022 transfer hook orchestrator for compliance checks | \`on_transfer\`, \`transfer_checked\` |
-| **offering_pool** | Capital formation lifecycle (open, subscribe, lock, settle, refund) | \`open\`, \`subscribe\`, \`lock\`, \`settle\`, \`refund\` |
-| **purchase_order** | OTC-style order flow with SOL escrow | \`create_order\`, \`approve_order\`, \`cancel_order\` |
+| **srwa_factory** | Token factory for SPL Token-2022 with transfer hooks, metadata, offering state | `create_srwa`, `request_srwa`, `approve_srwa`, `register_user` |
+| **identity_claims** | Identity registry with topic-based claims (KYC, AML, Accredited) | `register_identity`, `add_claim`, `revoke_claim`, `is_verified` |
+| **compliance_modules** | Pluggable policies: jurisdictions, sanctions, lockups, investor limits | `configure_jurisdiction`, `set_sanctions`, `set_lockup` |
+| **srwa_controller** | Token-2022 transfer hook orchestrator for compliance checks | `on_transfer`, `transfer_checked` |
+| **offering_pool** | Capital formation lifecycle (open, subscribe, lock, settle, refund) | `open`, `subscribe`, `lock`, `settle`, `refund` |
+| **purchase_order** | OTC-style order flow with SOL escrow | `create_order`, `approve_order`, `cancel_order` |
 
 ### Core Data Accounts
 
-- \`SRWAConfig\`, \`OfferingState\`, \`ValuationData\`: Per-mint configuration PDAs
-- \`PlatformAdminRegistry\`, \`KYCProviderRegistry\`, \`IssuerKYCConfig\`: Governance registries
-- \`UserRegistry\`: Wallet-level role, KYC status, activation flags
-- \`IdentityAccount\` & \`ClaimAccount\`: Identity graph with topic IDs
-- \`JurisdictionConfig\`, \`SanctionsList\`, \`LockupAccount\`: Modular compliance state
+- `SRWAConfig`, `OfferingState`, `ValuationData`: Per-mint configuration PDAs
+- `PlatformAdminRegistry`, `KYCProviderRegistry`, `IssuerKYCConfig`: Governance registries
+- `UserRegistry`: Wallet-level role, KYC status, activation flags
+- `IdentityAccount` & `ClaimAccount`: Identity graph with topic IDs
+- `JurisdictionConfig`, `SanctionsList`, `LockupAccount`: Modular compliance state
 
 ---
 
@@ -105,18 +105,18 @@ All programs are written in Rust with Anchor. Program IDs are configured in \`An
 
 ### Install Tooling
 
-\`\`\`bash
+```bash
 # Install Anchor CLI
 cargo install --git https://github.com/coral-xyz/anchor --tag v0.31.1 anchor-cli
 
 # Configure Solana
 solana-install init 1.18.0
 solana config set --url devnet
-\`\`\`
+```
 
 ### Build Smart Contracts
 
-\`\`\`bash
+```bash
 # Clone repository
 git clone https://github.com/your-org/srwa-protocol
 cd srwa-protocol
@@ -126,18 +126,18 @@ anchor build
 
 # Run tests
 anchor test
-\`\`\`
+```
 
 ### Deploy Contracts
 
-\`\`\`bash
+```bash
 # Deploy to devnet
 anchor deploy --provider.cluster devnet
 
 # Or deploy to localnet
 solana-test-validator --reset
 anchor deploy --provider.cluster localnet
-\`\`\`
+```
 
 ---
 
@@ -147,25 +147,25 @@ The frontend is a React 18 + Vite 7 + TypeScript institutional dashboard with So
 
 ### Quick Start
 
-\`\`\`bash
+```bash
 cd frontend
 npm install
 npm run dev
-\`\`\`
+```
 
 ### Environment Configuration
 
-Create \`frontend/.env\`:
+Create `frontend/.env`:
 
-\`\`\`bash
+```bash
 VITE_SOLANA_NETWORK=devnet
 VITE_SOLANA_RPC_URL=https://api.devnet.solana.com
 VITE_ENABLE_DASHBOARD=true
-\`\`\`
+```
 
 ### Wallet Support
 
-Integrated with \`@solana/wallet-adapter\`:
+Integrated with `@solana/wallet-adapter`:
 - Phantom
 - Backpack
 - Solflare
@@ -173,11 +173,11 @@ Integrated with \`@solana/wallet-adapter\`:
 
 ### Build for Production
 
-\`\`\`bash
+```bash
 npm run build
 
 # Output in frontend/dist/
-\`\`\`
+```
 
 ---
 
@@ -199,7 +199,7 @@ Every SRWA transfer triggers compliance checks:
 
 ### Error Codes
 
-\`\`\`
+```
 0   OK
 10  PAUSED
 11  FROZEN_FROM
@@ -213,7 +213,7 @@ Every SRWA transfer triggers compliance checks:
 23  NOT_ACCREDITED
 24  LOCKUP_ACTIVE
 25  MAX_HOLDERS_EXCEEDED
-\`\`\`
+```
 
 ---
 
@@ -222,8 +222,8 @@ Every SRWA transfer triggers compliance checks:
 ### Issuer Flow
 
 1. Connect wallet → Register role (requires admin approval)
-2. Submit \`request_srwa\` with token config
-3. Admin approves via \`approve_srwa\`
+2. Submit `request_srwa` with token config
+3. Admin approves via `approve_srwa`
 4. Open offering, accept subscriptions
 5. Settle distribution to investors
 
@@ -236,7 +236,7 @@ Every SRWA transfer triggers compliance checks:
 
 ### Admin Flow
 
-1. Initialize \`PlatformAdminRegistry\`
+1. Initialize `PlatformAdminRegistry`
 2. Manage KYC providers and allowlists
 3. Approve/reject SRWA requests
 4. Monitor compliance events
@@ -249,10 +249,10 @@ The frontend uses a modern glassmorphism design with Solana branding:
 
 ### Colors
 
-- **Primary Purple**: \`#9945FF\` (Solana brand)
-- **Secondary Green**: \`#14F195\` (Success)
-- **Accent Orange**: \`#FF6B35\`
-- **Background**: Deep black \`#0A0A0A\`
+- **Primary Purple**: `#9945FF` (Solana brand)
+- **Secondary Green**: `#14F195` (Success)
+- **Accent Orange**: `#FF6B35`
+- **Background**: Deep black `#0A0A0A`
 
 ### Components
 
@@ -290,10 +290,10 @@ The frontend uses a modern glassmorphism design with Solana branding:
 
 ## 📖 Documentation
 
-- **Smart Contracts**: See inline documentation in \`programs/\`
-- **Frontend**: Component docs in \`frontend/src/components/\`
-- **API Reference**: TypeScript types in \`frontend/src/types/\`
-- **Integration Guide**: Examples in \`examples/\`
+- **Smart Contracts**: See inline documentation in `programs/`
+- **Frontend**: Component docs in `frontend/src/components/`
+- **API Reference**: TypeScript types in `frontend/src/types/`
+- **Integration Guide**: Examples in `examples/`
 
 ---
 
@@ -302,9 +302,9 @@ The frontend uses a modern glassmorphism design with Solana branding:
 We welcome contributions! Please follow these guidelines:
 
 1. Fork the repository
-2. Create a feature branch (\`git checkout -b feature/amazing-feature\`)
-3. Commit your changes (\`git commit -m 'Add amazing feature'\`)
-4. Push to the branch (\`git push origin feature/amazing-feature\`)
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
 ### Development Guidelines
