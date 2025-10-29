@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '@/styles/features/dashboard.css';
 import { DashboardLayout, DashboardSection } from "@/components/layout";
@@ -5,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { HeroButton } from "@/components/ui/hero-button";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 import { DashboardNav } from "@/components/dashboard/DashboardNav";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { IssuerWizard } from "@/components/srwa/IssuerWizard";
 
 // Hooks
 import { useBlendPools } from '@/hooks/markets/useBlendPools';
@@ -19,6 +22,7 @@ import { Plus, BarChart3, TrendingUp, DollarSign, Package, Users } from "lucide-
 
 export default function DashboardOverview() {
   const navigate = useNavigate();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Wallet connection
   const { isConnected, address, connect, isConnecting } = useWallet();
@@ -114,7 +118,7 @@ export default function DashboardOverview() {
             {isIssuer && (
               <div className="w-full sm:w-auto">
                 <HeroButton
-                  onClick={() => window.location.href = '/srwa-issuance'}
+                  onClick={() => setIsCreateModalOpen(true)}
                   variant="brand"
                   className="w-full sm:w-auto"
                   icon={<Plus className="h-4 w-4" />}
@@ -213,6 +217,16 @@ export default function DashboardOverview() {
                 </div>
               </div>
           </DashboardSection>
+
+      {/* SRWA Creation Modal */}
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Create SRWA Token</DialogTitle>
+          </DialogHeader>
+          <IssuerWizard />
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

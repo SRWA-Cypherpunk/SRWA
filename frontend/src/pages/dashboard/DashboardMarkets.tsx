@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { IssuerWizard } from "@/components/srwa/IssuerWizard";
 
 // Hooks
 import { useRaydiumPools } from '@/hooks/solana';
@@ -72,6 +73,7 @@ export default function DashboardMarkets() {
 
   // State for pool operations dialog
   const [selectedRaydiumPoolId, setSelectedRaydiumPoolId] = useState<string | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Navigation handler
   const handleViewPoolDetails = (poolAddress: string) => {
@@ -93,7 +95,7 @@ export default function DashboardMarkets() {
 
         <div className="w-full sm:w-auto">
           <HeroButton
-            onClick={() => window.location.href = '/srwa-issuance'}
+            onClick={() => setIsCreateModalOpen(true)}
             variant="brand"
             className="w-full sm:w-auto"
             icon={<Plus className="h-4 w-4" />}
@@ -258,6 +260,16 @@ export default function DashboardMarkets() {
           )}
         </div>
       </DashboardSection>
+
+      {/* SRWA Creation Modal */}
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Create SRWA Token</DialogTitle>
+          </DialogHeader>
+          <IssuerWizard />
+        </DialogContent>
+      </Dialog>
 
       {/* Raydium Pool Dialog */}
       <Dialog

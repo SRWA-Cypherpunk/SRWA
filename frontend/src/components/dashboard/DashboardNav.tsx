@@ -1,18 +1,23 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Globe, Shield, BarChart3 } from 'lucide-react';
+import { Globe, Shield, BarChart3, UserCog } from 'lucide-react';
+import { useUserRegistry } from '@/hooks/solana';
+import { UserRole } from '@/types/srwa-contracts';
 
 // Dashboard route constants
 const DASHBOARD_ROUTES = {
   OVERVIEW: '/dashboard',
   MARKETS: '/dashboard/markets',
   PORTFOLIO: '/dashboard/portfolio',
+  ADMIN: '/dashboard/admin',
 } as const;
 
 export function DashboardNav() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { userRegistry } = useUserRegistry();
+  const isAdmin = userRegistry?.role === UserRole.Admin;
 
-  const tabs = [
+  const baseTabs = [
     {
       id: 'overview',
       label: 'Dashboard',
@@ -45,11 +50,24 @@ export function DashboardNav() {
     }
   ];
 
+  const adminTab = {
+    id: 'admin',
+    label: 'Admin',
+    mobileLabel: 'Admin',
+    icon: UserCog,
+    path: DASHBOARD_ROUTES.ADMIN,
+    colorClass: 'from-red-500/25 to-orange-500/25',
+    activeColor: 'text-red-300',
+    hoverColor: 'hover:text-red-300 hover:bg-red-500/10'
+  };
+
+  const tabs = isAdmin ? [...baseTabs, adminTab] : baseTabs;
+
   const activeTab = tabs.find(tab => location.pathname === tab.path) || tabs[0];
 
   return (
     <div className="flex justify-center">
-      <div className="grid w-full max-w-md grid-cols-3 h-10 sm:h-12 bg-card/50 backdrop-blur-md border-2 border-purple-500/20 rounded-xl p-1 shadow-lg">
+      <div className={`grid w-full ${isAdmin ? 'max-w-2xl grid-cols-4' : 'max-w-md grid-cols-3'} h-10 sm:h-12 bg-card/50 backdrop-blur-md border-2 border-purple-500/20 rounded-xl p-1 shadow-lg`}>
         {tabs.map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab.id === tab.id;

@@ -3,10 +3,12 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  Coins, 
-  Crown, 
-  ExternalLink, 
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { IssuerWizard } from "@/components/srwa/IssuerWizard";
+import {
+  Coins,
+  Crown,
+  ExternalLink,
   RefreshCw,
   Copy,
   CheckCircle,
@@ -212,6 +214,7 @@ const RWATokenCard = ({ token, index }: { token: RWAToken; index: number }) => {
 
 const RWATokensGrid = () => {
   const { tokens, loading, error, refetch } = useUserRWATokens();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const handleRefresh = async () => {
     toast.promise(refetch(), {
@@ -275,7 +278,7 @@ const RWATokensGrid = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" onClick={() => window.location.href = '/srwa-issuance'}>
+          <Button size="sm" onClick={() => setIsCreateModalOpen(true)}>
             <TrendingUp className="w-4 h-4 mr-2" />
             Create New Token
           </Button>
@@ -300,7 +303,7 @@ const RWATokensGrid = () => {
               </p>
             </div>
             <div className="flex gap-3 justify-center">
-              <Button onClick={() => window.location.href = '/srwa-issuance'}>
+              <Button onClick={() => setIsCreateModalOpen(true)}>
                 <TrendingUp className="w-4 h-4 mr-2" />
                 Create Your First Token
               </Button>
@@ -318,6 +321,16 @@ const RWATokensGrid = () => {
           ))}
         </div>
       )}
+
+      {/* SRWA Creation Modal */}
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Create SRWA Token</DialogTitle>
+          </DialogHeader>
+          <IssuerWizard />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

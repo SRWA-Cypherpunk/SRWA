@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { useDeployedTokens } from '@/hooks/solana/useDeployedTokens';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { IssuerWizard } from '@/components/srwa/IssuerWizard';
 import { toast } from 'sonner';
 import { Coins, TrendingUp, DollarSign, RefreshCw, Copy, Shield, ArrowUpRight } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -23,6 +26,7 @@ const truncateAddress = (address: string, start = 8, end = 6) => {
 
 export function DeployedTokensGrid() {
   const { tokens, loading, error, refresh } = useDeployedTokens();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   if (loading) {
     return (
@@ -70,7 +74,7 @@ export function DeployedTokensGrid() {
           <p className="text-muted-foreground mb-6 text-center max-w-md">
             Get started by creating your first SRWA token using the Token Wizard
           </p>
-          <Button onClick={() => window.location.href = '/srwa-issuance'} className="btn-primary">
+          <Button onClick={() => setIsCreateModalOpen(true)} className="btn-primary">
             <Coins className="h-4 w-4 mr-2" />
             Create Your First Token
           </Button>
@@ -236,6 +240,16 @@ export function DeployedTokensGrid() {
           </motion.div>
         ))}
       </div>
+
+      {/* SRWA Creation Modal */}
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Create SRWA Token</DialogTitle>
+          </DialogHeader>
+          <IssuerWizard />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

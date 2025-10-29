@@ -24,6 +24,7 @@ import Optimizer from "./pages/Optimizer";
 import DashboardOverview from "./pages/dashboard/DashboardOverview";
 import DashboardMarkets from "./pages/dashboard/DashboardMarkets";
 import DashboardPortfolio from "./pages/dashboard/DashboardPortfolio";
+import DashboardAdmin from "./pages/dashboard/DashboardAdmin";
 import Investor from "./pages/Investor";
 
 const App = () => (
@@ -52,6 +53,14 @@ const App = () => (
             <Route path="/dashboard" element={<DashboardOverview />} />
             <Route path="/dashboard/markets" element={<DashboardMarkets />} />
             <Route path="/dashboard/portfolio" element={<DashboardPortfolio />} />
+            <Route
+              path="/dashboard/admin"
+              element={
+                <ProtectedRoute allowedRoles={[UserRole.Admin]}>
+                  <DashboardAdmin />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Other routes */}
             <Route path="/pools" element={<Pools />} />

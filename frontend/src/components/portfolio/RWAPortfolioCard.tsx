@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useWalletAssets } from '@/hooks/wallet/useWalletAssets';
 import { useUserBlendPositions } from '@/hooks/markets/useUserBlendPositions';
 import { useRecentTransactions, formatTransactionForDisplay } from '@/hooks/wallet/useWalletTransactions';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { IssuerWizard } from '@/components/srwa/IssuerWizard';
 
 interface RWAPortfolioCardProps {
   className?: string;
@@ -12,6 +14,7 @@ export function RWAPortfolioCard({ className }: RWAPortfolioCardProps) {
   const [activeTab, setActiveTab] = useState('assets');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const navigate = useNavigate();
   const cardRef = useRef<HTMLDivElement>(null);
   
@@ -24,12 +27,7 @@ export function RWAPortfolioCard({ className }: RWAPortfolioCardProps) {
   
   // Navigation handlers with debug logging
   const handleCreateRWAToken = () => {
-    try {
-      navigate('/srwa-issuance');
-    } catch (error) {
-      console.error('❌ Navigation error:', error);
-      window.location.href = '/srwa-issuance';
-    }
+    setIsCreateModalOpen(true);
   };
 
   const handleExploreMarkets = () => {
@@ -552,6 +550,16 @@ export function RWAPortfolioCard({ className }: RWAPortfolioCardProps) {
           )}
         </div>
       </div>
+
+      {/* SRWA Creation Modal */}
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Create SRWA Token</DialogTitle>
+          </DialogHeader>
+          <IssuerWizard />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

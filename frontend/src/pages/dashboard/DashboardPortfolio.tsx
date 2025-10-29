@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { HeroButton } from "@/components/ui/hero-button";
 import { DashboardNav } from "@/components/dashboard/DashboardNav";
 import { Card } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { IssuerWizard } from "@/components/srwa/IssuerWizard";
 import { mockUserPositions, type UserPosition } from "@/lib/mock-data";
 
 // Hooks
@@ -77,6 +79,7 @@ const shortenAddress = (address: string, chars = 4) => {
 export default function DashboardPortfolio() {
   const navigate = useNavigate();
   const [selectedPosition, setSelectedPosition] = useState<UserPosition | null>(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Wallet connection
   const { connected, address, connect, connecting } = useWallet();
@@ -241,7 +244,7 @@ export default function DashboardPortfolio() {
     }
   ] as const;
 
-  const handleCreateSrwa = () => navigate('/srwa-issuance');
+  const handleCreateSrwa = () => setIsCreateModalOpen(true);
   const walletShortAddress = address ? shortenAddress(address, 4) : null;
 
   return (
@@ -511,6 +514,16 @@ export default function DashboardPortfolio() {
           </div>
         </DashboardSection>
       )}
+
+      {/* SRWA Creation Modal */}
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">Create SRWA Token</DialogTitle>
+          </DialogHeader>
+          <IssuerWizard />
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }
