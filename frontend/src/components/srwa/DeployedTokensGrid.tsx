@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useDeployedTokens } from '@/hooks/solana/useDeployedTokens';
+import { useUserRegistry } from '@/hooks/solana';
+import { UserRole } from '@/types/srwa-contracts';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +28,8 @@ const truncateAddress = (address: string, start = 8, end = 6) => {
 
 export function DeployedTokensGrid() {
   const { tokens, loading, error, refresh } = useDeployedTokens();
+  const { isIssuer, isInvestor, isAdmin } = useUserRegistry();
+  const canCreateSRWA = (isIssuer || isAdmin) && !isInvestor;
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   if (loading) {
@@ -72,12 +76,16 @@ export function DeployedTokensGrid() {
           <Coins className="h-20 w-20 text-muted-foreground/30 mb-6" />
           <h3 className="text-xl font-semibold mb-2">No tokens deployed yet</h3>
           <p className="text-muted-foreground mb-6 text-center max-w-md">
-            Get started by creating your first SRWA token using the Token Wizard
+            {canCreateSRWA
+              ? "Get started by creating your first SRWA token using the Token Wizard"
+              : "No SRWA tokens have been deployed yet. Check back soon for available tokens."}
           </p>
-          <Button onClick={() => setIsCreateModalOpen(true)} className="btn-primary">
-            <Coins className="h-4 w-4 mr-2" />
-            Create Your First Token
-          </Button>
+          {canCreateSRWA && (
+            <Button onClick={() => setIsCreateModalOpen(true)} className="btn-primary">
+              <Coins className="h-4 w-4 mr-2" />
+              Create Your First Token
+            </Button>
+          )}
         </CardContent>
       </Card>
     );

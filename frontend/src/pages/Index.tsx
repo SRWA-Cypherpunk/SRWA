@@ -14,6 +14,7 @@ import { SolanaWalletButton } from "@/components/wallet/SolanaWalletButton";
 import { useBlendPools } from "@/hooks/markets/useBlendPools";
 import { useEnhancedPoolData } from "@/hooks/markets/useDefIndexData";
 import { useDeployedTokens } from "@/hooks/solana/useDeployedTokens";
+import { usePrefetchDashboard } from "@/hooks/usePrefetchDashboard";
 import { useWallet } from '@solana/wallet-adapter-react';
 import { mockMarketStats, mockMarkets, mockMarketCharts } from "@/lib/mock-data";
 import { PARTNERS } from "@/lib/constants";
@@ -85,6 +86,9 @@ const Index = () => {
   const { tokens: srwaTokens, loading: srwaTokensLoading } = useDeployedTokens();
   const displayedTokens = srwaTokens.slice(0, 3);
   const isMarketsLoading = srwaTokensLoading || (displayedTokens.length === 0 && isLoading);
+
+  // Prefetch dashboard data para navegação futura
+  usePrefetchDashboard();
 
   // Detect mobile to disable heavy animations
   // Initialize with actual window size to prevent flash

@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Globe, Shield, BarChart3, UserCog } from 'lucide-react';
+import { Globe, Shield, BarChart3, UserCog, User } from 'lucide-react';
 import { useUserRegistry } from '@/hooks/solana';
 import { UserRole } from '@/types/srwa-contracts';
 
@@ -9,6 +9,7 @@ const DASHBOARD_ROUTES = {
   MARKETS: '/dashboard/markets',
   PORTFOLIO: '/dashboard/portfolio',
   ADMIN: '/dashboard/admin',
+  INVESTOR: '/dashboard/investor',
 } as const;
 
 export function DashboardNav() {
@@ -16,6 +17,7 @@ export function DashboardNav() {
   const navigate = useNavigate();
   const { userRegistry } = useUserRegistry();
   const isAdmin = userRegistry?.role === UserRole.Admin;
+  const isInvestor = userRegistry?.role === UserRole.Investor;
 
   const baseTabs = [
     {
@@ -61,13 +63,32 @@ export function DashboardNav() {
     hoverColor: 'hover:text-red-300 hover:bg-red-500/10'
   };
 
-  const tabs = isAdmin ? [...baseTabs, adminTab] : baseTabs;
+  const investorTab = {
+    id: 'investor',
+    label: 'Investor',
+    mobileLabel: 'Inv',
+    icon: User,
+    path: DASHBOARD_ROUTES.INVESTOR,
+    colorClass: 'from-purple-500/25 to-pink-500/25',
+    activeColor: 'text-purple-300',
+    hoverColor: 'hover:text-purple-300 hover:bg-purple-500/10'
+  };
+
+  let tabs = [...baseTabs];
+  if (isInvestor) {
+    tabs = [...tabs, investorTab];
+  }
+  if (isAdmin) {
+    tabs = [...tabs, adminTab];
+  }
 
   const activeTab = tabs.find(tab => location.pathname === tab.path) || tabs[0];
 
+  const hasFourthTab = isAdmin || isInvestor;
+
   return (
     <div className="flex justify-center">
-      <div className={`grid w-full ${isAdmin ? 'max-w-2xl grid-cols-4' : 'max-w-md grid-cols-3'} h-10 sm:h-12 bg-card/50 backdrop-blur-md border-2 border-purple-500/20 rounded-xl p-1 shadow-lg`}>
+      <div className={`grid w-full ${hasFourthTab ? 'max-w-2xl grid-cols-4' : 'max-w-md grid-cols-3'} h-10 sm:h-12 bg-card/50 backdrop-blur-md border-2 border-purple-500/20 rounded-xl p-1 shadow-lg`}>
         {tabs.map(tab => {
           const Icon = tab.icon;
           const isActive = activeTab.id === tab.id;

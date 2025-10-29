@@ -25,6 +25,7 @@ import DashboardOverview from "./pages/dashboard/DashboardOverview";
 import DashboardMarkets from "./pages/dashboard/DashboardMarkets";
 import DashboardPortfolio from "./pages/dashboard/DashboardPortfolio";
 import DashboardAdmin from "./pages/dashboard/DashboardAdmin";
+import DashboardInvestor from "./pages/dashboard/DashboardInvestor";
 import Investor from "./pages/Investor";
 
 const App = () => (
@@ -58,6 +59,14 @@ const App = () => (
               element={
                 <ProtectedRoute allowedRoles={[UserRole.Admin]}>
                   <DashboardAdmin />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/dashboard/investor"
+              element={
+                <ProtectedRoute allowedRoles={[UserRole.Investor]}>
+                  <DashboardInvestor />
                 </ProtectedRoute>
               }
             />

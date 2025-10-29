@@ -21,6 +21,8 @@ import {
 import { toast } from "sonner";
 import { useUserRWATokens, type RWAToken } from "@/hooks/rwa/useUserRWATokens";
 import { RWALendingModal } from "@/components/rwa/RWALendingModal";
+import { useUserRegistry } from "@/hooks/solana";
+import { UserRole } from "@/types/srwa-contracts";
 
 const RWATokenCard = ({ token, index }: { token: RWAToken; index: number }) => {
   const [copied, setCopied] = useState(false);
@@ -214,6 +216,8 @@ const RWATokenCard = ({ token, index }: { token: RWAToken; index: number }) => {
 
 const RWATokensGrid = () => {
   const { tokens, loading, error, refetch } = useUserRWATokens();
+  const { isIssuer, isInvestor, isAdmin } = useUserRegistry();
+  const canCreateSRWA = (isIssuer || isAdmin) && !isInvestor;
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const handleRefresh = async () => {
@@ -278,10 +282,12 @@ const RWATokensGrid = () => {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button size="sm" onClick={() => setIsCreateModalOpen(true)}>
-            <TrendingUp className="w-4 h-4 mr-2" />
-            Create New Token
-          </Button>
+          {canCreateSRWA && (
+            <Button size="sm" onClick={() => setIsCreateModalOpen(true)}>
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Create New Token
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={handleRefresh}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Refresh
@@ -303,10 +309,12 @@ const RWATokensGrid = () => {
               </p>
             </div>
             <div className="flex gap-3 justify-center">
-              <Button onClick={() => setIsCreateModalOpen(true)}>
-                <TrendingUp className="w-4 h-4 mr-2" />
-                Create Your First Token
-              </Button>
+              {canCreateSRWA && (
+                <Button onClick={() => setIsCreateModalOpen(true)}>
+                  <TrendingUp className="w-4 h-4 mr-2" />
+                  Create Your First Token
+                </Button>
+              )}
               <Button variant="outline" onClick={handleRefresh}>
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Check Again

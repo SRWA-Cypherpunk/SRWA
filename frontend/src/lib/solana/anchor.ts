@@ -51,6 +51,12 @@ export class SRWAClient {
       return;
     }
 
+    // Skip wallet funding for read-only mode (dummy wallet)
+    if (publicKey.equals(PublicKey.default)) {
+      console.log("🔒 Read-only mode detected, skipping wallet funding");
+      return;
+    }
+
     const endpoint = provider.connection.rpcEndpoint || "";
     const isLocalEndpoint =
       endpoint.includes("127.0.0.1") ||
@@ -249,8 +255,27 @@ export const srwaClient = new SRWAClient();
 // Exportar connection para uso em outros arquivos
 export const connection = srwaClient.connection;
 
-export function getProvider(wallet: any) {
+export function getProvider(wallet?: any) {
   const connection = new Connection(RPC_ENDPOINT, "confirmed");
+
+  // Se não há wallet, criar um provider read-only com wallet dummy
+  if (!wallet) {
+    const dummyWallet = {
+      publicKey: PublicKey.default,
+      signTransaction: async () => { throw new Error('Read-only mode: Cannot sign transactions'); },
+      signAllTransactions: async () => { throw new Error('Read-only mode: Cannot sign transactions'); },
+    };
+
+    console.log("🔧 Creating read-only provider (no wallet connected):", {
+      mode: 'read-only',
+      rpcEndpoint: RPC_ENDPOINT
+    });
+
+    return new anchor.AnchorProvider(connection, dummyWallet as any, {
+      commitment: 'confirmed',
+      preflightCommitment: 'confirmed'
+    });
+  }
 
   // O wallet do @solana/wallet-adapter-react precisa ser encapsulado corretamente
   // para que o Anchor reconheça a propriedade publicKey

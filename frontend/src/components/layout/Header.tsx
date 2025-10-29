@@ -4,11 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { SolanaWalletButton } from "@/components/wallet/SolanaWalletButton";
 import { FEATURES } from "@/lib/constants/features";
+import { useQueryClient } from '@tanstack/react-query';
+import { useProgramsSafe } from '@/contexts/ProgramContext';
 
 // Route constants
 const ROUTES = {
   HOME: "/",
-  DASHBOARD: "/dashboard",
+  DASHBOARD: "/dashboard/markets",
   DOCS: "/docs",
   ADMIN: "/admin",
 } as const;
@@ -34,6 +36,8 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
   const [lastScrollY, setLastScrollY] = useState(0);
   const { userRegistry } = useUserRegistry();
   const { connected } = useWallet();
+  const queryClient = useQueryClient();
+  const { programs } = useProgramsSafe();
 
   const roleNavItems = useMemo(() => {
     if (!userRegistry) return [];
@@ -110,6 +114,33 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
     }
   };
 
+  const handleDashboardHover = () => {
+    // Prefetch ao passar mouse sobre o link Dashboard
+    if (programs?.yieldAdapter) {
+      const queryKey = ['raydiumPools', programs.yieldAdapter.programId.toString()];
+      queryClient.prefetchQuery({
+        queryKey,
+        queryFn: async () => {
+          try {
+            const allPools = await programs.yieldAdapter!.account.raydiumPoolAccount.all();
+            const mappedPools = allPools.map((pool: any) => ({
+              publicKey: pool.publicKey,
+              admin: pool.account.admin,
+              poolId: pool.account.poolId,
+              tokenMint: pool.account.tokenMint,
+              baseMint: pool.account.baseMint,
+              createdAt: pool.account.createdAt?.toNumber?.() ?? 0,
+              isActive: pool.account.isActive,
+            }));
+            return mappedPools.filter((pool: any) => pool.isActive);
+          } catch (err) {
+            return [];
+          }
+        },
+      });
+    }
+  };
+
   return (
     <header className={`sticky top-0 z-50 w-full border-b border-stroke-line bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-transform duration-300 ${
       isVisible ? 'translate-y-0' : '-translate-y-full'
@@ -135,6 +166,7 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
               <Link
                 to={disableDashboardLink ? "#" : ROUTES.DASHBOARD}
                 onClick={handleDashboardLink}
+                onMouseEnter={handleDashboardHover}
                 className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group font-medium"
               >
                 Dashboard

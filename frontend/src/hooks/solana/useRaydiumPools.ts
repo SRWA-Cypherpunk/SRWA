@@ -75,8 +75,11 @@ export function useRaydiumPools() {
     queryKey,
     queryFn: fetchPools,
     enabled: !!programs?.yieldAdapter,
-    staleTime: 0,
-    retry: 1,
+    staleTime: 1000 * 60 * 1,           // 1 minute
+    gcTime: 1000 * 60 * 5,              // 5 minutes cache
+    refetchInterval: 1000 * 60 * 2,     // Re-fetch a cada 2 minutos em background
+    retry: 3,                            // Mais tentativas
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
   });
 
   const registerPool = useCallback(
