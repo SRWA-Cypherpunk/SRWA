@@ -122,9 +122,9 @@ export default function Portfolio() {
         {/* Header Section */}
         <div className="flex items-start justify-between animate-fade-in">
           <div className="space-y-2">
-            <h1 className="text-h1 font-semibold text-fg-primary">Meu Portfolio</h1>
+            <h1 className="text-h1 font-semibold text-fg-primary">My Portfolio</h1>
             <p className="text-body-1 text-fg-secondary">
-              Tokens SRWA que você possui na sua carteira
+              SRWA tokens you own in your wallet
             </p>
           </div>
           <Button
@@ -134,44 +134,44 @@ export default function Portfolio() {
             disabled={loading}
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Atualizar
+            Refresh
           </Button>
         </div>
 
         {/* Portfolio Overview */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-slide-up">
           <KPICard
-            title="Valor Total"
+            title="Total Value"
             value={formatCurrency(totalValue)}
             icon={DollarSign}
             subtitle={`${totalTokens.toFixed(2)} tokens`}
           />
           <KPICard
-            title="Total de Tokens"
+            title="Total Tokens"
             value={positions.length.toString()}
             icon={Wallet}
-            subtitle="Tipos diferentes"
+            subtitle="Different types"
           />
           <KPICard
-            title="APY Médio"
+            title="Average APY"
             value={`${avgSupplyAPY.toFixed(2)}%`}
             icon={TrendingUp}
             trend="up"
             trendValue="Supply APY"
           />
           <KPICard
-            title="Retorno Anual Estimado"
+            title="Estimated Annual Return"
             value={formatCurrency(estimatedYearlyReturn)}
             icon={BarChart3}
-            subtitle="Baseado no APY"
+            subtitle="Based on APY"
           />
         </div>
 
         {/* Main Content */}
         <Tabs defaultValue="positions" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2 lg:w-96">
-            <TabsTrigger value="positions">Meus Tokens</TabsTrigger>
-            <TabsTrigger value="activity">Atividade</TabsTrigger>
+            <TabsTrigger value="positions">My Tokens</TabsTrigger>
+            <TabsTrigger value="activity">Activity</TabsTrigger>
           </TabsList>
 
           {/* Positions Tab */}
@@ -184,10 +184,10 @@ export default function Portfolio() {
               <Card className="card-institutional">
                 <div className="text-center py-12">
                   <Activity className="h-12 w-12 text-red-400 mx-auto mb-4" />
-                  <h3 className="text-h3 text-fg-primary mb-2">Erro ao carregar portfolio</h3>
+                  <h3 className="text-h3 text-fg-primary mb-2">Error loading portfolio</h3>
                   <p className="text-body-2 text-fg-muted mb-6">{error}</p>
                   <Button variant="outline" onClick={handleRefresh}>
-                    Tentar Novamente
+                    Try Again
                   </Button>
                 </div>
               </Card>
@@ -195,15 +195,15 @@ export default function Portfolio() {
               <Card className="card-institutional">
                 <div className="text-center py-12">
                   <Wallet className="h-12 w-12 text-fg-muted mx-auto mb-4" />
-                  <h3 className="text-h3 text-fg-primary mb-2">Nenhum Token Encontrado</h3>
+                  <h3 className="text-h3 text-fg-primary mb-2">No Tokens Found</h3>
                   <p className="text-body-2 text-fg-muted mb-6">
-                    Você ainda não possui tokens SRWA na sua carteira.
+                    You don't have any SRWA tokens in your wallet yet.
                   </p>
                   <Button
                     variant="outline"
                     onClick={() => window.location.href = '/dashboard/markets'}
                   >
-                    Explorar Mercados
+                    Explore Markets
                   </Button>
                 </div>
               </Card>
@@ -253,10 +253,10 @@ export default function Portfolio() {
 
                       {/* Balance Display */}
                       <div className="space-y-1">
-                        <p className="text-micro text-fg-muted uppercase tracking-wide">Saldo</p>
+                        <p className="text-micro text-fg-muted uppercase tracking-wide">Balance</p>
                         <div className="flex items-end gap-3">
                           <p className="text-3xl font-bold text-purple-400">
-                            {position.balance.toLocaleString('pt-BR', {
+                            {position.balance.toLocaleString('en-US', {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 6
                             })}
@@ -272,7 +272,7 @@ export default function Portfolio() {
                         <div className="space-y-1">
                           <p className="text-micro text-fg-muted uppercase tracking-wide flex items-center gap-1">
                             <DollarSign className="h-3 w-3" />
-                            Valor Estimado
+                            Estimated Value
                           </p>
                           <p className="text-body-1 font-semibold text-fg-primary tabular-nums">
                             {formatCurrency(position.value)}
@@ -291,7 +291,7 @@ export default function Portfolio() {
                             {position.token.supplyAPY.toFixed(2)}%
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            Retorno anual
+                            Annual return
                           </p>
                         </div>
                       </div>
@@ -308,7 +308,7 @@ export default function Portfolio() {
                         </div>
                         <div className="space-y-1">
                           <p className="text-micro text-fg-muted uppercase tracking-wide">
-                            Protocolo
+                            Protocol
                           </p>
                           <p className="text-body-2 text-fg-secondary capitalize">
                             {position.token.yieldConfig.protocol}
@@ -319,7 +319,7 @@ export default function Portfolio() {
                       {/* Estimated Earnings */}
                       <div className="rounded-lg bg-purple-500/10 border border-purple-500/30 p-3">
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">Ganho anual estimado:</span>
+                          <span className="text-xs text-muted-foreground">Estimated annual earnings:</span>
                           <span className="text-sm font-semibold text-purple-400">
                             {formatCurrency(position.value * (position.token.supplyAPY / 100))}
                           </span>
@@ -335,7 +335,7 @@ export default function Portfolio() {
                           onClick={() => window.location.href = '/dashboard/markets'}
                         >
                           <Activity className="h-4 w-4 mr-2" />
-                          Ver Mercados
+                          View Markets
                         </Button>
                         <Button
                           variant="outline"
@@ -361,9 +361,9 @@ export default function Portfolio() {
             <Card className="card-institutional">
               <div className="text-center py-12">
                 <Activity className="h-12 w-12 text-fg-muted mx-auto mb-4" />
-                <h3 className="text-h3 text-fg-primary mb-2">Histórico de Transações</h3>
+                <h3 className="text-h3 text-fg-primary mb-2">Transaction History</h3>
                 <p className="text-body-2 text-fg-muted mb-6">
-                  Seu histórico de transações aparecerá aqui conforme você interage com os mercados.
+                  Your transaction history will appear here as you interact with markets.
                 </p>
                 <Button
                   variant="outline"
@@ -374,7 +374,7 @@ export default function Portfolio() {
                   }}
                   disabled={positions.length === 0}
                 >
-                  Ver no Solscan
+                  View on Solscan
                 </Button>
               </div>
             </Card>

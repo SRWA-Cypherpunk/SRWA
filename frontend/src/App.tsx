@@ -13,19 +13,14 @@ import KYC from "./pages/KYC";
 import Admin from "./pages/Admin";
 import Docs from "./pages/Docs";
 import NotFound from "./pages/NotFound";
-import Home from "./pages/Home";
 import Register from "./pages/Register";
 import SRWAIssuance from "./pages/SRWAIssuance";
-import SRWADemo from "./pages/SRWADemo";
-import SRWATestForm from "./pages/SRWATestForm";
 import KYCEligibility from "./pages/KYCEligibility";
 import OracleNav from "./pages/OracleNav";
 import Pools from "./pages/Pools";
 import CreatePool from "./pages/CreatePool";
 import PoolDetail from "./pages/PoolDetail";
 import Optimizer from "./pages/Optimizer";
-import Dashboards from "./pages/Dashboards";
-import Dashboard from "./pages/Dashboard";
 import DashboardOverview from "./pages/dashboard/DashboardOverview";
 import DashboardMarkets from "./pages/dashboard/DashboardMarkets";
 import DashboardPortfolio from "./pages/dashboard/DashboardPortfolio";
@@ -39,12 +34,7 @@ const App = () => (
       <Routes>
         {/* Public routes - always available */}
         <Route path="/" element={<Index />} />
-        <Route path="/home" element={<Home />} />
         <Route path="/docs" element={<Docs />} />
-
-        {/* Demo/Test routes - always public */}
-        <Route path="/srwa-demo" element={<SRWADemo />} />
-        <Route path="/srwa-test" element={<SRWATestForm />} />
 
         {/* Feature-gated routes - only available when VITE_ENABLE_DASHBOARD=true (development) */}
         {FEATURES.DASHBOARD && (
@@ -63,9 +53,7 @@ const App = () => (
             <Route path="/dashboard/markets" element={<DashboardMarkets />} />
             <Route path="/dashboard/portfolio" element={<DashboardPortfolio />} />
 
-            {/* Legacy dashboard routes */}
-            <Route path="/dashboard-old" element={<Dashboard />} />
-            <Route path="/dashboards" element={<Dashboards />} />
+            {/* Other routes */}
             <Route path="/pools" element={<Pools />} />
             <Route path="/pool/:id" element={<PoolDetail />} />
             <Route path="/kyc" element={<KYC />} />

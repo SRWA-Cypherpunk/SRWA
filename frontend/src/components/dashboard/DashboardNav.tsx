@@ -1,6 +1,12 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { DASHBOARD_ROUTES } from '@/lib/constants';
 import { Globe, Shield, BarChart3 } from 'lucide-react';
+
+// Dashboard route constants
+const DASHBOARD_ROUTES = {
+  OVERVIEW: '/dashboard',
+  MARKETS: '/dashboard/markets',
+  PORTFOLIO: '/dashboard/portfolio',
+} as const;
 
 export function DashboardNav() {
   const location = useLocation();

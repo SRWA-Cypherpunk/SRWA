@@ -5,8 +5,18 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { SolanaWalletButton } from "@/components/wallet/SolanaWalletButton";
 import { HeroButton } from "@/components/ui/hero-button";
 import { LaunchCountdownButton } from "@/components/ui/launch-countdown-button";
-import { ROUTES } from "@/lib/constants";
 import { FEATURES } from "@/lib/constants/features";
+
+// Route constants
+const ROUTES = {
+  HOME: "/",
+  DASHBOARD: "/dashboard",
+  MARKETS: "/markets",
+  PORTFOLIO: "/portfolio",
+  KYC: "/kyc",
+  DOCS: "/docs",
+  ADMIN: "/admin",
+} as const;
 import Logo from "@/assets/logo.png";
 import SRWALetters from "@/assets/srwa_letters.png";
 import {

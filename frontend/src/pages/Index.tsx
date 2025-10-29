@@ -16,13 +16,10 @@ import { useEnhancedPoolData } from "@/hooks/markets/useDefIndexData";
 import { useDeployedTokens } from "@/hooks/solana/useDeployedTokens";
 import { useWallet } from '@solana/wallet-adapter-react';
 import { mockMarketStats, mockMarkets, mockMarketCharts } from "@/lib/mock-data";
-import { ROUTES, COLORS, PARTNERS } from "@/lib/constants";
+import { PARTNERS } from "@/lib/constants";
 import { FEATURES } from "@/lib/constants/features";
 import Logo from "@/assets/logo.png";
 import SRWALetters from "@/assets/srwa_letters.png";
-
-// Simplified backgrounds - just colors
-import { COLORS as BG_COLORS } from "@/lib/constants/backgrounds";
 
 import { motion, useInView, AnimatePresence } from "framer-motion";
 import { useRef, useState, useEffect } from "react";

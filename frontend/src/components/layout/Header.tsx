@@ -3,8 +3,19 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { SolanaWalletButton } from "@/components/wallet/SolanaWalletButton";
-import { ROUTES, SRWA_ROUTES } from "@/lib/constants";
 import { FEATURES } from "@/lib/constants/features";
+
+// Route constants
+const ROUTES = {
+  HOME: "/",
+  DASHBOARD: "/dashboard",
+  DOCS: "/docs",
+  ADMIN: "/admin",
+} as const;
+
+const SRWA_ROUTES = {
+  ISSUANCE: "/srwa-issuance",
+} as const;
 import Logo from "@/assets/logo.png";
 import SRWALetters from "@/assets/srwa_letters.png";
 import { AnimatePresence, motion } from "framer-motion";

@@ -19,7 +19,7 @@ export default function PoolDetail() {
           <div>
             <h1 className="text-2xl font-semibold">Raydium Pool</h1>
             <p className="text-sm text-muted-foreground">
-              Visualize e gerencie operações do pool selecionado.
+              View and manage operations for the selected pool.
             </p>
           </div>
         </div>
@@ -28,7 +28,7 @@ export default function PoolDetail() {
           <RaydiumPoolOperations poolId={id} />
         ) : (
           <p className="text-sm text-muted-foreground">
-            Pool ID inválido. Retorne à dashboard e selecione um pool novamente.
+            Invalid Pool ID. Return to the dashboard and select a pool again.
           </p>
         )}
       </div>

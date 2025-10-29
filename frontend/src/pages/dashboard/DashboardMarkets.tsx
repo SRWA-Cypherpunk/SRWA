@@ -311,7 +311,7 @@ export default function DashboardMarkets() {
 
   const handleBuy = async () => {
     if (!selectedToken || !purchaseQuantity) {
-      toast.error('Por favor, informe a quantidade');
+      toast.error('Please enter the quantity');
       return;
     }
 
@@ -320,18 +320,18 @@ export default function DashboardMarkets() {
 
       const quantity = parseInt(purchaseQuantity);
       if (quantity <= 0) {
-        toast.error('Quantidade deve ser maior que zero');
+        toast.error('Quantity must be greater than zero');
         return;
       }
 
       await purchaseOrders.createOrder(selectedToken.mint, quantity);
 
-      toast.success(`Purchase order criada! ${quantity} tokens de ${selectedToken.symbol}`);
+      toast.success(`Purchase order created! ${quantity} tokens of ${selectedToken.symbol}`);
       setSelectedToken(null);
       setPurchaseQuantity('');
     } catch (error: any) {
-      console.error('Erro ao criar purchase order:', error);
-      toast.error(error.message || 'Erro ao criar purchase order');
+      console.error('Error creating purchase order:', error);
+      toast.error(error.message || 'Error creating purchase order');
     } finally {
       setBuyLoading(false);
     }
@@ -378,8 +378,8 @@ export default function DashboardMarkets() {
 
       {/* SRWA Tokens Section with New UI */}
       <DashboardSection
-        title="Tokens SRWA disponíveis"
-        description="Compre tokens SRWA com SOL (Devnet POC)"
+        title="Available SRWA Tokens"
+        description="Buy SRWA tokens with SOL (Devnet POC)"
         decorativeColor="orange"
       >
         <div className="space-y-6">
@@ -511,7 +511,7 @@ export default function DashboardMarkets() {
             <div className="rounded-lg border border-border/50 bg-muted/20 p-12 text-center">
               <Activity className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
               <p className="text-lg font-medium text-muted-foreground">
-                {searchQuery ? 'Nenhum token encontrado' : 'Nenhum token disponível'}
+                {searchQuery ? 'No tokens found' : 'No tokens available'}
               </p>
             </div>
           ) : (
@@ -531,14 +531,14 @@ export default function DashboardMarkets() {
       {/* Raydium Pools Section */}
       <DashboardSection
         title="Raydium Liquidity Pools"
-        description="Pools de liquidez CPMM criadas no Raydium com tokens SRWA"
+        description="CPMM liquidity pools created on Raydium with SRWA tokens"
         decorativeColor="cyan"
       >
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="rounded-full px-3 py-1">
-                {raydiumPools.length} pools registradas
+                {raydiumPools.length} registered pools
               </Badge>
             </div>
             <Button
@@ -566,10 +566,10 @@ export default function DashboardMarkets() {
               <CardContent className="p-8 text-center">
                 <Activity className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
                 <p className="text-base font-medium text-muted-foreground">
-                  Nenhuma pool Raydium registrada ainda
+                  No Raydium pools registered yet
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Crie uma pool no painel admin para vê-la aqui
+                  Create a pool in the admin panel to see it here
                 </p>
               </CardContent>
             </Card>
@@ -639,7 +639,7 @@ export default function DashboardMarkets() {
                               className="flex-1 h-8 text-xs"
                               onClick={() => handleViewPoolDetails(pool.poolId.toBase58())}
                             >
-                              Ver Pool
+                              View Pool
                             </Button>
                             <Button
                               variant="ghost"
@@ -657,7 +657,7 @@ export default function DashboardMarkets() {
                               className="h-8 w-8"
                               onClick={() => {
                                 navigator.clipboard.writeText(pool.poolId.toBase58());
-                                toast.success('Pool ID copiado!');
+                                toast.success('Pool ID copied!');
                               }}
                             >
                               <Copy className="h-4 w-4" />
@@ -706,9 +706,9 @@ export default function DashboardMarkets() {
       >
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Operações Raydium</DialogTitle>
+            <DialogTitle>Raydium Operations</DialogTitle>
             <DialogDescription>
-              Execute swaps ou gerencie liquidez para o pool selecionado diretamente da dashboard.
+              Execute swaps or manage liquidity for the selected pool directly from the dashboard.
             </DialogDescription>
           </DialogHeader>
           {selectedRaydiumPoolId && (
@@ -721,9 +721,9 @@ export default function DashboardMarkets() {
       <Dialog open={!!selectedToken} onOpenChange={(open) => !open && setSelectedToken(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Comprar {selectedToken?.symbol}</DialogTitle>
+            <DialogTitle>Buy {selectedToken?.symbol}</DialogTitle>
             <DialogDescription>
-              Informe a quantidade de tokens que deseja comprar
+              Enter the quantity of tokens you want to buy
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -736,7 +736,7 @@ export default function DashboardMarkets() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="quantity">Quantidade</Label>
+              <Label htmlFor="quantity">Quantity</Label>
               <Input
                 id="quantity"
                 type="number"
@@ -747,7 +747,7 @@ export default function DashboardMarkets() {
                 onChange={(e) => setPurchaseQuantity(e.target.value)}
               />
               <p className="text-xs text-muted-foreground">
-                Preço: 0.01 SOL por token
+                Price: 0.01 SOL per token
               </p>
             </div>
 
@@ -769,7 +769,7 @@ export default function DashboardMarkets() {
                 onClick={() => setSelectedToken(null)}
                 disabled={buyLoading}
               >
-                Cancelar
+                Cancel
               </Button>
               <Button
                 className="flex-1 bg-purple-600 hover:bg-purple-700"
@@ -779,10 +779,10 @@ export default function DashboardMarkets() {
                 {buyLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processando...
+                    Processing...
                   </>
                 ) : (
-                  `Pagar ${(parseFloat(purchaseQuantity || '0') * 0.01).toFixed(4)} SOL`
+                  `Pay ${(parseFloat(purchaseQuantity || '0') * 0.01).toFixed(4)} SOL`
                 )}
               </Button>
             </div>

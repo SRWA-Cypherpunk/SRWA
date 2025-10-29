@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from 'react-router-dom';
 import '@/styles/features/dashboard.css';
-import { Header, Footer } from "@/components/layout";
+import { DashboardLayout, DashboardSection } from "@/components/layout";
 import { KPICard } from "@/components/ui/kpi-card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { HeroButton } from "@/components/ui/hero-button";
 import { DashboardNav } from "@/components/dashboard/DashboardNav";
+import { Card } from "@/components/ui/card";
 import { mockUserPositions, type UserPosition } from "@/lib/mock-data";
 
 // Hooks
@@ -208,33 +209,33 @@ export default function DashboardPortfolio() {
   const issuanceSections = [
     {
       key: "approved",
-      label: "Tokens aprovados",
-      description: "Tokens prontos para distribuição.",
+      label: "Approved Tokens",
+      description: "Tokens ready for distribution.",
       count: issuanceCounts.approved,
       badgeClass: "bg-emerald-500/10 border-emerald-500/30 text-emerald-200",
       borderClass: "border-emerald-500/20",
       items: issuerRequestBreakdown.approved,
-      emptyText: "Nenhum token aprovado ainda. Envie sua primeira emissão."
+      emptyText: "No approved tokens yet. Submit your first issuance."
     },
     {
       key: "pending",
-      label: "Em análise",
-      description: "Solicitações aguardando aprovação do comitê.",
+      label: "Under Review",
+      description: "Requests awaiting committee approval.",
       count: issuanceCounts.pending,
       badgeClass: "bg-amber-400/10 border-amber-400/30 text-amber-200",
       borderClass: "border-amber-400/20",
       items: issuerRequestBreakdown.pending,
-      emptyText: "Envie uma nova solicitação para começar."
+      emptyText: "Submit a new request to get started."
     },
     {
       key: "rejected",
-      label: "Necessitam ajustes",
-      description: "Pedidos que foram rejeitados e precisam ser revisados.",
+      label: "Needs Adjustments",
+      description: "Requests that were rejected and need to be revised.",
       count: issuanceCounts.rejected,
       badgeClass: "bg-rose-500/10 border-rose-500/30 text-rose-200",
       borderClass: "border-rose-500/20",
       items: issuerRequestBreakdown.rejected,
-      emptyText: "Nenhuma solicitação rejeitada até agora."
+      emptyText: "No rejected requests so far."
     }
   ] as const;
 
@@ -242,122 +243,118 @@ export default function DashboardPortfolio() {
   const walletShortAddress = address ? shortenAddress(address, 4) : null;
 
   return (
-    <div className="min-h-screen bg-background">
+    <DashboardLayout>
+      {/* Header with Create SRWA Button */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6 sm:mb-8">
+        <div className="w-full sm:w-auto">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-400 via-purple-300 to-orange-400 bg-clip-text text-transparent">
+            Portfolio Dashboard
+          </h1>
+          <p className="text-base sm:text-lg text-fg-secondary mt-2">
+            A clear view of your SRWA issuances and positions
+          </p>
+        </div>
 
-      <Header />
+        <div className="w-full sm:w-auto">
+          <HeroButton
+            onClick={handleCreateSrwa}
+            variant="brand"
+            className="w-full sm:w-auto"
+            icon={<Plus className="h-4 w-4" />}
+          >
+            Create New SRWA
+          </HeroButton>
+        </div>
+      </div>
 
-      <main className="container mx-auto max-w-7xl px-4 sm:px-6 py-8 lg:py-12 space-y-10">
-        <section className="rounded-3xl border border-border/60 bg-card/80 shadow-[0_20px_50px_rgba(12,10,18,0.45)] p-6 sm:p-8 space-y-6">
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="space-y-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-fg-muted">Dashboard</p>
-              <h1 className="text-3xl sm:text-4xl font-bold text-fg-primary">
-                Cockpit do portfólio SRWA
-              </h1>
-              <p className="text-sm sm:text-base text-fg-secondary max-w-2xl">
-                Uma visão clara das suas emissões e posições para decidir com confiança, sem ruído visual.
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
-              {walletShortAddress && (
-                <div className="rounded-full border border-brand-500/30 bg-brand-500/10 px-4 py-2 text-xs font-semibold text-brand-200 text-center">
-                  Carteira {walletShortAddress}
-                </div>
-              )}
-              <HeroButton
-                onClick={handleCreateSrwa}
-                variant="brand"
-                className="w-full sm:w-auto"
-                icon={<Plus className="h-4 w-4" />}
-              >
-                Criar novo SRWA
-              </HeroButton>
-            </div>
-          </div>
+      {/* Dashboard Navigation */}
+      <DashboardNav />
 
-          {connected && (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      {/* Portfolio Stats */}
+      {connected && (
+        <DashboardSection decorativeColor="purple">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
               <KPICard
                 title="Total Supplied"
                 value={walletAssets.loading || blendPositions.loading
-                  ? "Carregando..."
+                  ? "Loading..."
                   : userPositions.length > 0
                     ? `$${totalSupplied.toFixed(1)}M`
                     : "$0.0M"}
-                subtitle="Volume depositado em protocolos SRWA"
+                subtitle="Volume deposited in SRWA protocols"
                 icon={DollarSign}
                 className="!cursor-default hover:shadow-none transition-none"
               />
               <KPICard
                 title="Total Borrowed"
                 value={walletAssets.loading || blendPositions.loading
-                  ? "Carregando..."
+                  ? "Loading..."
                   : userPositions.length > 0
                     ? `$${totalBorrowed.toFixed(1)}M`
                     : "$0.0M"}
                 subtitle={userPositions.length > 0
-                  ? "Posições ativas na sua carteira"
-                  : "Nenhuma posição ativa"}
+                  ? "Active positions in your wallet"
+                  : "No active positions"}
                 icon={TrendingUp}
                 trend={userPositions.length > 0 ? "neutral" : undefined}
                 trendValue={userPositions.length > 0
-                  ? `${userPositions.length} posição${userPositions.length > 1 ? 's' : ''}`
+                  ? `${userPositions.length} position${userPositions.length > 1 ? 's' : ''}`
                   : undefined}
                 className="!cursor-default hover:shadow-none transition-none"
               />
               <KPICard
                 title="Net APY"
                 value={walletAssets.loading || blendPositions.loading
-                  ? "Carregando..."
+                  ? "Loading..."
                   : userPositions.length > 0
                     ? netApy
                     : "0.00%"}
-                subtitle="Rentabilidade média do portfólio"
+                subtitle="Average portfolio profitability"
                 icon={BarChart3}
                 trend={userPositions.length > 0 && netProfitLoss > 0 ? "up"
                   : userPositions.length > 0 && netProfitLoss < 0 ? "down"
                   : userPositions.length > 0 ? "neutral" : undefined}
                 trendValue={userPositions.length > 0 && connected && netProfitLoss !== 0
                   ? `${netProfitLoss > 0 ? '+' : ''}$${(netProfitLoss / 1000).toFixed(1)}K`
-                  : userPositions.length > 0 ? "Estável" : undefined}
+                  : userPositions.length > 0 ? "Stable" : undefined}
                 className="!cursor-default hover:shadow-none transition-none"
               />
               <KPICard
                 title="Avg Health Factor"
                 value={walletAssets.loading || blendPositions.loading
-                  ? "Carregando..."
+                  ? "Loading..."
                   : userPositions.length > 0
                     ? avgHealthFactor.toFixed(2)
                     : "--"}
-                subtitle="Indicador de risco das posições"
+                subtitle="Position risk indicator"
                 icon={Shield}
                 trend={userPositions.length > 0 && avgHealthFactor >= 2.0 ? "up"
                   : userPositions.length > 0 && avgHealthFactor < 1.5 ? "down"
                   : userPositions.length > 0 ? "neutral" : undefined}
                 trendValue={userPositions.length > 0
-                  ? avgHealthFactor >= 2.0 ? "Saudável"
-                    : avgHealthFactor >= 1.5 ? "Atenção"
-                      : "Em risco"
+                  ? avgHealthFactor >= 2.0 ? "Healthy"
+                    : avgHealthFactor >= 1.5 ? "Caution"
+                      : "At Risk"
                   : undefined}
                 className="!cursor-default hover:shadow-none transition-none"
               />
-            </div>
-          )}
-        </section>
+          </div>
+        </DashboardSection>
+      )}
 
-        <DashboardNav />
-
-        {!connected ? (
-          <section className="rounded-3xl border border-border/60 bg-card/80 shadow-[0_12px_35px_rgba(12,10,18,0.45)] p-8 sm:p-10 text-center space-y-6">
+      {/* Wallet Connection Prompt */}
+      {!connected && (
+        <DashboardSection>
+          <div className="text-center space-y-6 py-8">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-500/10 border border-brand-500/20">
               <Wallet className="h-8 w-8 text-brand-400" />
             </div>
             <div className="space-y-3">
               <h3 className="text-xl font-semibold text-fg-primary">
-                Conecte sua carteira
+                Connect Your Wallet
               </h3>
               <p className="text-sm sm:text-base text-fg-secondary max-w-md mx-auto">
-                Visualize posições, métricas e tokens SRWA conectando sua carteira Solana de forma segura.
+                View positions, metrics, and SRWA tokens by securely connecting your Solana wallet.
               </p>
             </div>
             <Button
@@ -365,24 +362,19 @@ export default function DashboardPortfolio() {
               disabled={connecting}
               className="btn-primary w-full sm:w-auto px-6 py-3 text-sm font-semibold"
             >
-              {connecting ? "Conectando..." : "Conectar carteira"}
+              {connecting ? "Connecting..." : "Connect Wallet"}
             </Button>
-          </section>
-        ) : (
-          <>
-            {(isIssuer || isInvestor) && (
-              <section className="grid gap-6 lg:grid-cols-5">
-                {isIssuer && (
-                  <div className={`rounded-3xl border border-border/60 bg-card/70 shadow-[0_12px_35px_rgba(12,10,18,0.45)] p-6 space-y-6 ${isInvestor ? "lg:col-span-3" : "lg:col-span-5"}`}>
-                    <div className="space-y-2">
-                      <span className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
-                        Espaço do emissor
-                      </span>
-                      <h2 className="text-lg font-semibold text-fg-primary">Pipeline de emissões</h2>
-                      <p className="text-sm text-fg-secondary">
-                        Acompanhe o status das solicitações enviadas para o comitê SRWA.
-                      </p>
-                    </div>
+          </div>
+        </DashboardSection>
+      )}
+
+      {/* Issuer Section: Issuance Pipeline */}
+      {connected && isIssuer && (
+        <DashboardSection
+          title="Issuance Pipeline"
+          description="Track the status of requests submitted to the SRWA committee"
+          decorativeColor="blue"
+        >
                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                       {issuanceSections.map((section) => (
                         <div
@@ -431,25 +423,27 @@ export default function DashboardPortfolio() {
                           </div>
                           {section.items.length > 4 && (
                             <p className="text-[11px] text-fg-muted">
-                              +{section.items.length - 4} registro(s) adicionais.
+                              +{section.items.length - 4} additional record(s).
                             </p>
                           )}
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
+        </DashboardSection>
+      )}
 
-                {isInvestor && (
-                  <div className={`rounded-3xl border border-border/60 bg-card/70 shadow-[0_12px_35px_rgba(12,10,18,0.45)] p-6 space-y-6 ${isIssuer ? "lg:col-span-2" : "lg:col-span-5"}`}>
-                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                      <div className="space-y-2">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-fg-muted">
-                          Espaço do investidor
-                        </span>
-                        <h2 className="text-lg font-semibold text-fg-primary">Tokens na carteira</h2>
-                        <p className="text-sm text-fg-secondary">
-                          Resumo dos tokens SRWA disponíveis para staking ou liquidez.
+      {/* Investor Section: Wallet Tokens */}
+      {connected && isInvestor && (
+        <DashboardSection
+          title="Wallet Tokens"
+          description="Your active SRWA tokens"
+          decorativeColor="orange"
+        >
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div className="space-y-2">
+                <p className="text-sm text-fg-secondary">
+                          Summary of SRWA tokens available for staking or liquidity.
                         </p>
                       </div>
                       <Button
@@ -460,14 +454,14 @@ export default function DashboardPortfolio() {
                         className="gap-2"
                       >
                         <RefreshCw className={`h-4 w-4 ${walletTokenLoading ? "animate-spin" : ""}`} />
-                        Atualizar
+                        Refresh
                       </Button>
                     </div>
 
                     <div className="border-t border-border/40 pt-4 space-y-4">
                       {walletTokenError && (
                         <p className="text-xs text-red-400">
-                          Erro ao carregar tokens da carteira: {walletTokenError}
+                          Error loading wallet tokens: {walletTokenError}
                         </p>
                       )}
 
@@ -479,10 +473,10 @@ export default function DashboardPortfolio() {
                         <div className="rounded-2xl border border-dashed border-border/70 bg-muted/10 p-6 text-center space-y-2">
                           <Wallet className="h-8 w-8 mx-auto text-fg-muted opacity-70" />
                           <p className="text-sm text-fg-muted">
-                            Nenhum token SRWA encontrado na carteira conectada.
+                            No SRWA tokens found in connected wallet.
                           </p>
                           <p className="text-xs text-fg-muted">
-                            Compre tokens nos mercados SRWA para ver seus saldos aqui.
+                            Buy tokens in SRWA markets to see your balances here.
                           </p>
                         </div>
                       ) : (
@@ -519,27 +513,15 @@ export default function DashboardPortfolio() {
                           </div>
                           {extraWalletHoldings > 0 && (
                             <p className="text-xs text-fg-muted">
-                              +{extraWalletHoldings} token(s) adicionais não exibidos.
+                              +{extraWalletHoldings} additional token(s) not displayed.
                             </p>
                           )}
                         </>
                       )}
                     </div>
-                  </div>
-                )}
-              </section>
-            )}
-
-          </>
-        )}
-      </main>
-
-      <Footer
-        showCTA
-        ctaAction="top"
-        ctaTitle="Gerencie seu portfólio"
-        ctaDescription="Acompanhe e otimize suas posições"
-      />
-    </div>
+          </div>
+        </DashboardSection>
+      )}
+    </DashboardLayout>
   );
 }

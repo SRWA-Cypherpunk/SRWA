@@ -34,19 +34,19 @@ export default function Register() {
     }
   }, [roleRoute, navigate]);
 
-  // Mostrar loading enquanto carrega
+  // Show loading while loading
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4" />
-          <p className="text-lg text-muted-foreground">Verificando registro...</p>
+          <p className="text-lg text-muted-foreground">Verifying registration...</p>
         </div>
       </div>
     );
   }
 
-  // Se não estiver conectado, mostrar mensagem para conectar
+  // If not connected, show message to connect
   if (!connected) {
     return (
       <div className="flex items-center justify-center min-h-screen p-4">
@@ -56,15 +56,15 @@ export default function Register() {
               <Wallet className="w-8 h-8 text-primary" />
             </div>
             <CardTitle className="text-center text-2xl">
-              Conecte sua Wallet
+              Connect Your Wallet
             </CardTitle>
             <CardDescription className="text-center text-base">
-              Para se registrar no SRWA Protocol, você precisa conectar sua carteira Solana
+              To register on SRWA Protocol, you need to connect your Solana wallet
             </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground text-center mb-4">
-              Clique no botão "Connect Wallet" no canto superior direito para começar
+              Click the "Connect Wallet" button in the top right corner to get started
             </p>
           </CardContent>
         </Card>
@@ -72,7 +72,7 @@ export default function Register() {
     );
   }
 
-  // Se o usuário já estiver registrado, mostrar mensagem
+  // If user is already registered, show message
   if (roleRoute) {
     return (
       <div className="flex items-center justify-center min-h-screen p-4">
@@ -82,22 +82,22 @@ export default function Register() {
               <CheckCircle className="w-8 h-8 text-green-500" />
             </div>
             <CardTitle className="text-center text-2xl">
-              Você já está registrado!
+              You are already registered!
             </CardTitle>
             <CardDescription className="text-center text-base">
-              Seu tipo de conta: <strong>{userRegistry?.role}</strong>
+              Your account type: <strong>{userRegistry?.role}</strong>
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-sm text-muted-foreground text-center">
-              Registrado em: {userRegistry ? new Date(userRegistry.registered_at * 1000).toLocaleDateString('pt-BR') : '—'}
+              Registered on: {userRegistry ? new Date(userRegistry.registered_at * 1000).toLocaleDateString('en-US') : '—'}
             </p>
             <div className="flex gap-2">
               <Button asChild className="flex-1">
-                <Link to={roleRoute}>Ir para minha página</Link>
+                <Link to={roleRoute}>Go to my page</Link>
               </Button>
               <Button asChild variant="outline" className="flex-1">
-                <Link to="/dashboard">Ver Dashboard</Link>
+                <Link to="/dashboard">View Dashboard</Link>
               </Button>
             </div>
           </CardContent>
@@ -106,6 +106,6 @@ export default function Register() {
     );
   }
 
-  // Mostrar o wizard de registro
+  // Show registration wizard
   return <RegistrationWizard />;
 }

@@ -9,7 +9,7 @@ export default function Pools() {
 				<div className="space-y-2">
 					<h1 className="text-3xl font-bold">Raydium Liquidity Pools</h1>
 					<p className="text-muted-foreground">
-						Gerencie seus pools de liquidez: faça swaps, adicione ou remova liquidez
+						Manage your liquidity pools: make swaps, add or remove liquidity
 					</p>
 				</div>
 

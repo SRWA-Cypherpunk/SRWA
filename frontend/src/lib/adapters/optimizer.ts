@@ -1,17 +1,15 @@
-import { withTxToasts } from '@/lib/txFlow';
-
-export async function place_supply(_pool: string, _amount: string) {
-	return withTxToasts('Place supply', async () => 'MOCK_TX_HASH_PLACE_SUPPLY');
+// Optimizer adapter - placeholder
+export function place_supply(pool: string, amount: string) {
+  console.log('place_supply', pool, amount);
+  alert('Optimizer: Place supply feature not implemented yet');
 }
 
-export async function place_borrow(_pool: string, _amount: string) {
-	return withTxToasts('Place borrow', async () => 'MOCK_TX_HASH_PLACE_BORROW');
+export function place_borrow(pool: string, amount: string) {
+  console.log('place_borrow', pool, amount);
+  alert('Optimizer: Place borrow feature not implemented yet');
 }
 
-export async function cancel(_orderId: string) {
-	return withTxToasts('Cancel order', async () => 'MOCK_TX_HASH_CANCEL');
-}
-
-export async function match() {
-	return withTxToasts('Match orders', async () => 'MOCK_TX_HASH_MATCH');
+export function match() {
+  console.log('match');
+  alert('Optimizer: Match feature not implemented yet');
 }
