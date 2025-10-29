@@ -16,9 +16,10 @@ import {
 import { IssuerWizard } from "@/components/srwa/IssuerWizard";
 
 // Hooks
-import { useRaydiumPools } from '@/hooks/solana';
+import { useRaydiumPools, useUserRegistry } from '@/hooks/solana';
 import { useDeployedTokens } from '@/hooks/solana/useDeployedTokens';
 import { RaydiumPoolOperations } from '@/components/raydium/RaydiumPoolOperations';
+import { UserRole } from '@/types/srwa-contracts';
 
 // Icons
 import { Plus, Zap, Loader2, RefreshCw, TrendingUp, DollarSign, Activity, ExternalLink, Shield } from "lucide-react";
@@ -71,6 +72,10 @@ export default function DashboardMarkets() {
     refresh: refreshRaydiumPools
   } = useRaydiumPools();
 
+  // Check user role
+  const { userRegistry } = useUserRegistry();
+  const isIssuer = (userRegistry?.role === UserRole.Issuer || userRegistry?.role === UserRole.Admin) && userRegistry?.role !== UserRole.Investor;
+
   // State for pool operations dialog
   const [selectedRaydiumPoolId, setSelectedRaydiumPoolId] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -93,16 +98,18 @@ export default function DashboardMarkets() {
           </p>
         </div>
 
-        <div className="w-full sm:w-auto">
-          <HeroButton
-            onClick={() => setIsCreateModalOpen(true)}
-            variant="brand"
-            className="w-full sm:w-auto"
-            icon={<Plus className="h-4 w-4" />}
-          >
-            Create SRWA
-          </HeroButton>
-        </div>
+        {isIssuer && (
+          <div className="w-full sm:w-auto">
+            <HeroButton
+              onClick={() => setIsCreateModalOpen(true)}
+              variant="brand"
+              className="w-full sm:w-auto"
+              icon={<Plus className="h-4 w-4" />}
+            >
+              Create SRWA
+            </HeroButton>
+          </div>
+        )}
       </div>
 
       {/* Dashboard Navigation */}

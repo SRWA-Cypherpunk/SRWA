@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useWalletAssets } from '@/hooks/wallet/useWalletAssets';
 import { useUserBlendPositions } from '@/hooks/markets/useUserBlendPositions';
 import { useRecentTransactions, formatTransactionForDisplay } from '@/hooks/wallet/useWalletTransactions';
+import { useUserRegistry } from '@/hooks/solana';
+import { UserRole } from '@/types/srwa-contracts';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { IssuerWizard } from '@/components/srwa/IssuerWizard';
 
@@ -17,11 +19,13 @@ export function RWAPortfolioCard({ className }: RWAPortfolioCardProps) {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const navigate = useNavigate();
   const cardRef = useRef<HTMLDivElement>(null);
-  
+
   // Hooks for real data
   const { rwaAssets, hasRWAAssets, loading: assetsLoading, refreshAssets } = useWalletAssets();
   const { rwaPositions, loading: positionsLoading } = useUserBlendPositions();
   const { recentTransactions, loading: transactionsLoading } = useRecentTransactions(5);
+  const { isIssuer, isInvestor, isAdmin } = useUserRegistry();
+  const canCreateSRWA = (isIssuer || isAdmin) && !isInvestor;
 
   const loading = assetsLoading || positionsLoading || transactionsLoading;
   
@@ -162,25 +166,27 @@ export function RWAPortfolioCard({ className }: RWAPortfolioCardProps) {
           </div>
           
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <button 
-              data-action="create-rwa"
-              onClick={handleCreateRWAToken}
-              className="btn-primary flex items-center justify-center gap-2"
-              style={{ 
-                pointerEvents: 'auto', 
-                cursor: 'pointer',
-                minHeight: '44px',
-                padding: '0 16px',
-                borderRadius: '0.75rem',
-                fontWeight: '500',
-                transition: 'all 0.2s ease'
-              }}
-            >
-              Create RWA Token
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7l3-3 3 3m0 8l-3 3-3-3" />
-              </svg>
-            </button>
+            {canCreateSRWA && (
+              <button
+                data-action="create-rwa"
+                onClick={handleCreateRWAToken}
+                className="btn-primary flex items-center justify-center gap-2"
+                style={{
+                  pointerEvents: 'auto',
+                  cursor: 'pointer',
+                  minHeight: '44px',
+                  padding: '0 16px',
+                  borderRadius: '0.75rem',
+                  fontWeight: '500',
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                Create RWA Token
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7l3-3 3 3m0 8l-3 3-3-3" />
+                </svg>
+              </button>
+            )}
             <button 
               data-action="explore-markets"
               onClick={handleExploreMarkets}

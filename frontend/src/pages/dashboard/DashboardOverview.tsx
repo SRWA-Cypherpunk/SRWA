@@ -50,7 +50,7 @@ export default function DashboardOverview() {
   } = useSRWAMarkets();
 
   const { userRegistry } = useUserRegistry();
-  const isIssuer = userRegistry?.role === UserRole.Issuer || userRegistry?.role === UserRole.Admin;
+  const isIssuer = (userRegistry?.role === UserRole.Issuer || userRegistry?.role === UserRole.Admin) && userRegistry?.role !== UserRole.Investor;
 
   const loading = poolsLoading || analyticsLoading || srwaLoading;
   const error = poolsError?.message || analyticsError?.message || srwaError?.message || null;
@@ -71,14 +71,29 @@ export default function DashboardOverview() {
     totalUsers: 0
   };
 
-  // Chart data for dashboard (including SRWA)
-  const poolTVLChartData = allMarkets.length > 0
-    ? allMarkets.slice(0, 8).map((pool, index) => ({
+  // Chart data for dashboard with 12 mock data points
+  const mockPoolTVLData = [
+    { name: "USDC Pool", tvl: 8.5 },
+    { name: "SOL Pool", tvl: 7.2 },
+    { name: "BTC Pool", tvl: 6.8 },
+    { name: "ETH Pool", tvl: 5.9 },
+    { name: "USDT Pool", tvl: 5.3 },
+    { name: "Real Estate", tvl: 4.7 },
+    { name: "Treasury", tvl: 4.2 },
+    { name: "Private Equity", tvl: 3.8 },
+    { name: "Commodities", tvl: 3.2 },
+    { name: "Credit", tvl: 2.6 },
+    { name: "Infrastructure", tvl: 2.1 },
+    { name: "Bonds", tvl: 1.8 },
+  ];
+
+  const poolTVLChartData = allMarkets.length >= 12
+    ? allMarkets.slice(0, 12).map((pool, index) => ({
         name: pool.name.length > 15 ? pool.name.slice(0, 15) + '...' : pool.name,
         tvl: pool.tvl / 1e6, // Convert to millions
         poolAddress: pool.address
       }))
-    : [{ name: "No Data", tvl: 0, poolAddress: "" }];
+    : mockPoolTVLData;
 
 
   // Custom Tooltip for Charts

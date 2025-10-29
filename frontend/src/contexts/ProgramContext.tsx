@@ -17,22 +17,19 @@ export function ProgramProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     async function load() {
-      if (!wallet) {
-        setPrograms(null);
-        console.log('[ProgramProvider] No wallet, skipping program load');
-        return;
-      }
-
-      console.log('[ProgramProvider] Loading programs for wallet', wallet.publicKey?.toBase58());
+      const mode = wallet ? 'with wallet' : 'read-only';
+      console.log(`[ProgramProvider] Loading programs (${mode})`, wallet?.publicKey?.toBase58());
       setLoading(true);
       try {
         const provider = getProvider(wallet);
         console.log('[ProgramProvider] Provider ready', {
+          mode,
           wallet: provider.wallet?.publicKey?.toBase58?.(),
           connection: provider.connection?._rpcEndpoint,
         });
         const loadedPrograms = await loadPrograms(provider);
         console.log('[ProgramProvider] Programs loaded', {
+          mode,
           keys: loadedPrograms ? Object.keys(loadedPrograms) : [],
           hasFactory: !!loadedPrograms?.srwaFactory,
           hasCoder: !!loadedPrograms?.srwaFactory?.coder,

@@ -83,7 +83,8 @@ export default function DashboardPortfolio() {
 
   // Wallet connection
   const { connected, address, connect, connecting } = useWallet();
-  const { isIssuer, isInvestor } = useUserRegistry();
+  const { isIssuer, isInvestor, isAdmin } = useUserRegistry();
+  const canCreateSRWA = (isIssuer || isAdmin) && !isInvestor;
   const {
     requests: issuanceRequests,
     loading: issuanceLoading,
@@ -260,16 +261,18 @@ export default function DashboardPortfolio() {
           </p>
         </div>
 
-        <div className="w-full sm:w-auto">
-          <HeroButton
-            onClick={handleCreateSrwa}
-            variant="brand"
-            className="w-full sm:w-auto"
-            icon={<Plus className="h-4 w-4" />}
-          >
-            Create New SRWA
-          </HeroButton>
-        </div>
+        {canCreateSRWA && (
+          <div className="w-full sm:w-auto">
+            <HeroButton
+              onClick={handleCreateSrwa}
+              variant="brand"
+              className="w-full sm:w-auto"
+              icon={<Plus className="h-4 w-4" />}
+            >
+              Create New SRWA
+            </HeroButton>
+          </div>
+        )}
       </div>
 
       {/* Dashboard Navigation */}
@@ -361,7 +364,7 @@ export default function DashboardPortfolio() {
       )}
 
       {/* Issuer Section: Issuance Pipeline */}
-      {connected && isIssuer && (
+      {connected && canCreateSRWA && (
         <DashboardSection
           title="Issuance Pipeline"
           description="Track the status of requests submitted to the SRWA committee"

@@ -21,8 +21,12 @@ interface CombinedProviderProps {
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutes
-      refetchOnWindowFocus: false,
+      staleTime: 1000 * 60 * 2,        // 2 minutes (mais agressivo)
+      gcTime: 1000 * 60 * 10,          // 10 minutes cache (mantém dados em cache)
+      retry: 3,                         // Mais tentativas em caso de falha
+      refetchOnWindowFocus: true,       // Re-fetch ao voltar para aba
+      refetchOnReconnect: true,         // Re-fetch ao reconectar internet
+      refetchOnMount: 'always',         // Sempre buscar ao montar (mas usa cache se disponível)
     },
   },
 });
