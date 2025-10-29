@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { UserRole } from '@/types/srwa-contracts';
 import { useUserRegistry } from '@/hooks/solana';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -65,11 +66,18 @@ export function RegistrationWizard() {
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [isRegistering, setIsRegistering] = useState(false);
   const { registerUser } = useUserRegistry();
+  const wallet = useWallet();
   const navigate = useNavigate();
 
   const handleRegister = async () => {
     if (!selectedRole) {
       toast.error('Please select a user type');
+      return;
+    }
+
+    // Check if wallet is connected
+    if (!wallet.connected || !wallet.publicKey) {
+      toast.error('Please connect your wallet first');
       return;
     }
 
@@ -317,7 +325,7 @@ export function RegistrationWizard() {
           <Button
             size="lg"
             onClick={handleRegister}
-            disabled={!selectedRole || isRegistering}
+            disabled={!selectedRole || isRegistering || !wallet.connected}
             className="min-w-[200px] bg-gradient-to-r from-purple-600 via-purple-500 to-orange-500 hover:from-purple-500 hover:via-orange-500 hover:to-orange-400 shadow-lg shadow-purple-500/30 hover:shadow-orange-500/50 hover:shadow-2xl border-2 border-purple-500/30 transition-all duration-300 text-white font-bold"
           >
             {isRegistering ? (
@@ -325,6 +333,10 @@ export function RegistrationWizard() {
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Registering...
               </>
+            ) : !wallet.connected ? (
+              'Connect Your Wallet'
+            ) : !selectedRole ? (
+              'Select Account Type'
             ) : (
               'Confirm Registration'
             )}

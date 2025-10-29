@@ -21,6 +21,13 @@ export function useUserRegistry() {
 
   // Registrar um novo usuário com um role específico
   const registerUser = async (role: UserRole) => {
+    console.log('[useUserRegistry.registerUser] Starting registration', {
+      hasWallet: !!wallet,
+      walletPubkey: wallet?.publicKey?.toBase58(),
+      hasProgram: !!programs.srwaFactory,
+      programProvider: programs.srwaFactory?.provider?.wallet?.publicKey?.toBase58(),
+    });
+
     if (!wallet?.publicKey) throw new Error('Wallet not connected');
     if (!programs.srwaFactory) throw new Error('SRWA Factory program not loaded');
 

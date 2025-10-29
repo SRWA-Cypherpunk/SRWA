@@ -13,7 +13,7 @@ import {
 } from '@solana/web3.js';
 import { WalletSendTransactionError } from '@solana/wallet-adapter-base';
 import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
+  ASSOCIATED_ s,
   Account,
   MINT_SIZE,
   TOKEN_2022_PROGRAM_ID,

@@ -1,4 +1,12 @@
-use anchor_lang::prelude::*;
+use anchor_lang::{
+    prelude::*,
+    system_program::{create_account, CreateAccount},
+};
+use spl_tlv_account_resolution::{
+    account::ExtraAccountMeta, seeds::Seed, state::ExtraAccountMetaList,
+};
+use spl_transfer_hook_interface::instruction::{ExecuteInstruction, TransferHookInstruction};
+use std::str::FromStr;
 
 declare_id!("345oZiSawNcHLVLnQLjiE7bkycC3bS1DJcmhvYDDaMFH");
 
@@ -6,416 +14,225 @@ declare_id!("345oZiSawNcHLVLnQLjiE7bkycC3bS1DJcmhvYDDaMFH");
 pub mod srwa_controller {
     use super::*;
 
-    /// Transfer Hook - called automatically on every transfer, ensuring baseline compliance.
-    /// This should be configured as the transfer hook for the Token-2022 mint.
-    pub fn on_transfer(ctx: Context<OnTransfer>, amount: u64) -> Result<()> {
-        let config = &ctx.accounts.config;
-        let offering = &ctx.accounts.offering;
-        let clock = Clock::get()?;
+    /// Initialize the ExtraAccountMetaList account
+    /// This stores the list of extra accounts needed by the transfer hook
+    pub fn initialize_extra_account_meta_list(
+        ctx: Context<InitializeExtraAccountMetaList>,
+    ) -> Result<()> {
+        // Define the extra accounts needed for KYC validation
+        // Usamos AccountKey direto - o frontend passará os endereços manualmente
+        let srwa_factory_program = srwa_factory_program_id();
 
-        // 1. Global pause check
-        require!(!config.paused, ControllerError::TransferPaused);
+        let account_metas = vec![
+            // SRWA Factory Program (necessário para derivar os PDAs)
+            ExtraAccountMeta::new_with_pubkey(&srwa_factory_program, false, false)?,
+            // Sender User Registry - será passado manualmente pelo frontend
+            // Usa AccountKey com index 5 (será a 6ª conta extra, depois das 4 base + program_id)
+            ExtraAccountMeta::new_external_pda_with_seeds(
+                0, // index do SRWA Factory program (primeiro extra account)
+                &[
+                    Seed::Literal {
+                        bytes: b"user_registry".to_vec(),
+                    },
+                    Seed::AccountKey { index: 3 }, // authority/sender (4ª conta base)
+                ],
+                false,
+                false,
+            )?,
+            // Destination User Registry
+            ExtraAccountMeta::new_external_pda_with_seeds(
+                0, // index do SRWA Factory program
+                &[
+                    Seed::Literal {
+                        bytes: b"user_registry".to_vec(),
+                    },
+                    Seed::AccountKey { index: 2 }, // destination owner (3ª conta base)
+                ],
+                false,
+                false,
+            )?,
+        ];
 
-        // 2. Offering phase validation
+        // Initialize the ExtraAccountMetaList account
+        let account_size = ExtraAccountMetaList::size_of(account_metas.len())?;
+        let lamports = Rent::get()?.minimum_balance(account_size);
+
+        let mint = ctx.accounts.mint.key();
+        let signer_seeds: &[&[&[u8]]] = &[&[
+            b"extra-account-metas",
+            &mint.as_ref(),
+            &[ctx.bumps.extra_account_meta_list],
+        ]];
+
+        // Create the account
+        create_account(
+            CpiContext::new(
+                ctx.accounts.system_program.to_account_info(),
+                CreateAccount {
+                    from: ctx.accounts.payer.to_account_info(),
+                    to: ctx.accounts.extra_account_meta_list.to_account_info(),
+                },
+            )
+            .with_signer(signer_seeds),
+            lamports,
+            account_size as u64,
+            ctx.program_id,
+        )?;
+
+        // Initialize the account data
+        let mut data = ctx.accounts.extra_account_meta_list.try_borrow_mut_data()?;
+        ExtraAccountMetaList::init::<ExecuteInstruction>(&mut data, &account_metas)?;
+
+        msg!("Extra account meta list initialized");
+        Ok(())
+    }
+
+    /// Transfer Hook - called automatically on every transfer
+    /// Simplified version: validates only KYC
+    pub fn transfer_hook(ctx: Context<TransferHook>, amount: u64) -> Result<()> {
+        msg!("Transfer Hook: Validating transfer of {} tokens", amount);
+
+        // Deserialize User Registries only
+        let sender_data = ctx.accounts.sender_user_registry.try_borrow_data()?;
+        let recipient_data = ctx.accounts.recipient_user_registry.try_borrow_data()?;
+
+        // Skip discriminator (8 bytes) and deserialize
+        let sender_user_registry: UserRegistry = AnchorDeserialize::deserialize(&mut &sender_data[8..])?;
+        let recipient_user_registry: UserRegistry = AnchorDeserialize::deserialize(&mut &recipient_data[8..])?;
+
+        // KYC verification for sender
         require!(
-            matches!(
-                offering.phase,
-                OfferingPhase::OfferOpen
-                    | OfferingPhase::OfferLocked
-                    | OfferingPhase::OfferClosed
-                    | OfferingPhase::Settlement
-            ),
-            ControllerError::OfferingRulesViolated
-        );
-
-        // 3. Time window validation (TransferWindow module)
-        if config.modules_enabled.contains(&ModuleId::TransferWindow) {
-            require!(
-                clock.unix_timestamp >= offering.window.start_ts
-                    && clock.unix_timestamp <= offering.window.end_ts,
-                ControllerError::WindowClosed
-            );
-        }
-
-        // 4. KYC verification for sender
-        require!(
-            ctx.accounts.from_registry.kyc_completed && ctx.accounts.from_registry.is_active,
+            sender_user_registry.kyc_completed
+                && sender_user_registry.is_active,
             ControllerError::KYCFailed
         );
 
-        // 5. KYC verification for recipient (if provided)
-        if let Some(to_registry) = &ctx.accounts.to_registry {
-            require!(
-                to_registry.kyc_completed && to_registry.is_active,
-                ControllerError::KYCFailed
-            );
-        } else if !config.required_topics.is_empty() || config.token_controls.default_frozen {
-            // If KYC is required but no destination registry provided, fail
-            return Err(ControllerError::KYCFailed.into());
-        }
+        // KYC verification for recipient
+        require!(
+            recipient_user_registry.kyc_completed
+                && recipient_user_registry.is_active,
+            ControllerError::KYCFailed
+        );
 
-        // 6. Offering rules validation (investor limits)
-        if config.modules_enabled.contains(&ModuleId::OfferingRules) {
-            require!(
-                amount >= offering.rules.min_ticket,
-                ControllerError::OfferingRulesViolated
-            );
+        msg!("✅ Transfer validation passed - KYC OK for both parties");
+        Ok(())
+    }
 
-            // Verify max investors limit (if destination is a new investor)
-            if offering.funding.investors >= offering.rules.max_investors {
-                // Could check if recipient is already a holder to allow existing investor transfers
-                msg!("Warning: Max investors limit reached");
+    // Fallback instruction for transfer hook interface
+    pub fn fallback<'info>(
+        _program_id: &Pubkey,
+        accounts: &'info [AccountInfo<'info>],
+        data: &[u8],
+    ) -> Result<()> {
+        let instruction = TransferHookInstruction::unpack(data)?;
+
+        match instruction {
+            TransferHookInstruction::Execute { amount } => {
+                let account_info_iter = &mut accounts.iter();
+
+                let _source_account_info = next_account_info(account_info_iter)?;
+                let _mint_info = next_account_info(account_info_iter)?;
+                let _destination_account_info = next_account_info(account_info_iter)?;
+                let _authority_info = next_account_info(account_info_iter)?;
+                let _extra_account_meta_list_info = next_account_info(account_info_iter)?;
+                let sender_user_registry_info = next_account_info(account_info_iter)?;
+                let recipient_user_registry_info = next_account_info(account_info_iter)?;
+
+                // Manual KYC validation
+                let sender_user_registry = Account::<UserRegistry>::try_from(sender_user_registry_info)?;
+                let recipient_user_registry = Account::<UserRegistry>::try_from(recipient_user_registry_info)?;
+
+                msg!("Transfer Hook: Validating transfer of {} tokens", amount);
+
+                // KYC verification for sender
+                require!(
+                    sender_user_registry.kyc_completed
+                        && sender_user_registry.is_active,
+                    ControllerError::KYCFailed
+                );
+
+                // KYC verification for recipient
+                require!(
+                    recipient_user_registry.kyc_completed
+                        && recipient_user_registry.is_active,
+                    ControllerError::KYCFailed
+                );
+
+                msg!("✅ Transfer validation passed - KYC OK for both parties");
+                Ok(())
             }
+            _ => Err(ProgramError::InvalidInstructionData.into()),
         }
-
-        // 7. Investor limits validation (per-investor cap)
-        if config.modules_enabled.contains(&ModuleId::InvestorLimits) {
-            require!(
-                amount <= offering.rules.per_investor_cap,
-                ControllerError::InvestorLimitExceeded
-            );
-        }
-
-        // 8. Account allowlist validation
-        if config.modules_enabled.contains(&ModuleId::AccountAllowlist) {
-            // Would need additional account state to track allowlisted addresses
-            // For now, just log that the module is enabled
-            msg!("AccountAllowlist module is enabled");
-        }
-
-        // 9. Program allowlist validation (check calling program)
-        if config.modules_enabled.contains(&ModuleId::ProgramAllowlist) {
-            // Would need to check the instruction's program_id against allowlist
-            msg!("ProgramAllowlist module is enabled");
-        }
-
-        // 10. Sanctions check
-        if config.modules_enabled.contains(&ModuleId::Sanctions) {
-            // Would integrate with Chainalysis/TRM or other oracle
-            msg!("Sanctions module is enabled");
-        }
-
-        // 11. Jurisdiction check
-        if config.modules_enabled.contains(&ModuleId::Jurisdiction) {
-            // Would check user's jurisdiction against allowed list
-            msg!("Jurisdiction module is enabled");
-        }
-
-        msg!(
-            "Transfer validation passed: {} tokens from {} to {}",
-            amount,
-            ctx.accounts.from.key(),
-            ctx.accounts.to.key()
-        );
-
-        Ok(())
-    }
-
-    /// Admin function to pause/unpause transfers
-    pub fn set_paused(ctx: Context<SetPaused>, paused: bool) -> Result<()> {
-        let config = &mut ctx.accounts.config;
-
-        // Verify admin authority
-        require!(
-            ctx.accounts.authority.key() == config.roles.issuer_admin
-                || ctx.accounts.authority.key() == config.roles.compliance_officer,
-            ControllerError::UnauthorizedAdmin
-        );
-
-        config.paused = paused;
-
-        msg!("Transfer paused status set to: {}", paused);
-        Ok(())
-    }
-
-    /// Admin function to update offering phase
-    pub fn set_offering_phase(ctx: Context<SetOfferingPhase>, new_phase: OfferingPhase) -> Result<()> {
-        let config = &ctx.accounts.config;
-        let offering = &mut ctx.accounts.offering;
-
-        // Verify admin authority
-        require!(
-            ctx.accounts.authority.key() == config.roles.issuer_admin,
-            ControllerError::UnauthorizedAdmin
-        );
-
-        offering.phase = new_phase;
-
-        msg!("Offering phase updated to: {:?}", new_phase);
-        Ok(())
     }
 }
 
 #[derive(Accounts)]
-pub struct OnTransfer<'info> {
-    /// CHECK: SRWA mint (Token-2022)
+pub struct InitializeExtraAccountMetaList<'info> {
+    #[account(mut)]
+    pub payer: Signer<'info>,
+
+    /// CHECK: The mint account
     pub mint: UncheckedAccount<'info>,
+
+    /// CHECK: ExtraAccountMetaList Account, must use these seeds
+    #[account(
+        mut,
+        seeds = [b"extra-account-metas", mint.key().as_ref()],
+        bump
+    )]
+    pub extra_account_meta_list: UncheckedAccount<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct TransferHook<'info> {
     /// CHECK: Source token account
-    #[account(mut)]
-    pub from: UncheckedAccount<'info>,
+    pub source_token: UncheckedAccount<'info>,
+
+    /// CHECK: Mint
+    pub mint: UncheckedAccount<'info>,
+
     /// CHECK: Destination token account
-    #[account(mut)]
-    pub to: UncheckedAccount<'info>,
-    /// Owner/delegate executing the transfer
+    pub destination_token: UncheckedAccount<'info>,
+
+    /// CHECK: Authority
     pub authority: Signer<'info>,
-    #[account(
-        seeds = [b"srwa_config", mint.key().as_ref()],
-        bump = config.bump,
-    )]
-    pub config: Account<'info, SRWAConfig>,
-    #[account(
-        seeds = [b"offering", mint.key().as_ref()],
-        bump = offering.bump,
-    )]
-    pub offering: Account<'info, OfferingState>,
-    #[account(
-        seeds = [b"user_registry", authority.key().as_ref()],
-        bump = from_registry.bump,
-    )]
-    pub from_registry: Account<'info, UserRegistry>,
-    /// Optional destination registry for KYC validation
-    pub to_registry: Option<Account<'info, UserRegistry>>,
+
+    /// CHECK: ExtraAccountMetaList
+    pub extra_account_meta_list: UncheckedAccount<'info>,
+
+    /// CHECK: Sender User Registry PDA (from SRWA Factory)
+    pub sender_user_registry: UncheckedAccount<'info>,
+
+    /// CHECK: Recipient User Registry PDA (from SRWA Factory)
+    pub recipient_user_registry: UncheckedAccount<'info>,
 }
 
-#[derive(Accounts)]
-pub struct SetPaused<'info> {
-    #[account(mut)]
-    pub authority: Signer<'info>,
-    /// CHECK: SRWA mint
-    pub mint: UncheckedAccount<'info>,
-    #[account(
-        mut,
-        seeds = [b"srwa_config", mint.key().as_ref()],
-        bump = config.bump,
-    )]
-    pub config: Account<'info, SRWAConfig>,
+// Helper function to get SRWA Factory program ID
+fn srwa_factory_program_id() -> Pubkey {
+    Pubkey::from_str("DgNZ6dzLSXzunGiaFnpUhS63B6Wu9WNZ79KF6fW3ETgY")
+        .expect("Invalid SRWA Factory program ID")
 }
 
-#[derive(Accounts)]
-pub struct SetOfferingPhase<'info> {
-    #[account(mut)]
-    pub authority: Signer<'info>,
-    /// CHECK: SRWA mint
-    pub mint: UncheckedAccount<'info>,
-    #[account(
-        seeds = [b"srwa_config", mint.key().as_ref()],
-        bump = config.bump,
-    )]
-    pub config: Account<'info, SRWAConfig>,
-    #[account(
-        mut,
-        seeds = [b"offering", mint.key().as_ref()],
-        bump = offering.bump,
-    )]
-    pub offering: Account<'info, OfferingState>,
-}
-
-#[error_code]
-pub enum ControllerError {
-    #[msg("Transfer paused")]
-    TransferPaused,
-    #[msg("Account frozen")]
-    AccountFrozen,
-    #[msg("KYC verification failed")]
-    KYCFailed,
-    #[msg("Offering rules violated")]
-    OfferingRulesViolated,
-    #[msg("Investor limit exceeded")]
-    InvestorLimitExceeded,
-    #[msg("Lockup active")]
-    LockupActive,
-    #[msg("Transfer window closed")]
-    WindowClosed,
-    #[msg("Not allowlisted")]
-    NotAllowlisted,
-    #[msg("Unauthorized admin")]
-    UnauthorizedAdmin,
-}
-
-// -----------------------------------------------------------------------------
-// Local copies of SRWA factory account layouts required for compliance checks.
-// These mirror the structs defined in `srwa_factory::state`.
-// -----------------------------------------------------------------------------
-
+// Account structs (imported from SRWA Factory)
 #[account]
 pub struct SRWAConfig {
-    pub version: u8,
-    pub mint: Pubkey,
-    pub roles: Roles,
-    pub required_topics: Vec<u32>,
-    pub trusted_issuers_data: Vec<TrustedIssuerEntry>,
-    pub modules_enabled: Vec<ModuleId>,
-    pub params_by_module: Vec<u8>,
-    pub token_controls: TokenControls,
-    pub oracle_cfg: OracleConfig,
-    pub compliance_version: u16,
-    pub metadata_uri: String,
     pub paused: bool,
+    pub modules_enabled: Vec<ModuleId>,
+    pub required_topics: Vec<u8>,
+    pub token_controls: TokenControls,
+    pub roles: Roles,
     pub bump: u8,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub struct Roles {
-    pub issuer_admin: Pubkey,
-    pub compliance_officer: Pubkey,
-    pub transfer_agent: Pubkey,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub struct TrustedIssuerEntry {
-    pub topic: u32,
-    pub issuer: Pubkey,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug)]
-pub enum ModuleId {
-    Jurisdiction,
-    Sanctions,
-    Accredited,
-    Lockup,
-    MaxHolders,
-    VolumeCaps,
-    TransferWindow,
-    ProgramAllowlist,
-    AccountAllowlist,
-    OfferingRules,
-    InvestorLimits,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub struct TokenControls {
-    pub default_frozen: bool,
-    pub permanent_delegate: Pubkey,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub struct OracleConfig {
-    pub pyth_feeds: Vec<Pubkey>,
-    pub heartbeat: u32,
-    pub max_dev_bps: u32,
-    pub nav_feeder: Pubkey,
-    pub base_ccy: Currency,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq)]
-pub enum Currency {
-    USD,
-    BRL,
-    EUR,
 }
 
 #[account]
 pub struct OfferingState {
-    pub mint: Pubkey,
     pub phase: OfferingPhase,
-    pub window: TimeWindow,
-    pub target: Target,
-    pub pricing: Pricing,
+    pub window: TransferWindow,
     pub rules: OfferingRules,
-    pub distribution: Distribution,
-    pub funding: Funding,
-    pub pool_vault: Pubkey,
-    pub idle_strategy: IdleStrategy,
-    pub fees_bps: Fees,
-    pub settlement: Settlement,
+    pub funding: FundingState,
     pub bump: u8,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq, Debug)]
-pub enum OfferingPhase {
-    Draft,
-    PreOffer,
-    OfferOpen,
-    OfferLocked,
-    OfferClosed,
-    Settlement,
-    Refund,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub struct TimeWindow {
-    pub start_ts: i64,
-    pub end_ts: i64,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub struct Target {
-    pub soft_cap: u64,
-    pub hard_cap: u64,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub struct Pricing {
-    pub model: PricingModel,
-    pub unit_price: u64,
-    pub currency: Currency,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq)]
-pub enum PricingModel {
-    Fixed,
-    NAV,
-    Hybrid,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub struct OfferingRules {
-    pub min_ticket: u64,
-    pub per_investor_cap: u64,
-    pub max_investors: u32,
-    pub eligibility: Eligibility,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub struct Eligibility {
-    pub jurisdictions_allow: Vec<u16>,
-    pub investor_types: Vec<InvestorType>,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq)]
-pub enum InvestorType {
-    RetailQualified,
-    Accredited,
-    Institutional,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub struct Distribution {
-    pub oversub_policy: OversubPolicy,
-    pub lockups_data: Vec<u8>,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq)]
-pub enum OversubPolicy {
-    ProRata,
-    FCFS,
-    PriorityBuckets,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub struct Funding {
-    pub raised: u64,
-    pub investors: u32,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq)]
-pub enum IdleStrategy {
-    None,
-    Marginfi,
-    Solend,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub struct Fees {
-    pub origination_bps: u16,
-    pub platform_bps: u16,
-    pub success_bps: u16,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone)]
-pub struct Settlement {
-    pub issuer_treasury: Pubkey,
-    pub fee_treasury: Pubkey,
 }
 
 #[account]
@@ -428,9 +245,74 @@ pub struct UserRegistry {
     pub bump: u8,
 }
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, PartialEq, Eq)]
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]
+pub enum OfferingPhase {
+    OfferOpen,
+    OfferLocked,
+    OfferClosed,
+    Settlement,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy)]
+pub struct TransferWindow {
+    pub start_ts: i64,
+    pub end_ts: i64,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy)]
+pub struct OfferingRules {
+    pub min_ticket: u64,
+    pub max_investors: u32,
+    pub per_investor_cap: u64,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy)]
+pub struct FundingState {
+    pub investors: u32,
+    pub total_raised: u64,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy)]
+pub struct TokenControls {
+    pub default_frozen: bool,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy)]
+pub struct Roles {
+    pub issuer_admin: Pubkey,
+    pub compliance_officer: Pubkey,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]
+pub enum ModuleId {
+    TransferWindow,
+    OfferingRules,
+    InvestorLimits,
+    AccountAllowlist,
+    ProgramAllowlist,
+    Sanctions,
+    Jurisdiction,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]
 pub enum UserRole {
     Issuer,
     Investor,
     Admin,
+}
+
+#[error_code]
+pub enum ControllerError {
+    #[msg("Transfers are currently paused")]
+    TransferPaused,
+    #[msg("KYC verification failed")]
+    KYCFailed,
+    #[msg("Transfer window is closed")]
+    WindowClosed,
+    #[msg("Offering rules violated")]
+    OfferingRulesViolated,
+    #[msg("Investor limit exceeded")]
+    InvestorLimitExceeded,
+    #[msg("Unauthorized admin")]
+    UnauthorizedAdmin,
 }
