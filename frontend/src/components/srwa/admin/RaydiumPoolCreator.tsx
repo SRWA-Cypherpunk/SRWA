@@ -9,6 +9,7 @@ import { TokenSelect } from './TokenSelect';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { useRaydiumPools } from '@/hooks/solana/useRaydiumPools';
+import { useRaydiumClmm } from '@/hooks/raydium/useRaydiumClmm';
 import { PublicKey, Transaction } from '@solana/web3.js';
 import {
   getAssociatedTokenAddressSync,
@@ -34,20 +35,26 @@ import {
 } from '@raydium-io/raydium-sdk-v2';
 import BN from 'bn.js';
 
+type PoolType = 'cpmm' | 'clmm';
+
 type FormState = {
+  poolType: PoolType;
   tokenAMint: string;
   tokenBMint: string;
   tokenAAmount: string;
   tokenBAmount: string;
   initialPrice: string;
+  feeTier: 100 | 500 | 2500 | 10000; // CLMM fee tiers
 };
 
 const DEFAULT_FORM_STATE: FormState = {
+  poolType: 'clmm', // Default to CLMM for Token-2022 support
   tokenAMint: '',
   tokenBMint: 'So11111111111111111111111111111111111111112', // wSOL
   tokenAAmount: '1000',
   tokenBAmount: '1',
   initialPrice: '0.001',
+  feeTier: 2500, // 0.25%
 };
 
 type PoolInfoExtended = {
@@ -75,6 +82,7 @@ export function RaydiumPoolCreator() {
   const { connection } = useConnection();
   const wallet = useWallet();
   const { registerPool } = useRaydiumPools();
+  const { createClmmPool } = useRaydiumClmm();
   const [form, setForm] = useState<FormState>(DEFAULT_FORM_STATE);
   const [loading, setLoading] = useState(false);
   const [loadingPool, setLoadingPool] = useState(false);
@@ -195,7 +203,13 @@ export function RaydiumPoolCreator() {
 
       let errorMessage = 'Erro desconhecido';
       if (error.message?.includes('fetch pool info error')) {
-        errorMessage = 'Pool não encontrado. Verifique se o Pool ID está correto e se o pool existe na devnet.';
+        errorMessage = 'Pool ainda não indexada pelo Raydium. Por favor, aguarde 1-2 minutos e clique em "Recarregar Info" ou recarregue a página.';
+        toast.warning(errorMessage, {
+          duration: 10000,
+        });
+        // Não limpar o result para que o usuário possa tentar recarregar
+        setPoolInfo(null);
+        return; // Não limpar o result
       } else if (error.message) {
         errorMessage = error.message;
       }
@@ -210,7 +224,12 @@ export function RaydiumPoolCreator() {
 
   useEffect(() => {
     if (result?.poolId && wallet.publicKey) {
-      loadPoolInfo(result.poolId);
+      // Aguardar 10 segundos para o Raydium indexar a pool
+      const timer = setTimeout(() => {
+        loadPoolInfo(result.poolId);
+      }, 10000);
+
+      return () => clearTimeout(timer);
     }
   }, [result?.poolId, wallet.publicKey]);
 
@@ -426,6 +445,34 @@ export function RaydiumPoolCreator() {
         tokenB: programB.toBase58(),
       });
 
+      // Verificar se algum token é Token-2022
+      const isToken2022A = programA.toBase58() === TOKEN_2022_PROGRAM_ID.toBase58();
+      const isToken2022B = programB.toBase58() === TOKEN_2022_PROGRAM_ID.toBase58();
+      const hasToken2022 = isToken2022A || isToken2022B;
+
+      if (hasToken2022) {
+        console.log('[RaydiumPoolCreator] ⚠️ Token-2022 detected! Using CLMM instead of CPMM');
+        toast.info('Token-2022 detectado! Usando Raydium CLMM...', {
+          description: 'CLMM tem suporte completo para Token-2022',
+        });
+
+        // Usar CLMM para Token-2022
+        const price = parseFloat(form.initialPrice);
+        if (isNaN(price) || price <= 0) {
+          throw new Error('Preço inicial inválido');
+        }
+
+        const clmmResult = await createClmmPool(tokenAMint, tokenBMint, price, form.feeTier);
+
+        toast.success('Pool CLMM criada com sucesso!');
+        setResult({
+          poolId: clmmResult.poolId,
+          signature: clmmResult.txId,
+        });
+
+        return;
+      }
+
       // Usar getMint que funciona para ambos programas
       const [mintAData, mintBData] = await Promise.all([
         getMint(connection, tokenAMint, 'confirmed', programA),
@@ -549,29 +596,121 @@ export function RaydiumPoolCreator() {
 
       console.log('[RaydiumPoolCreator] Pool created! TxId:', txId);
 
-      const poolId = extInfo.address.poolId.toBase58();
+      // Wait for transaction to be confirmed and indexed
+      toast.info('Aguardando confirmação da transação...');
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+
+      // Fetch the transaction to get the actual pool account
+      console.log('[RaydiumPoolCreator] Fetching transaction to find pool address...');
+      const txInfo = await connection.getTransaction(txId, {
+        maxSupportedTransactionVersion: 0,
+        commitment: 'confirmed',
+      });
+
+      console.log('[RaydiumPoolCreator] Transaction info:', txInfo);
+
+      // Extract all writable accounts from the transaction
+      let poolId: string | null = null;
+
+      if (txInfo?.transaction) {
+        const message = txInfo.transaction.message;
+        const accountKeys = message.staticAccountKeys || [];
+
+        console.log('[RaydiumPoolCreator] Transaction accounts:', accountKeys.map(k => k.toBase58()));
+
+        // The pool account is typically one of the first writable accounts
+        // created by the program. Let's test them.
+        toast.info('Procurando endereço da pool nos accounts da transação...');
+
+        for (const accountKey of accountKeys) {
+          const address = accountKey.toBase58();
+
+          // Skip known accounts (program IDs, system program, token program, etc.)
+          if (
+            address === 'DRaycpLY18LhpbydsBWbVJtxpNv9oXPgjRSfpF2bWpYb' || // CPMM program
+            address === 'So11111111111111111111111111111111111111112' || // WSOL
+            address === wallet.publicKey?.toBase58() ||
+            address === '11111111111111111111111111111111' || // System program
+            address === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' || // Token program
+            address === tokenAMint.toBase58() || // Token A mint
+            address === tokenBMint.toBase58() || // Token B mint
+            address === extInfo.address.configId?.toBase58() ||
+            address === extInfo.address.authority?.toBase58() ||
+            address === extInfo.address.lpMint?.toBase58() ||
+            address === extInfo.address.vaultA?.toBase58() ||
+            address === extInfo.address.vaultB?.toBase58() ||
+            address === extInfo.address.observationId?.toBase58() ||
+            address === extInfo.address.poolFeeAccount?.toBase58()
+          ) {
+            continue;
+          }
+
+          try {
+            console.log(`[RaydiumPoolCreator] Testing account: ${address}`);
+            const testPoolData = await raydium.cpmm.getPoolInfoFromRpc(address);
+            console.log(`[RaydiumPoolCreator] ✅ FOUND VALID POOL! Address: ${address}`);
+            poolId = address;
+            break;
+          } catch (testError: any) {
+            console.log(`[RaydiumPoolCreator] ❌ ${address} is not the pool`);
+          }
+        }
+      }
+
+      if (!poolId) {
+        console.error('[RaydiumPoolCreator] ⚠️ Could not find pool address in transaction accounts!');
+        console.error('[RaydiumPoolCreator] Using poolId from extInfo as fallback');
+        poolId = extInfo.address.poolId?.toBase58();
+
+        toast.success('Pool criada com sucesso!', {
+          description: 'Aguardando indexação pelo Raydium... (pode levar até 1 minuto)',
+          duration: 10000,
+        });
+
+        console.log('[RaydiumPoolCreator] 📋 INFORMAÇÕES IMPORTANTES:');
+        console.log('[RaydiumPoolCreator] Transaction ID:', txId);
+        console.log('[RaydiumPoolCreator] Pool ID (from extInfo):', poolId);
+        console.log('[RaydiumPoolCreator] Verifique no Explorer: https://explorer.solana.com/tx/' + txId + '?cluster=devnet');
+      } else {
+        toast.success('Pool Raydium criado e verificado com sucesso!');
+      }
 
       setResult({
         poolId,
         signature: txId,
       });
 
-      toast.success('Pool Raydium criado com sucesso!');
-
       // Register pool on-chain in yield_adapter program
-      try {
-        toast.info('Registrando pool on-chain...');
-        const poolIdPubkey = new PublicKey(poolId);
-        const tokenMintPubkey = new PublicKey(form.tokenAMint);
-        const baseMintPubkey = new PublicKey(form.tokenBMint);
+      // Skip registration if pool couldn't be verified
+      if (poolId && poolId !== 'undefined') {
+        try {
+          toast.info('Registrando pool on-chain...');
+          const poolIdPubkey = new PublicKey(poolId);
+          const tokenMintPubkey = new PublicKey(form.tokenAMint);
+          const baseMintPubkey = new PublicKey(form.tokenBMint);
 
-        await registerPool(poolIdPubkey, tokenMintPubkey, baseMintPubkey);
+          await registerPool(poolIdPubkey, tokenMintPubkey, baseMintPubkey);
 
-        toast.success('Pool registrada on-chain! Agora ela aparecerá automaticamente no dashboard.');
-        console.log('[RaydiumPoolCreator] Pool registered on-chain');
-      } catch (registerError: any) {
-        console.error('[RaydiumPoolCreator] Failed to register pool on-chain:', registerError);
-        toast.warning('Pool criada com sucesso, mas falha ao registrar on-chain: ' + registerError.message);
+          toast.success('Pool registrada on-chain! Agora ela aparecerá automaticamente no dashboard.');
+          console.log('[RaydiumPoolCreator] Pool registered on-chain');
+        } catch (registerError: any) {
+          console.error('[RaydiumPoolCreator] Failed to register pool on-chain:', registerError);
+
+          // Show more detailed error
+          let errorMsg = registerError.message || 'Erro desconhecido';
+          if (registerError.logs) {
+            console.error('[RaydiumPoolCreator] Transaction logs:', registerError.logs);
+          }
+
+          toast.error('Falha ao registrar pool on-chain: ' + errorMsg, {
+            duration: 10000,
+          });
+
+          console.log('[RaydiumPoolCreator] 💡 Você pode tentar registrar manualmente depois com estes dados:');
+          console.log('[RaydiumPoolCreator]   Pool ID:', poolId);
+          console.log('[RaydiumPoolCreator]   Token Mint:', form.tokenAMint);
+          console.log('[RaydiumPoolCreator]   Base Mint:', form.tokenBMint);
+        }
       }
 
       // Reset form
@@ -675,6 +814,45 @@ export function RaydiumPoolCreator() {
                       <ExternalLink className="h-3 w-3" />
                     </a>
                   </div>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Mensagem quando pool foi criada mas ainda não indexada */}
+          {result?.poolId && !poolInfo && (
+            <Alert className="bg-amber-500/10 border-amber-500/30">
+              <Info className="h-4 w-4 text-amber-400" />
+              <AlertDescription>
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <p className="font-semibold mb-1">Pool criada com sucesso!</p>
+                    <p className="text-sm">
+                      Pool ID: <code className="text-xs">{result.poolId}</code>
+                    </p>
+                    <p className="text-sm mt-2">
+                      Aguardando indexação pelo Raydium... Isso pode levar até 2 minutos.
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => loadPoolInfo(result.poolId)}
+                    disabled={loadingPool}
+                    className="ml-4"
+                  >
+                    {loadingPool ? (
+                      <>
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Carregando...
+                      </>
+                    ) : (
+                      <>
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Recarregar
+                      </>
+                    )}
+                  </Button>
                 </div>
               </AlertDescription>
             </Alert>

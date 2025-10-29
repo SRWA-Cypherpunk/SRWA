@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { useProgramsSafe } from '@/contexts/ProgramContext';
 import { useWallet } from '@/contexts/wallet/WalletContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -46,6 +46,18 @@ export function useRaydiumPools() {
 
       const activePools = mappedPools.filter(pool => pool.isActive);
       console.log('[useRaydiumPools] Active pools:', activePools.length);
+
+      // Log detailed info for each pool
+      activePools.forEach((pool, index) => {
+        console.log(`[useRaydiumPools] Pool ${index + 1}:`, {
+          poolId: pool.poolId.toBase58(),
+          tokenMint: pool.tokenMint.toBase58(),
+          baseMint: pool.baseMint.toBase58(),
+          admin: pool.admin.toBase58(),
+          isActive: pool.isActive,
+        });
+      });
+
       return activePools;
     } catch (err: any) {
       console.error('[useRaydiumPools] Failed to fetch pools:', err);
@@ -96,6 +108,7 @@ export function useRaydiumPools() {
             poolAccount: poolAccountPda,
             tokenMint: tokenMint,
             admin: publicKey,
+            systemProgram: SystemProgram.programId,
           })
           .rpc();
 
@@ -148,6 +161,14 @@ export function useRaydiumPools() {
     [programs?.yieldAdapter, publicKey, queryClient, queryKey]
   );
 
+  const deactivatePool = useCallback(
+    async (tokenMint: PublicKey) => {
+      console.log('[useRaydiumPools] Deactivating pool for token:', tokenMint.toBase58());
+      return await updatePoolStatus(tokenMint, false);
+    },
+    [updatePoolStatus]
+  );
+
   return {
     pools,
     loading: isLoading || (isFetching && pools.length === 0),
@@ -155,5 +176,6 @@ export function useRaydiumPools() {
     refresh: refetch,
     registerPool,
     updatePoolStatus,
+    deactivatePool,
   };
 }

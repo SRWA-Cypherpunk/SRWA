@@ -557,6 +557,18 @@ export function AdminPanel() {
               )}
             </div>
 
+            {/* Token-2022 Warning */}
+            {status === 'pending' && (
+              <Alert className="bg-amber-500/10 border-amber-500/30">
+                <AlertCircle className="h-4 w-4 text-amber-500" />
+                <AlertDescription className="text-xs text-amber-200">
+                  <strong>Importante:</strong> Este token usa Token-2022. Raydium CPMM NÃO suporta Token-2022 no devnet.
+                  Após aprovação, você precisará criar uma pool manualmente no <strong>Orca Whirlpools</strong> ou outro AMM compatível.
+                  Instruções completas aparecerão no console após aprovação.
+                </AlertDescription>
+              </Alert>
+            )}
+
             {/* Actions */}
             {status === 'pending' && (
               <div className="flex gap-2 pt-2">

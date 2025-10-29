@@ -8,6 +8,8 @@ import {
   TransactionInstruction,
 } from '@solana/web3.js';
 import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
   getAssociatedTokenAddress,
   createAssociatedTokenAccountInstruction,
   createTransferCheckedInstruction,
@@ -75,12 +77,12 @@ export function useInvestorPurchase() {
       tx.add(solTransferIx);
 
       // 2. Preparar recebimento de tokens SRWA
-      const investorAta = await getAssociatedTokenAddress(mint, wallet.publicKey);
+      const investorAta = await getAssociatedTokenAddress(mint, wallet.publicKey, false, TOKEN_2022_PROGRAM_ID);
 
       // Verificar se investidor já tem ATA
       let investorAtaExists = false;
       try {
-        await getAccount(connection, investorAta);
+        await getAccount(connection, investorAta, 'confirmed', TOKEN_2022_PROGRAM_ID);
         investorAtaExists = true;
       } catch (err: any) {
         if (err instanceof TokenAccountNotFoundError || err instanceof TokenInvalidAccountOwnerError) {
@@ -96,18 +98,20 @@ export function useInvestorPurchase() {
           wallet.publicKey, // payer
           investorAta, // ata
           wallet.publicKey, // owner
-          mint // mint
+          mint, // mint
+          TOKEN_2022_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID
         );
         tx.add(createAtaIx);
         console.log('[useInvestorPurchase.purchaseWithSOL] Creating investor ATA:', investorAta.toBase58());
       }
 
       // 3. Transferir tokens SRWA do issuer para o investidor
-      const issuerAta = await getAssociatedTokenAddress(mint, issuer);
+      const issuerAta = await getAssociatedTokenAddress(mint, issuer, false, TOKEN_2022_PROGRAM_ID);
 
       // Verificar saldo do issuer
       try {
-        const issuerAccount = await getAccount(connection, issuerAta);
+        const issuerAccount = await getAccount(connection, issuerAta, 'confirmed', TOKEN_2022_PROGRAM_ID);
         const tokenAmount = BigInt(Math.floor(quantity * 10 ** decimals));
 
         console.log('[useInvestorPurchase.purchaseWithSOL] Issuer balance:', {

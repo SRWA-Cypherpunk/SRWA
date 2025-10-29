@@ -70,8 +70,10 @@ export function useRaydiumCpmm() {
 
   const loadPoolInfo = useCallback(
     async (poolId: string): Promise<RaydiumPoolDisplay> => {
+      console.log('[useRaydiumCpmm.loadPoolInfo] Loading pool info for:', poolId);
       const sdk = await loadSdk();
       const { poolInfo, poolKeys } = await sdk.cpmm.getPoolInfoFromRpc(new PublicKey(poolId));
+      console.log('[useRaydiumCpmm.loadPoolInfo] Pool info loaded successfully');
 
       const mintAAmount = Number(poolInfo.mintAmountA);
       const mintBAmount = Number(poolInfo.mintAmountB);
