@@ -26,6 +26,12 @@ export function useUserRegistry() {
 
     const { pda: userRegistryPda } = getUserRegistryPDA(wallet.publicKey);
 
+    // Verificar se o usuário já está registrado
+    const existingRegistry = await fetchUserRegistry(wallet.publicKey);
+    if (existingRegistry) {
+      throw new Error(`Você já está registrado como ${existingRegistry.role}. Não é necessário registrar-se novamente.`);
+    }
+
     // Mapear o enum TypeScript para o enum Rust
     const roleEnum = role === UserRole.Issuer
       ? { issuer: {} }
@@ -74,10 +80,47 @@ export function useUserRegistry() {
         is_active: accountInfo.isActive,
         bump: accountInfo.bump,
       };
-    } catch (error) {
-      // Usuário não registrado ainda
-      console.log('User not registered:', error);
-      return null;
+    } catch (error: any) {
+      // Se o erro é "Account does not exist", o usuário não está registrado
+      if (error?.message?.includes('Account does not exist')) {
+        console.log('[useUserRegistry] User not registered:', pubkey.toBase58());
+        return null;
+      }
+
+      // Se for outro tipo de erro, tentar buscar diretamente da RPC
+      console.warn('[useUserRegistry] Error fetching user registry, retrying with getAccountInfo:', error?.message);
+      try {
+        const accountInfo = await programs.srwaFactory.provider.connection.getAccountInfo(pda);
+        if (!accountInfo) {
+          console.log('[useUserRegistry] User not registered (no account info):', pubkey.toBase58());
+          return null;
+        }
+
+        // Conta existe, mas talvez o fetch do Anchor falhou
+        console.log('[useUserRegistry] Account exists but Anchor fetch failed. Retrying...');
+        const retry = await programs.srwaFactory.account.userRegistry.fetch(pda);
+
+        let role: UserRole;
+        if ('issuer' in retry.role) {
+          role = UserRole.Issuer;
+        } else if ('investor' in retry.role) {
+          role = UserRole.Investor;
+        } else {
+          role = UserRole.Admin;
+        }
+
+        return {
+          user: retry.user.toBase58(),
+          role,
+          registered_at: retry.registeredAt.toNumber(),
+          kyc_completed: retry.kycCompleted,
+          is_active: retry.isActive,
+          bump: retry.bump,
+        };
+      } catch (retryError: any) {
+        console.error('[useUserRegistry] Failed to fetch user registry after retry:', retryError);
+        return null;
+      }
     }
   };
 

@@ -20,6 +20,7 @@ pub struct SRWAConfig {
     pub compliance_version: u16,
     #[max_len(200)]
     pub metadata_uri: String,
+    pub paused: bool,
     pub bump: u8,
 }
 
@@ -84,6 +85,7 @@ pub struct SRWAConfigInit {
     pub metadata_uri: String,
     pub default_frozen: bool,
     pub permanent_delegate: Pubkey,
+    pub mint_decimals: u8,
 }
 
 /// Offering state PDA

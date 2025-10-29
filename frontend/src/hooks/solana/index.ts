@@ -34,3 +34,5 @@ export { useRaydiumPools } from './useRaydiumPools';
 export type { RaydiumPoolAccount } from './useRaydiumPools';
 export { useRaydiumCpmm } from '../raydium/useRaydiumCpmm';
 export type { RaydiumPoolDisplay, SwapDirection } from '../raydium/useRaydiumCpmm';
+export { useSRWATransfer } from './useSRWATransfer';
+export type { TransferParams, TransferHookAccounts } from './useSRWATransfer';

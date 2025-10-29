@@ -92,8 +92,30 @@ export function RegistrationWizard() {
       }, 1500);
     } catch (error: any) {
       console.error('Erro ao registrar:', error);
+      console.error('Erro completo:', JSON.stringify(error, null, 2));
+      console.error('Error stack:', error?.stack);
+
+      // Se o erro indica que o usuário já está registrado, redirecionar
+      if (error?.message?.includes('já está registrado')) {
+        toast.info('Você já está registrado!', {
+          description: error.message,
+        });
+
+        // Redirecionar após 1 segundo
+        setTimeout(() => {
+          if (selectedRole === UserRole.Issuer) {
+            navigate('/srwa-issuance');
+          } else if (selectedRole === UserRole.Investor) {
+            navigate('/investor');
+          } else {
+            navigate('/admin');
+          }
+        }, 1000);
+        return;
+      }
+
       toast.error('Erro ao realizar registro', {
-        description: error.message || 'Tente novamente',
+        description: error?.message || error?.toString() || 'Tente novamente',
       });
     } finally {
       setIsRegistering(false);
