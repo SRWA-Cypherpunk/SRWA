@@ -5,8 +5,7 @@ use anchor_lang::{
 use spl_tlv_account_resolution::{
     account::ExtraAccountMeta, seeds::Seed, state::ExtraAccountMetaList,
 };
-use spl_transfer_hook_interface::instruction::{ExecuteInstruction, TransferHookInstruction};
-use std::str::FromStr;
+use spl_transfer_hook_interface::instruction::ExecuteInstruction;
 
 declare_id!("345oZiSawNcHLVLnQLjiE7bkycC3bS1DJcmhvYDDaMFH");
 
@@ -15,41 +14,34 @@ pub mod srwa_controller {
     use super::*;
 
     /// Initialize the ExtraAccountMetaList account
-    /// This stores the list of extra accounts needed by the transfer hook
     pub fn initialize_extra_account_meta_list(
         ctx: Context<InitializeExtraAccountMetaList>,
     ) -> Result<()> {
-        // Define the extra accounts needed for KYC validation
-        // Usamos AccountKey direto - o frontend passará os endereços manualmente
-        let srwa_factory_program = srwa_factory_program_id();
-
+        // Define 2 extra accounts: KYC Registry PDAs derivados DESTE programa
+        // Agora podemos usar seeds porque os PDAs são do Transfer Hook program!
         let account_metas = vec![
-            // SRWA Factory Program (necessário para derivar os PDAs)
-            ExtraAccountMeta::new_with_pubkey(&srwa_factory_program, false, false)?,
-            // Sender User Registry - será passado manualmente pelo frontend
-            // Usa AccountKey com index 5 (será a 6ª conta extra, depois das 4 base + program_id)
-            ExtraAccountMeta::new_external_pda_with_seeds(
-                0, // index do SRWA Factory program (primeiro extra account)
+            // Sender KYC Registry (index 0 after base accounts)
+            ExtraAccountMeta::new_with_seeds(
                 &[
-                    Seed::Literal {
-                        bytes: b"user_registry".to_vec(),
-                    },
-                    Seed::AccountKey { index: 3 }, // authority/sender (4ª conta base)
+                    Seed::Literal { bytes: b"kyc".to_vec() },
+                    Seed::AccountKey { index: 3 }, // authority (sender owner)
                 ],
-                false,
-                false,
+                false, // not signer
+                false, // not writable
             )?,
-            // Destination User Registry
-            ExtraAccountMeta::new_external_pda_with_seeds(
-                0, // index do SRWA Factory program
+            // Recipient KYC Registry (index 1 after base accounts)
+            // Usamos o destination token account para extrair o owner
+            ExtraAccountMeta::new_with_seeds(
                 &[
-                    Seed::Literal {
-                        bytes: b"user_registry".to_vec(),
+                    Seed::Literal { bytes: b"kyc".to_vec() },
+                    Seed::AccountData {
+                        account_index: 2, // destination token account
+                        data_index: 32,   // owner field offset
+                        length: 32,       // pubkey length
                     },
-                    Seed::AccountKey { index: 2 }, // destination owner (3ª conta base)
                 ],
-                false,
-                false,
+                false, // not signer
+                false, // not writable
             )?,
         ];
 
@@ -83,86 +75,80 @@ pub mod srwa_controller {
         let mut data = ctx.accounts.extra_account_meta_list.try_borrow_mut_data()?;
         ExtraAccountMetaList::init::<ExecuteInstruction>(&mut data, &account_metas)?;
 
-        msg!("Extra account meta list initialized");
+        msg!("✅ ExtraAccountMetaList initialized with dynamic KYC validation");
         Ok(())
     }
 
-    /// Transfer Hook - called automatically on every transfer
-    /// Simplified version: validates only KYC
-    pub fn transfer_hook(ctx: Context<TransferHook>, amount: u64) -> Result<()> {
-        msg!("Transfer Hook: Validating transfer of {} tokens", amount);
-
-        // Deserialize User Registries only
-        let sender_data = ctx.accounts.sender_user_registry.try_borrow_data()?;
-        let recipient_data = ctx.accounts.recipient_user_registry.try_borrow_data()?;
-
-        // Skip discriminator (8 bytes) and deserialize
-        let sender_user_registry: UserRegistry = AnchorDeserialize::deserialize(&mut &sender_data[8..])?;
-        let recipient_user_registry: UserRegistry = AnchorDeserialize::deserialize(&mut &recipient_data[8..])?;
-
-        // KYC verification for sender
-        require!(
-            sender_user_registry.kyc_completed
-                && sender_user_registry.is_active,
-            ControllerError::KYCFailed
-        );
-
-        // KYC verification for recipient
-        require!(
-            recipient_user_registry.kyc_completed
-                && recipient_user_registry.is_active,
-            ControllerError::KYCFailed
-        );
-
-        msg!("✅ Transfer validation passed - KYC OK for both parties");
-        Ok(())
-    }
-
-    // Fallback instruction for transfer hook interface
-    pub fn fallback<'info>(
-        _program_id: &Pubkey,
-        accounts: &'info [AccountInfo<'info>],
-        data: &[u8],
+    /// Initialize KYC Registry for a user
+    pub fn initialize_kyc_registry(
+        ctx: Context<InitializeKYCRegistry>,
+        kyc_completed: bool,
+        is_active: bool,
     ) -> Result<()> {
-        let instruction = TransferHookInstruction::unpack(data)?;
+        let kyc_registry = &mut ctx.accounts.kyc_registry;
 
-        match instruction {
-            TransferHookInstruction::Execute { amount } => {
-                let account_info_iter = &mut accounts.iter();
+        kyc_registry.user = ctx.accounts.user.key();
+        kyc_registry.kyc_completed = kyc_completed;
+        kyc_registry.is_active = is_active;
+        kyc_registry.updated_at = Clock::get()?.unix_timestamp;
+        kyc_registry.bump = ctx.bumps.kyc_registry;
 
-                let _source_account_info = next_account_info(account_info_iter)?;
-                let _mint_info = next_account_info(account_info_iter)?;
-                let _destination_account_info = next_account_info(account_info_iter)?;
-                let _authority_info = next_account_info(account_info_iter)?;
-                let _extra_account_meta_list_info = next_account_info(account_info_iter)?;
-                let sender_user_registry_info = next_account_info(account_info_iter)?;
-                let recipient_user_registry_info = next_account_info(account_info_iter)?;
+        msg!("✅ KYC Registry initialized for {}", ctx.accounts.user.key());
+        msg!("  - KYC completed: {}", kyc_completed);
+        msg!("  - Is active: {}", is_active);
 
-                // Manual KYC validation
-                let sender_user_registry = Account::<UserRegistry>::try_from(sender_user_registry_info)?;
-                let recipient_user_registry = Account::<UserRegistry>::try_from(recipient_user_registry_info)?;
+        Ok(())
+    }
 
-                msg!("Transfer Hook: Validating transfer of {} tokens", amount);
+    /// Update KYC status for existing registry
+    pub fn update_kyc_status(
+        ctx: Context<UpdateKYCStatus>,
+        kyc_completed: bool,
+        is_active: bool,
+    ) -> Result<()> {
+        let kyc_registry = &mut ctx.accounts.kyc_registry;
 
-                // KYC verification for sender
-                require!(
-                    sender_user_registry.kyc_completed
-                        && sender_user_registry.is_active,
-                    ControllerError::KYCFailed
-                );
+        kyc_registry.kyc_completed = kyc_completed;
+        kyc_registry.is_active = is_active;
+        kyc_registry.updated_at = Clock::get()?.unix_timestamp;
 
-                // KYC verification for recipient
-                require!(
-                    recipient_user_registry.kyc_completed
-                        && recipient_user_registry.is_active,
-                    ControllerError::KYCFailed
-                );
+        msg!("✅ KYC status updated for {}", kyc_registry.user);
+        msg!("  - KYC completed: {}", kyc_completed);
+        msg!("  - Is active: {}", is_active);
 
-                msg!("✅ Transfer validation passed - KYC OK for both parties");
-                Ok(())
-            }
-            _ => Err(ProgramError::InvalidInstructionData.into()),
-        }
+        Ok(())
+    }
+
+    /// Transfer Hook - validates KYC for both sender and recipient
+    #[interface(spl_transfer_hook_interface::execute)]
+    pub fn transfer_hook<'info>(
+        ctx: Context<'_, '_, '_, 'info, TransferHook<'info>>,
+        amount: u64
+    ) -> Result<()> {
+        msg!("🔒 Transfer Hook: Validating KYC for {} tokens", amount);
+
+        // Get remaining accounts (KYC registries passed via ExtraAccountMetaList)
+        let remaining_accounts = ctx.remaining_accounts;
+
+        require!(
+            remaining_accounts.len() >= 2,
+            ControllerError::MissingKYCAccounts
+        );
+
+        let sender_kyc = &remaining_accounts[0];
+        let recipient_kyc = &remaining_accounts[1];
+
+        msg!("👤 Sender KYC: {}", sender_kyc.key());
+        msg!("👤 Recipient KYC: {}", recipient_kyc.key());
+
+        // Validate sender KYC
+        validate_kyc_account(sender_kyc, "Sender")?;
+
+        // Validate recipient KYC
+        validate_kyc_account(recipient_kyc, "Recipient")?;
+
+        msg!("✅ Transfer approved - Both parties have active KYC");
+        Ok(())
     }
 }
 
@@ -174,7 +160,7 @@ pub struct InitializeExtraAccountMetaList<'info> {
     /// CHECK: The mint account
     pub mint: UncheckedAccount<'info>,
 
-    /// CHECK: ExtraAccountMetaList Account, must use these seeds
+    /// CHECK: ExtraAccountMetaList Account
     #[account(
         mut,
         seeds = [b"extra-account-metas", mint.key().as_ref()],
@@ -183,6 +169,39 @@ pub struct InitializeExtraAccountMetaList<'info> {
     pub extra_account_meta_list: UncheckedAccount<'info>,
 
     pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct InitializeKYCRegistry<'info> {
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    /// CHECK: User to initialize KYC for
+    pub user: UncheckedAccount<'info>,
+
+    #[account(
+        init,
+        payer = authority,
+        space = 8 + 32 + 1 + 1 + 8 + 1, // discriminator + pubkey + 2 bools + i64 + bump
+        seeds = [b"kyc", user.key().as_ref()],
+        bump
+    )]
+    pub kyc_registry: Account<'info, KYCRegistry>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+pub struct UpdateKYCStatus<'info> {
+    #[account(mut)]
+    pub authority: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [b"kyc", kyc_registry.user.as_ref()],
+        bump = kyc_registry.bump
+    )]
+    pub kyc_registry: Account<'info, KYCRegistry>,
 }
 
 #[derive(Accounts)]
@@ -197,122 +216,61 @@ pub struct TransferHook<'info> {
     pub destination_token: UncheckedAccount<'info>,
 
     /// CHECK: Authority
-    pub authority: Signer<'info>,
+    pub authority: UncheckedAccount<'info>,
 
     /// CHECK: ExtraAccountMetaList
     pub extra_account_meta_list: UncheckedAccount<'info>,
-
-    /// CHECK: Sender User Registry PDA (from SRWA Factory)
-    pub sender_user_registry: UncheckedAccount<'info>,
-
-    /// CHECK: Recipient User Registry PDA (from SRWA Factory)
-    pub recipient_user_registry: UncheckedAccount<'info>,
 }
 
-// Helper function to get SRWA Factory program ID
-fn srwa_factory_program_id() -> Pubkey {
-    Pubkey::from_str("DgNZ6dzLSXzunGiaFnpUhS63B6Wu9WNZ79KF6fW3ETgY")
-        .expect("Invalid SRWA Factory program ID")
-}
-
-// Account structs (imported from SRWA Factory)
+// KYC Registry Account (owned by Transfer Hook program)
 #[account]
-pub struct SRWAConfig {
-    pub paused: bool,
-    pub modules_enabled: Vec<ModuleId>,
-    pub required_topics: Vec<u8>,
-    pub token_controls: TokenControls,
-    pub roles: Roles,
-    pub bump: u8,
+pub struct KYCRegistry {
+    pub user: Pubkey,        // 32
+    pub kyc_completed: bool,  // 1
+    pub is_active: bool,      // 1
+    pub updated_at: i64,      // 8
+    pub bump: u8,             // 1
 }
 
-#[account]
-pub struct OfferingState {
-    pub phase: OfferingPhase,
-    pub window: TransferWindow,
-    pub rules: OfferingRules,
-    pub funding: FundingState,
-    pub bump: u8,
-}
+// Validate KYC by reading KYC Registry account
+fn validate_kyc_account(account: &AccountInfo, label: &str) -> Result<()> {
+    // Verify account has data
+    let data = account.try_borrow_data()?;
 
-#[account]
-pub struct UserRegistry {
-    pub user: Pubkey,
-    pub role: UserRole,
-    pub registered_at: i64,
-    pub kyc_completed: bool,
-    pub is_active: bool,
-    pub bump: u8,
-}
+    require!(
+        data.len() >= 8 + 43, // discriminator + KYCRegistry size
+        ControllerError::InvalidKYCAccount
+    );
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]
-pub enum OfferingPhase {
-    OfferOpen,
-    OfferLocked,
-    OfferClosed,
-    Settlement,
-}
+    // Deserialize KYCRegistry (skip 8-byte discriminator)
+    let kyc_registry: KYCRegistry = AnchorDeserialize::deserialize(&mut &data[8..])?;
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy)]
-pub struct TransferWindow {
-    pub start_ts: i64,
-    pub end_ts: i64,
-}
+    msg!("  {} KYC status:", label);
+    msg!("    - Completed: {}", kyc_registry.kyc_completed);
+    msg!("    - Active: {}", kyc_registry.is_active);
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy)]
-pub struct OfferingRules {
-    pub min_ticket: u64,
-    pub max_investors: u32,
-    pub per_investor_cap: u64,
-}
+    // Validate KYC completed and user is active
+    require!(
+        kyc_registry.kyc_completed,
+        ControllerError::KYCNotCompleted
+    );
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy)]
-pub struct FundingState {
-    pub investors: u32,
-    pub total_raised: u64,
-}
+    require!(
+        kyc_registry.is_active,
+        ControllerError::UserNotActive
+    );
 
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy)]
-pub struct TokenControls {
-    pub default_frozen: bool,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy)]
-pub struct Roles {
-    pub issuer_admin: Pubkey,
-    pub compliance_officer: Pubkey,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]
-pub enum ModuleId {
-    TransferWindow,
-    OfferingRules,
-    InvestorLimits,
-    AccountAllowlist,
-    ProgramAllowlist,
-    Sanctions,
-    Jurisdiction,
-}
-
-#[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Eq)]
-pub enum UserRole {
-    Issuer,
-    Investor,
-    Admin,
+    Ok(())
 }
 
 #[error_code]
 pub enum ControllerError {
-    #[msg("Transfers are currently paused")]
-    TransferPaused,
-    #[msg("KYC verification failed")]
-    KYCFailed,
-    #[msg("Transfer window is closed")]
-    WindowClosed,
-    #[msg("Offering rules violated")]
-    OfferingRulesViolated,
-    #[msg("Investor limit exceeded")]
-    InvestorLimitExceeded,
-    #[msg("Unauthorized admin")]
-    UnauthorizedAdmin,
+    #[msg("Missing KYC accounts in remaining_accounts")]
+    MissingKYCAccounts,
+    #[msg("Invalid KYC account")]
+    InvalidKYCAccount,
+    #[msg("KYC not completed")]
+    KYCNotCompleted,
+    #[msg("User is not active")]
+    UserNotActive,
 }
