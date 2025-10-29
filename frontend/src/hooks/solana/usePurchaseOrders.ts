@@ -3,7 +3,7 @@ import { PublicKey, SystemProgram } from '@solana/web3.js';
 import { useConnection, useAnchorWallet } from '@solana/wallet-adapter-react';
 import { BN } from '@coral-xyz/anchor';
 import {
-  TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
   getAssociatedTokenAddress,
   createAssociatedTokenAccountInstruction,
   ASSOCIATED_TOKEN_PROGRAM_ID
@@ -212,7 +212,7 @@ export function usePurchaseOrders() {
         }
 
         // Get investor's token account
-        const investorTokenAccount = await getAssociatedTokenAddress(mint, investor);
+        const investorTokenAccount = await getAssociatedTokenAddress(mint, investor, false, TOKEN_2022_PROGRAM_ID);
 
         // Check if investor's token account exists
         const accountInfo = await connection.getAccountInfo(investorTokenAccount);
@@ -228,7 +228,7 @@ export function usePurchaseOrders() {
             investorTokenAccount, // ata
             investor, // owner
             mint, // mint
-            TOKEN_PROGRAM_ID,
+            TOKEN_2022_PROGRAM_ID,
             ASSOCIATED_TOKEN_PROGRAM_ID
           );
 

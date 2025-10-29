@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { PublicKey, Transaction, TransactionInstruction } from '@solana/web3.js';
 import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_2022_PROGRAM_ID,
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountInstruction,
@@ -123,7 +124,8 @@ export function useSRWATransfer() {
             destinationAta,
             destination,
             mint,
-            TOKEN_2022_PROGRAM_ID
+            TOKEN_2022_PROGRAM_ID,
+            ASSOCIATED_TOKEN_PROGRAM_ID
           )
         );
         console.log('[useSRWATransfer] Creating destination ATA:', destinationAta.toBase58());

@@ -13,8 +13,9 @@ import {
 } from '@solana/web3.js';
 import { WalletSendTransactionError } from '@solana/wallet-adapter-base';
 import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  Account,
   MINT_SIZE,
-  TOKEN_PROGRAM_ID,
   TOKEN_2022_PROGRAM_ID,
   createAssociatedTokenAccountInstruction,
   createInitializeMintInstruction,
@@ -28,6 +29,13 @@ import {
 } from '@solana/spl-token';
 import { useProgramsSafe } from '@/contexts/ProgramContext';
 import { useAnchorWallet, useConnection, useWallet } from '@solana/wallet-adapter-react';
+import {
+  Raydium,
+  TxVersion,
+  DEVNET_PROGRAM_ID,
+  getCpmmPdaAmmConfigId
+} from '@raydium-io/raydium-sdk-v2';
+import BN from 'bn.js';
 
 export type RequestStatus = 'pending' | 'rejected' | 'deployed';
 
@@ -163,6 +171,239 @@ export function useIssuanceRequests() {
     [wallet?.publicKey, walletAdapter, wallet, connection]
   );
 
+  const createRaydiumPool = useCallback(
+    async (tokenMint: PublicKey, tokenSymbol: string, initialLiquidity: bigint) => {
+      if (!wallet?.publicKey || !walletAdapter?.signAllTransactions) {
+        throw new Error('Wallet not connected or does not support signing');
+      }
+
+      const WSOL_MINT = new PublicKey('So11111111111111111111111111111111111111112');
+
+      console.log('[useIssuanceRequests.createRaydiumPool] Creating pool for token:', {
+        tokenMint: tokenMint.toBase58(),
+        tokenSymbol,
+        initialLiquidity: initialLiquidity.toString(),
+      });
+
+      try {
+        // Initialize Raydium SDK
+        console.log('[useIssuanceRequests.createRaydiumPool] Loading Raydium SDK...', {
+          cluster: 'devnet',
+          rpcEndpoint: connection.rpcEndpoint,
+        });
+        const raydium = await Raydium.load({
+          owner: wallet.publicKey,
+          connection,
+          cluster: 'devnet',
+          disableFeatureCheck: true,
+          disableLoadToken: false,
+          blockhashCommitment: 'finalized',
+          signAllTransactions: async (txs) => {
+            return await walletAdapter.signAllTransactions!(txs);
+          },
+        });
+
+        console.log('[useIssuanceRequests.createRaydiumPool] Raydium SDK loaded, cluster:', raydium.cluster);
+
+        // Get token decimals
+        const [accountAInfo, accountBInfo] = await Promise.all([
+          connection.getAccountInfo(tokenMint),
+          connection.getAccountInfo(WSOL_MINT),
+        ]);
+
+        if (!accountAInfo || !accountBInfo) {
+          throw new Error('Token not found');
+        }
+
+        const programA = accountAInfo.owner;
+        const programB = accountBInfo.owner;
+
+        const [mintAData, mintBData] = await Promise.all([
+          getMint(connection, tokenMint, 'confirmed', programA),
+          getMint(connection, WSOL_MINT, 'confirmed', programB),
+        ]);
+
+        const mintADecimals = mintAData.decimals;
+        const mintBDecimals = mintBData.decimals;
+
+        console.log('[useIssuanceRequests.createRaydiumPool] Token decimals:', {
+          mintA: mintADecimals,
+          mintB: mintBDecimals,
+        });
+
+        // Get fee configs
+        const feeConfigs = await raydium.api.getCpmmConfigs();
+
+        // Adjust config IDs for devnet
+        if (raydium.cluster === 'devnet') {
+          feeConfigs.forEach((config) => {
+            config.id = getCpmmPdaAmmConfigId(
+              DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_PROGRAM,
+              config.index
+            ).publicKey.toBase58();
+          });
+        }
+
+        if (feeConfigs.length === 0) {
+          throw new Error('No fee configs found');
+        }
+
+        const feeConfig = feeConfigs[0];
+
+        // Calculate amounts
+        // Use initial liquidity (e.g., 1000 tokens) and price of 0.001 SOL per token
+        const tokenAAmountRaw = Number(initialLiquidity);
+        const tokenBAmountRaw = Math.floor(0.001 * tokenAAmountRaw); // 0.001 SOL per token
+
+        console.log('[useIssuanceRequests.createRaydiumPool] Pool amounts:', {
+          tokenAAmountRaw,
+          tokenBAmountRaw,
+          price: tokenBAmountRaw / tokenAAmountRaw,
+        });
+
+        const mintA = {
+          address: tokenMint.toBase58(),
+          programId: programA.toBase58(),
+          decimals: mintADecimals,
+        };
+
+        const mintB = {
+          address: WSOL_MINT.toBase58(),
+          programId: programB.toBase58(),
+          decimals: mintBDecimals,
+        };
+
+        const poolParams = {
+          programId: DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_PROGRAM,
+          poolFeeAccount: DEVNET_PROGRAM_ID.CREATE_CPMM_POOL_FEE_ACC,
+          mintA,
+          mintB,
+          mintAAmount: new BN(tokenAAmountRaw),
+          mintBAmount: new BN(tokenBAmountRaw),
+          startTime: new BN(Math.floor(Date.now() / 1000)),
+          associatedOnly: false,
+          feeConfig: {
+            id: new PublicKey(feeConfig.id),
+            index: feeConfig.index,
+            protocolFeeRate: feeConfig.protocolFeeRate,
+            tradeFeeRate: feeConfig.tradeFeeRate,
+            fundFeeRate: feeConfig.fundFeeRate,
+            createPoolFee: new BN(feeConfig.createPoolFee),
+          },
+          ownerInfo: {
+            feePayer: wallet.publicKey,
+            useSOLBalance: true,
+          },
+          txVersion: TxVersion.V0,
+        };
+
+        console.log('[useIssuanceRequests.createRaydiumPool] Creating pool with params...');
+        const { execute, extInfo } = await raydium.cpmm.createPool(poolParams);
+
+        // Log ALL available addresses from extInfo
+        console.log('[useIssuanceRequests.createRaydiumPool] Pool creation prepared');
+        console.log('[useIssuanceRequests.createRaydiumPool] Full extInfo.address:', extInfo.address);
+
+        // Try to extract all possible PublicKeys
+        const addressKeys = Object.keys(extInfo.address);
+        console.log('[useIssuanceRequests.createRaydiumPool] Available address keys:', addressKeys);
+
+        addressKeys.forEach(key => {
+          const value = (extInfo.address as any)[key];
+          if (value && typeof value === 'object' && value.toBase58) {
+            console.log(`[useIssuanceRequests.createRaydiumPool] ${key}:`, value.toBase58());
+          } else {
+            console.log(`[useIssuanceRequests.createRaydiumPool] ${key}:`, value);
+          }
+        });
+
+        console.log('[useIssuanceRequests.createRaydiumPool] Executing transaction...');
+        const { txId } = await execute({ sendAndConfirm: true });
+
+        console.log('[useIssuanceRequests.createRaydiumPool] Pool created! TxId:', txId);
+
+        // Wait for transaction to be confirmed and indexed
+        console.log('[useIssuanceRequests.createRaydiumPool] Waiting for transaction to be indexed...');
+        await new Promise(resolve => setTimeout(resolve, 3000));
+
+        // Fetch the transaction to get the actual pool account
+        console.log('[useIssuanceRequests.createRaydiumPool] Fetching transaction to find pool address...');
+        const txInfo = await connection.getTransaction(txId, {
+          maxSupportedTransactionVersion: 0,
+          commitment: 'confirmed',
+        });
+
+        console.log('[useIssuanceRequests.createRaydiumPool] Transaction info received');
+
+        // Extract all writable accounts from the transaction
+        let poolId: string | null = null;
+
+        if (txInfo?.transaction) {
+          const message = txInfo.transaction.message;
+          const accountKeys = message.staticAccountKeys || [];
+
+          console.log('[useIssuanceRequests.createRaydiumPool] Transaction has', accountKeys.length, 'accounts');
+
+          // The pool account is typically one of the first writable accounts
+          // created by the program. Let's test them.
+          for (const accountKey of accountKeys) {
+            const address = accountKey.toBase58();
+
+            // Skip known accounts (program IDs, system program, token program, etc.)
+            if (
+              address === 'DRaycpLY18LhpbydsBWbVJtxpNv9oXPgjRSfpF2bWpYb' || // CPMM program
+              address === 'So11111111111111111111111111111111111111112' || // WSOL
+              address === wallet.publicKey?.toBase58() ||
+              address === '11111111111111111111111111111111' || // System program
+              address === 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' || // Token program
+              address === 'TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb' || // Token-2022 program
+              address === tokenMint.toBase58() || // Token A mint
+              address === extInfo.address.configId?.toBase58() ||
+              address === extInfo.address.authority?.toBase58() ||
+              address === extInfo.address.lpMint?.toBase58() ||
+              address === extInfo.address.vaultA?.toBase58() ||
+              address === extInfo.address.vaultB?.toBase58() ||
+              address === extInfo.address.observationId?.toBase58() ||
+              address === extInfo.address.poolFeeAccount?.toBase58()
+            ) {
+              continue;
+            }
+
+            try {
+              console.log(`[useIssuanceRequests.createRaydiumPool] Testing account: ${address}`);
+              const testPoolData = await raydium.cpmm.getPoolInfoFromRpc(address);
+              console.log(`[useIssuanceRequests.createRaydiumPool] ✅ FOUND VALID POOL! Address: ${address}`);
+              poolId = address;
+              console.log('[useIssuanceRequests.createRaydiumPool] Pool info:', {
+                poolId: address,
+                mintA: testPoolData.poolInfo.mintA.address,
+                mintB: testPoolData.poolInfo.mintB.address,
+              });
+              break;
+            } catch (testError: any) {
+              console.log(`[useIssuanceRequests.createRaydiumPool] ❌ ${address} is not the pool`);
+            }
+          }
+        }
+
+        if (!poolId) {
+          console.error('[useIssuanceRequests.createRaydiumPool] ⚠️ Could not find pool address in transaction accounts!');
+          console.error('[useIssuanceRequests.createRaydiumPool] Using poolId from extInfo as fallback');
+          poolId = extInfo.address.poolId?.toBase58();
+        }
+
+        return {
+          poolId,
+          signature: txId,
+        };
+      } catch (error: any) {
+        console.error('[useIssuanceRequests.createRaydiumPool] Failed to create Raydium pool:', error);
+        throw error;
+      }
+    },
+    [wallet?.publicKey, walletAdapter, connection]
+  );
+
   const refresh = useCallback(async () => {
     if (!programs?.srwaFactory) {
       console.log('[useIssuanceRequests.refresh] SRWA Factory program not loaded, skipping fetch');
@@ -258,31 +499,11 @@ export function useIssuanceRequests() {
       })
       .instruction();
 
-    // Create and sign transaction manually
+    // Create transaction
     const tx = new Transaction().add(ix);
 
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
-    tx.recentBlockhash = blockhash;
-    tx.lastValidBlockHeight = lastValidBlockHeight;
-    tx.feePayer = wallet.publicKey;
-
-    const signedTx = await wallet.signTransaction(tx);
-
     try {
-      const signature = await connection.sendRawTransaction(signedTx.serialize(), {
-        skipPreflight: false,
-        preflightCommitment: 'confirmed',
-      });
-
-      await connection.confirmTransaction(
-        {
-          signature,
-          blockhash,
-          lastValidBlockHeight,
-        },
-        'confirmed'
-      );
-
+      const signature = await sendWithWallet(tx, { preflightCommitment: 'confirmed' });
       console.log('[useIssuanceRequests.requestSrwa] Request created successfully:', signature);
 
       await refresh();
@@ -308,7 +529,7 @@ export function useIssuanceRequests() {
 
       throw err;
     }
-  }, [wallet?.publicKey, programs?.srwaFactory, refresh, walletAdapter]);
+  }, [wallet?.publicKey, programs?.srwaFactory, refresh, sendWithWallet]);
 
   const approveSrwa = useCallback(async (request: SrwaRequestAccount) => {
     if (!wallet?.publicKey) {
@@ -386,24 +607,55 @@ export function useIssuanceRequests() {
 
     // Send the fully signed transaction
     console.log('[useIssuanceRequests.approveSrwa] Sending transaction...');
-    const signature = await connection.sendRawTransaction(signedTx.serialize(), {
-      skipPreflight: false,
-      preflightCommitment: 'confirmed',
-    });
 
-    console.log('[useIssuanceRequests.approveSrwa] Transaction sent:', signature);
+    let signature: string;
+    try {
+      signature = await connection.sendRawTransaction(signedTx.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+      console.log('[useIssuanceRequests.approveSrwa] Transaction sent:', signature);
+    } catch (sendError: any) {
+      // If error is "already processed", the transaction went through but RPC returned error
+      if (sendError?.message?.includes('already been processed')) {
+        console.warn('[useIssuanceRequests.approveSrwa] Transaction already processed, checking recent transactions...');
+        // Wait a bit for transaction to propagate
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Get recent signatures for this wallet
+        const signatures = await connection.getSignaturesForAddress(wallet.publicKey, { limit: 5 });
+        if (signatures && signatures.length > 0) {
+          signature = signatures[0].signature;
+          console.log('[useIssuanceRequests.approveSrwa] Found recent signature:', signature);
+        } else {
+          throw new Error('Transaction was processed but signature not found');
+        }
+      } else {
+        throw sendError;
+      }
+    }
 
     // Confirm transaction
-    await connection.confirmTransaction(
-      {
-        signature,
-        blockhash,
-        lastValidBlockHeight,
-      },
-      'confirmed'
-    );
-
-    console.log('[useIssuanceRequests.approveSrwa] Approval transaction confirmed:', signature);
+    try {
+      await connection.confirmTransaction(
+        {
+          signature,
+          blockhash,
+          lastValidBlockHeight,
+        },
+        'confirmed'
+      );
+      console.log('[useIssuanceRequests.approveSrwa] Approval transaction confirmed:', signature);
+    } catch (confirmError: any) {
+      // If confirmation fails, check if transaction actually succeeded
+      console.warn('[useIssuanceRequests.approveSrwa] Confirmation error, checking transaction status...');
+      const status = await connection.getSignatureStatus(signature);
+      if (status?.value?.confirmationStatus === 'confirmed' || status?.value?.confirmationStatus === 'finalized') {
+        console.log('[useIssuanceRequests.approveSrwa] Transaction was actually confirmed:', signature);
+      } else {
+        throw confirmError;
+      }
+    }
 
     console.log('[useIssuanceRequests.approveSrwa] SRWA approved successfully. Now minting initial supply to admin wallet.');
 
@@ -440,8 +692,8 @@ export function useIssuanceRequests() {
               adminAta,
               wallet.publicKey,
               mint,
-              TOKEN_PROGRAM_ID,
-              TOKEN_2022_PROGRAM_ID
+              TOKEN_2022_PROGRAM_ID,
+              ASSOCIATED_TOKEN_PROGRAM_ID
             )
           );
         }
@@ -506,6 +758,35 @@ export function useIssuanceRequests() {
           amount: mintAmount.toString(),
           signature,
         });
+
+        // Show instructions for creating liquidity pool
+        console.log('[useIssuanceRequests.approveSrwa] ========================================');
+        console.log('[useIssuanceRequests.approveSrwa] ✅ SRWA TOKEN APPROVED SUCCESSFULLY!');
+        console.log('[useIssuanceRequests.approveSrwa] ========================================');
+        console.log('[useIssuanceRequests.approveSrwa] Token Mint:', mint.toBase58());
+        console.log('[useIssuanceRequests.approveSrwa] Symbol:', request.account.symbol);
+        console.log('[useIssuanceRequests.approveSrwa] Supply:', mintAmount.toString());
+        console.log('[useIssuanceRequests.approveSrwa] ');
+        console.log('[useIssuanceRequests.approveSrwa] 📌 NEXT STEPS - Create Liquidity Pool:');
+        console.log('[useIssuanceRequests.approveSrwa] ');
+        console.log('[useIssuanceRequests.approveSrwa] ⚠️  IMPORTANT: Raydium CPMM does NOT support Token-2022 on devnet.');
+        console.log('[useIssuanceRequests.approveSrwa] ');
+        console.log('[useIssuanceRequests.approveSrwa] Option 1 - Orca Whirlpools (Supports Token-2022):');
+        console.log('[useIssuanceRequests.approveSrwa]   1. Visit: https://www.orca.so/');
+        console.log('[useIssuanceRequests.approveSrwa]   2. Connect your wallet (devnet mode)');
+        console.log('[useIssuanceRequests.approveSrwa]   3. Create a Whirlpool with:');
+        console.log('[useIssuanceRequests.approveSrwa]      - Token A:', mint.toBase58());
+        console.log('[useIssuanceRequests.approveSrwa]      - Token B: So11111111111111111111111111111111111111112 (wSOL)');
+        console.log('[useIssuanceRequests.approveSrwa]      - Initial Price: ~0.001 SOL');
+        console.log('[useIssuanceRequests.approveSrwa]   4. Add initial liquidity');
+        console.log('[useIssuanceRequests.approveSrwa]   5. Copy the Pool Address');
+        console.log('[useIssuanceRequests.approveSrwa]   6. Register the pool in Admin Panel > Pool Management');
+        console.log('[useIssuanceRequests.approveSrwa] ');
+        console.log('[useIssuanceRequests.approveSrwa] Option 2 - Use the RaydiumPoolCreator component:');
+        console.log('[useIssuanceRequests.approveSrwa]   - Available in Admin Panel');
+        console.log('[useIssuanceRequests.approveSrwa]   - Note: May fail if token uses Token-2022 extensions');
+        console.log('[useIssuanceRequests.approveSrwa] ');
+        console.log('[useIssuanceRequests.approveSrwa] ========================================');
       }
     } catch (mintError) {
       console.error('[useIssuanceRequests.approveSrwa] Failed to mint initial supply to admin wallet', mintError);
@@ -515,7 +796,7 @@ export function useIssuanceRequests() {
     }
 
     await refresh();
-  }, [wallet?.publicKey, programs?.srwaFactory, refresh, walletAdapter, getEffectiveMintKey, connection, sendWithWallet]);
+  }, [wallet?.publicKey, programs?.srwaFactory, refresh, walletAdapter, getEffectiveMintKey, connection, sendWithWallet, createRaydiumPool]);
 
   const rejectSrwa = useCallback(async (request: SrwaRequestAccount, reason: string) => {
     if (!wallet?.publicKey) {
@@ -576,10 +857,10 @@ export function useIssuanceRequests() {
     const decimals = request.account.decimals ?? 0;
     const issuer = request.account.issuer;
 
-    const adminAta = await getAssociatedTokenAddress(mint, wallet.publicKey);
-    let adminAccount;
+    const adminAta = await getAssociatedTokenAddress(mint, wallet.publicKey, false, TOKEN_2022_PROGRAM_ID);
+    let adminAccount: Account;
     try {
-      adminAccount = await getAccount(connection, adminAta);
+      adminAccount = await getAccount(connection, adminAta, 'confirmed', TOKEN_2022_PROGRAM_ID);
     } catch (err: any) {
       if (err instanceof TokenAccountNotFoundError || err instanceof TokenInvalidAccountOwnerError) {
         throw new Error('Admin token account not found. Approve this request to mint the initial supply before sending.');
@@ -587,7 +868,7 @@ export function useIssuanceRequests() {
       throw err;
     }
 
-    const issuerAta = await getAssociatedTokenAddress(mint, issuer, true);
+    const issuerAta = await getAssociatedTokenAddress(mint, issuer, true, TOKEN_2022_PROGRAM_ID);
 
     const instructions: TransactionInstruction[] = [];
 
@@ -598,7 +879,9 @@ export function useIssuanceRequests() {
           wallet.publicKey,
           issuerAta,
           issuer,
-          mint
+          mint,
+          TOKEN_2022_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID
         )
       );
     }
@@ -637,7 +920,9 @@ export function useIssuanceRequests() {
         issuerAta,
         wallet.publicKey,
         Number(transferAmount),
-        decimals
+        decimals,
+        [],
+        TOKEN_2022_PROGRAM_ID
       )
     );
 
@@ -674,14 +959,14 @@ export function useIssuanceRequests() {
       admin: wallet.publicKey.toBase58(),
     });
 
-    const adminAta = await getAssociatedTokenAddress(mint, wallet.publicKey);
-    const investorAta = await getAssociatedTokenAddress(mint, investor);
+    const adminAta = await getAssociatedTokenAddress(mint, wallet.publicKey, false, TOKEN_2022_PROGRAM_ID);
+    const investorAta = await getAssociatedTokenAddress(mint, investor, false, TOKEN_2022_PROGRAM_ID);
     const instructions: TransactionInstruction[] = [];
 
     // Verificar saldo do admin
-    let adminAccount;
+    let adminAccount: Account;
     try {
-      adminAccount = await getAccount(connection, adminAta);
+      adminAccount = await getAccount(connection, adminAta, 'confirmed', TOKEN_2022_PROGRAM_ID);
     } catch (err: any) {
       if (err instanceof TokenAccountNotFoundError || err instanceof TokenInvalidAccountOwnerError) {
         throw new Error('Admin token account not found. Make sure tokens were minted to admin when approving the SRWA request.');
@@ -697,7 +982,9 @@ export function useIssuanceRequests() {
           wallet.publicKey, // payer (admin)
           investorAta,
           investor,
-          mint
+          mint,
+          TOKEN_2022_PROGRAM_ID,
+          ASSOCIATED_TOKEN_PROGRAM_ID
         )
       );
       console.log('[useIssuanceRequests.transferFromAdminToInvestor] Creating investor ATA:', investorAta.toBase58());
@@ -725,7 +1012,9 @@ export function useIssuanceRequests() {
         investorAta,
         wallet.publicKey, // owner (admin)
         Number(transferAmount),
-        decimals
+        decimals,
+        [],
+        TOKEN_2022_PROGRAM_ID
       )
     );
 

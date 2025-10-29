@@ -58,8 +58,9 @@ export function useUserRegistry() {
     const pubkey = userPubkey || wallet?.publicKey;
     if (!pubkey) return null;
 
+    const { pda } = getUserRegistryPDA(pubkey);
+
     try {
-      const { pda } = getUserRegistryPDA(pubkey);
       const accountInfo = await programs.srwaFactory.account.userRegistry.fetch(pda);
 
       // Converter o role do formato Rust para TypeScript

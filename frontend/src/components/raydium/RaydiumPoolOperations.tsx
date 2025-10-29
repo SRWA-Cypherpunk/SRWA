@@ -34,7 +34,7 @@ const shortenAddress = (address: string, size = 4) =>
 
 export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
   const wallet = useWallet();
-  const { pools } = useRaydiumPools();
+  const { pools, deactivatePool } = useRaydiumPools();
   const { tokens: deployedTokens } = useDeployedTokens();
   const { loadPoolInfo, addLiquidity, removeLiquidity } = useRaydiumCpmm();
 
@@ -55,6 +55,10 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
     []
   );
   const [activeSection, setActiveSection] = useState<SectionId>('info');
+
+  const currentPool = useMemo(() => {
+    return pools.find(p => p.poolId.toBase58() === poolId);
+  }, [pools, poolId]);
 
   const tokenLookup = useMemo(() => {
     return deployedTokens.reduce<Record<string, { symbol?: string; name?: string }>>((acc, token) => {
@@ -127,14 +131,21 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
 
     setLoading(true);
     try {
+      console.log('[RaydiumPoolOperations] Loading pool:', poolId);
       const info = await loadPoolInfo(poolId);
       setPoolInfo(info);
+      console.log('[RaydiumPoolOperations] Pool loaded successfully:', {
+        poolId,
+        mintA: info.mintA.address,
+        mintB: info.mintB.address,
+      });
     } catch (error: any) {
       if (error?.message?.includes('Wallet não conectada')) {
         setPoolInfo(null);
         return;
       }
       console.error('[RaydiumPoolOperations] Failed to load pool:', error);
+      console.error('[RaydiumPoolOperations] Pool ID that failed:', poolId);
       toast.error(error?.message ?? 'Erro ao carregar informações do pool');
     } finally {
       setLoading(false);
@@ -337,9 +348,19 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                Unable to load pool data. Please check the ID and try again.
-              </p>
+              <div className="space-y-4">
+                <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-4">
+                  <p className="text-sm font-semibold text-red-400 mb-2">
+                    ⚠️ Pool não encontrada no Raydium
+                  </p>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Esta pool está registrada no sistema mas não existe no Raydium. O Pool ID pode estar incorreto.
+                  </p>
+                  <p className="text-xs font-mono text-muted-foreground break-all">
+                    Pool ID: {poolId}
+                  </p>
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>
