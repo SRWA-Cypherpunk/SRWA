@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from "react";
-import { useUserRWATokens, type RWAToken } from "@/hooks/rwa/useUserRWATokens";
+import { useDeployedTokens } from "@/hooks/solana/useDeployedTokens";
 import { type EnhancedPoolData } from "@/types/markets";
 
 export interface SRWAMarketData extends EnhancedPoolData {
@@ -20,14 +20,14 @@ export interface UseSRWAMarketsReturn {
 }
 
 export const useSRWAMarkets = (): UseSRWAMarketsReturn => {
-  const { tokens: rwaTokens, loading: tokensLoading, error: tokensError, refetch: refetchTokens } = useUserRWATokens();
+  const { tokens: deployedTokens, loading: tokensLoading, error: tokensError, refetch: refetchTokens } = useDeployedTokens();
 
-  // Convert RWA tokens into market-compatible format - memoized to prevent recreation
-  const convertRWATokenToMarket = useCallback((token: RWAToken): SRWAMarketData => {
+  // Convert deployed tokens into market-compatible format - memoized to prevent recreation
+  const convertDeployedTokenToMarket = useCallback((token: any): SRWAMarketData => {
     // Calculate some mock/estimated values for now
-    // In a real implementation, these would come from on-chain data or oracles
-    const totalSupplyNumber = parseFloat(token.totalSupply) || 1000000; // Default to 1M if invalid
-    const mockTVL = totalSupplyNumber / Math.pow(10, token.decimals) * 0.8; // 80% utilization estimate
+    // Token from useDeployedTokens has different structure
+    const totalSupplyNumber = 1000000; // Mock: 1M tokens
+    const mockTVL = totalSupplyNumber * 0.8; // 80% utilization estimate
     const mockSuppliedAmount = mockTVL * 0.6; // 60% supplied
     const mockBorrowedAmount = mockTVL * 0.4; // 40% borrowed
     const utilizationRate = mockSuppliedAmount > 0 ? mockBorrowedAmount / mockSuppliedAmount : 0.4; // Fallback to 40%
@@ -39,7 +39,7 @@ export const useSRWAMarkets = (): UseSRWAMarketsReturn => {
 
     return {
       // Core pool info
-      address: token.contractAddress,
+      address: token.mint.toBase58(),
       name: `${token.name} Lending Market`,
       class: 'CRE', // Classify SRWA tokens as Commercial Real Estate for now
       status: 'Active' as const,
@@ -73,14 +73,14 @@ export const useSRWAMarkets = (): UseSRWAMarketsReturn => {
 
       // Price data (simplified)
       assetPrices: {
-        [token.symbol]: {
-          asset: token.symbol,
+        [token.symbol || 'SRWA']: {
+          asset: token.symbol || 'SRWA',
           price: 1.0, // Assume $1 per token for simplicity
           priceUSD: 1.0,
           change24h: Math.random() * 4 - 2, // -2% to +2%
           change7d: Math.random() * 10 - 5, // -5% to +5%
           volume24h: mockTVL * 0.1,
-          marketCap: parseFloat(token.totalSupply) / Math.pow(10, token.decimals),
+          marketCap: totalSupplyNumber,
           timestamp: Date.now(),
           source: 'SRWA-Estimated'
         }
@@ -92,15 +92,15 @@ export const useSRWAMarkets = (): UseSRWAMarketsReturn => {
       performance30d: Math.random() * 20 - 10, // -10% to +10%
 
       // Timestamps
-      lastUpdated: token.lastUpdated.getTime(),
+      lastUpdated: Date.now(),
       dataFreshness: 'Fresh' as const,
 
       // SRWA-specific fields
-      isUserAdmin: token.isUserAdmin,
-      tokenContract: token.contractAddress,
-      complianceContract: token.complianceContract,
-      totalSupply: token.totalSupply,
-      userBalance: token.balance,
+      isUserAdmin: false, // Will be determined by wallet connection
+      tokenContract: token.mint.toBase58(),
+      complianceContract: '', // Not available from deployed tokens
+      totalSupply: totalSupplyNumber.toString(),
+      userBalance: '0',
       marketType: 'SRWA' as const,
     };
   }, []);
@@ -112,20 +112,18 @@ export const useSRWAMarkets = (): UseSRWAMarketsReturn => {
     }
 
     try {
-      // Convert user's RWA tokens to market format
-      const markets = rwaTokens
-        .filter(token => {
-          // Only include tokens where user is admin or has balance
-          return token.isUserAdmin || parseFloat(token.balance) > 0;
-        })
-        .map(convertRWATokenToMarket);
+      // Convert ALL deployed RWA tokens to market format
+      // Display all tokens as public pools (regardless of ownership or balance)
+      const markets = deployedTokens.map(convertDeployedTokenToMarket);
+
+      console.log('🔗 [useSRWAMarkets] Converted markets:', markets.length, markets);
 
       return markets;
     } catch (err) {
       console.error("🔗 [useSRWAMarkets] Error converting tokens to markets:", err);
       return [];
     }
-  }, [rwaTokens, tokensLoading, tokensError, convertRWATokenToMarket]);
+  }, [deployedTokens, tokensLoading, tokensError, convertDeployedTokenToMarket]);
 
   const refetch = useCallback(async () => {
     await refetchTokens();
