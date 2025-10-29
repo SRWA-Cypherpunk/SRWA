@@ -57,7 +57,6 @@ export function useIssuanceRequests() {
   const [requests, setRequests] = useState<SrwaRequestAccount[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [mintOverrides, setMintOverrides] = useState<Record<string, string>>({});
 
   interface SendWithWalletOptions extends SendOptions {
     additionalSigners?: Signer[];
@@ -79,12 +78,24 @@ export function useIssuanceRequests() {
       const commitment = sendOptions.preflightCommitment ?? 'confirmed';
 
       try {
+        // Always get blockhash first
+        const latest = await connection.getLatestBlockhash(commitment);
+        tx.recentBlockhash = latest.blockhash;
+        tx.lastValidBlockHeight = latest.lastValidBlockHeight;
+
         const canUseWalletSend = walletAdapter?.sendTransaction && additionalSigners.length === 0 && !skipWalletSend;
 
         if (canUseWalletSend) {
           try {
             const signature = await walletAdapter.sendTransaction(tx, connection, sendOptions);
-            await connection.confirmTransaction(signature, commitment);
+            await connection.confirmTransaction(
+              {
+                signature,
+                blockhash: latest.blockhash,
+                lastValidBlockHeight: latest.lastValidBlockHeight,
+              },
+              commitment
+            );
             return signature;
           } catch (walletSendError) {
             if (walletSendError instanceof WalletSendTransactionError) {
@@ -99,8 +110,11 @@ export function useIssuanceRequests() {
           }
         }
 
-        const latest = await connection.getLatestBlockhash(commitment);
-        tx.recentBlockhash = latest.blockhash;
+        // Manual signing flow for transactions with additional signers
+        console.log('[useIssuanceRequests.sendWithWallet] Using manual signing flow', {
+          additionalSigners: additionalSigners.length,
+          signerKeys: additionalSigners.map(s => s.publicKey.toBase58()),
+        });
 
         if (additionalSigners.length > 0) {
           tx.partialSign(...additionalSigners);
@@ -180,20 +194,26 @@ export function useIssuanceRequests() {
   }, [refresh]);
 
   const getEffectiveMintKey = useCallback((request: SrwaRequestAccount) => {
-    const requestKey = request.publicKey.toBase58();
-    const override = mintOverrides[requestKey];
-    const onChainMint = request.account.mint;
-    console.log('[useIssuanceRequests.getEffectiveMintKey]', {
-      requestKey: requestKey.slice(0, 16) + '...',
-      override,
-      onChainMint: onChainMint instanceof PublicKey ? onChainMint.toBase58() : 'ZERO',
-      allOverrides: Object.keys(mintOverrides).map(k => k.slice(0, 16) + '...'),
-    });
-    if (override) {
-      return new PublicKey(override);
+    const mintField = request.account.mint;
+    if (mintField instanceof PublicKey) {
+      return mintField;
     }
-    return request.account.mint ?? PublicKey.default;
-  }, [mintOverrides]);
+    if (mintField && typeof mintField === 'object' && 'toBase58' in mintField) {
+      try {
+        return new PublicKey((mintField as any).toBase58());
+      } catch (err) {
+        console.warn('[useIssuanceRequests.getEffectiveMintKey] Failed to parse mint field', err);
+      }
+    }
+    if (typeof mintField === 'string' && mintField.length > 0) {
+      try {
+        return new PublicKey(mintField);
+      } catch (err) {
+        console.warn('[useIssuanceRequests.getEffectiveMintKey] Invalid mint string', err);
+      }
+    }
+    return PublicKey.default;
+  }, []);
 
   const requestSrwa = useCallback(async (input: RequestInput) => {
     if (!wallet?.publicKey) {
@@ -248,13 +268,13 @@ export function useIssuanceRequests() {
       throw new Error('SRWA Factory program not loaded');
     }
 
-    const mint: PublicKey = getEffectiveMintKey(request);
-    if (mint.equals(PublicKey.default)) {
-      throw new Error('Mint not created yet. Please create the mint before approving.');
-    }
-    const mintAccountInfo = await connection.getAccountInfo(mint);
-    if (!mintAccountInfo) {
-      throw new Error('Mint account not found on-chain. Use "Create Mint" before approving.');
+    const existingMint = request.account.mint as PublicKey | undefined;
+    let mintKeypair: Keypair | null = null;
+    let mint = existingMint ?? PublicKey.default;
+    if (!existingMint || existingMint.equals(PublicKey.default)) {
+      mintKeypair = Keypair.generate();
+      mint = mintKeypair.publicKey;
+      console.log('[useIssuanceRequests.approveSrwa] Generated mint keypair during approval', mint.toBase58());
     }
 
     const [adminRegistryPda] = PublicKey.findProgramAddressSync(
@@ -274,20 +294,8 @@ export function useIssuanceRequests() {
       programs.srwaFactory.programId
     );
 
-    console.log('[useIssuanceRequests.approveSrwa] Derived accounts', {
-      admin: wallet.publicKey.toBase58(),
-      adminRegistry: adminRegistryPda.toBase58(),
-      request: request.publicKey.toBase58(),
-      mint: mint.toBase58(),
-      srwaConfig: srwaConfigPda.toBase58(),
-      offeringState: offeringStatePda.toBase58(),
-      valuationData: valuationPda.toBase58(),
-      systemProgram: SystemProgram.programId.toBase58(),
-      clock: SYSVAR_CLOCK_PUBKEY.toBase58(),
-      programId: programs.srwaFactory.programId.toBase58(),
-    });
-
-    const approveBuilder = programs.srwaFactory.methods
+    // Create the instruction
+    const ix = await programs.srwaFactory.methods
       .approveSrwa()
       .accounts({
         admin: wallet.publicKey,
@@ -297,38 +305,51 @@ export function useIssuanceRequests() {
         srwaConfig: srwaConfigPda,
         offeringState: offeringStatePda,
         valuationData: valuationPda,
-        clock: SYSVAR_CLOCK_PUBKEY,
         systemProgram: SystemProgram.programId,
-      });
+      })
+      .instruction();
 
-    const resolvedAccounts = await approveBuilder.pubkeys();
-    console.log(
-      '[useIssuanceRequests.approveSrwa] Resolved account map',
-      Object.fromEntries(
-        Object.entries(resolvedAccounts).map(([key, value]) => [
-          key,
-          value?.toBase58?.() ?? value,
-        ])
-      )
-    );
+    // Build transaction manually
+    const tx = new Transaction();
+    tx.add(ix);
 
-    const ix = await approveBuilder.instruction();
-    const mintMeta = ix.keys.find((meta) => meta.pubkey.equals(mint));
-    if (mintMeta && !mintMeta.isWritable) {
-      console.warn('[useIssuanceRequests.approveSrwa] Overriding mint meta to writable (IDL mismatch fix)');
-      mintMeta.isWritable = true;
+    // Get latest blockhash
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+    tx.recentBlockhash = blockhash;
+    tx.lastValidBlockHeight = lastValidBlockHeight;
+    tx.feePayer = wallet.publicKey;
+
+    // CRITICAL: Sign in the correct order
+    // 1. First, sign with additional keypairs (mintKeypair)
+    if (mintKeypair) {
+      console.log('[useIssuanceRequests.approveSrwa] Signing with mint keypair:', mint.toBase58());
+      tx.sign(mintKeypair);
     }
-    console.log(
-      '[useIssuanceRequests.approveSrwa] Instruction account order',
-      ix.keys.map((meta, index) => ({
-        index,
-        pubkey: meta.pubkey.toBase58(),
-        isSigner: meta.isSigner,
-        isWritable: meta.isWritable,
-      }))
+
+    // 2. Then sign with wallet (this adds the wallet's signature)
+    console.log('[useIssuanceRequests.approveSrwa] Signing with wallet:', wallet.publicKey.toBase58());
+    const signedTx = await wallet.signTransaction(tx);
+
+    // Send the fully signed transaction
+    console.log('[useIssuanceRequests.approveSrwa] Sending transaction...');
+    const signature = await connection.sendRawTransaction(signedTx.serialize(), {
+      skipPreflight: false,
+      preflightCommitment: 'confirmed',
+    });
+
+    console.log('[useIssuanceRequests.approveSrwa] Transaction sent:', signature);
+
+    // Confirm transaction
+    await connection.confirmTransaction(
+      {
+        signature,
+        blockhash,
+        lastValidBlockHeight,
+      },
+      'confirmed'
     );
 
-    await sendWithWallet(new Transaction().add(ix), { preflightCommitment: 'confirmed' });
+    console.log('[useIssuanceRequests.approveSrwa] Approval transaction confirmed:', signature);
 
     console.log('[useIssuanceRequests.approveSrwa] SRWA approved successfully. Now minting initial supply to admin wallet.');
 
@@ -434,61 +455,6 @@ export function useIssuanceRequests() {
 
     await refresh();
   }, [wallet?.publicKey, programs?.srwaFactory, refresh]);
-
-  const createMintForRequest = useCallback(async (request: SrwaRequestAccount) => {
-    if (!wallet?.publicKey) {
-      throw new Error('Wallet not connected');
-    }
-
-    const requestKey = request.publicKey.toBase58();
-    console.log('[useIssuanceRequests.createMintForRequest] Starting mint creation for request:', requestKey);
-    console.log('[useIssuanceRequests.createMintForRequest] Current mintOverrides:', mintOverrides);
-
-    const decimals = request.account.decimals ?? 0;
-    const mintKeypair = Keypair.generate();
-    console.log('[useIssuanceRequests.createMintForRequest] Generated new mint:', mintKeypair.publicKey.toBase58());
-
-    const lamports = await connection.getMinimumBalanceForRentExemption(MINT_SIZE);
-
-    const tx = new Transaction().add(
-      SystemProgram.createAccount({
-        fromPubkey: wallet.publicKey,
-        newAccountPubkey: mintKeypair.publicKey,
-        space: MINT_SIZE,
-        lamports,
-        programId: TOKEN_PROGRAM_ID,
-      }),
-      createInitializeMintInstruction(
-        mintKeypair.publicKey,
-        decimals,
-        wallet.publicKey,
-        wallet.publicKey
-      )
-    );
-
-    const signature = await sendWithWallet(tx, {
-      preflightCommitment: 'confirmed',
-      additionalSigners: [mintKeypair],
-      skipWalletSend: true,
-    });
-
-    setMintOverrides((prev) => {
-      const updated = {
-        ...prev,
-        [requestKey]: mintKeypair.publicKey.toBase58(),
-      };
-      console.log('[useIssuanceRequests.createMintForRequest] Updated mintOverrides:', updated);
-      return updated;
-    });
-
-    console.log('[useIssuanceRequests.createMintForRequest] Mint created', {
-      request: requestKey,
-      mint: mintKeypair.publicKey.toBase58(),
-      signature,
-    });
-
-    return mintKeypair.publicKey;
-  }, [wallet?.publicKey, connection, wallet, sendWithWallet, mintOverrides]);
 
   const sendTokensToIssuer = useCallback(async (request: SrwaRequestAccount, amount?: number) => {
     if (!wallet?.publicKey) {
@@ -678,7 +644,6 @@ export function useIssuanceRequests() {
     requestSrwa,
     approveSrwa,
     rejectSrwa,
-    createMintForRequest,
     sendTokensToIssuer,
     transferFromAdminToInvestor,
     getEffectiveMintKey,

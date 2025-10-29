@@ -2,10 +2,10 @@ import * as anchor from "@coral-xyz/anchor";
 import type { Idl } from "@coral-xyz/anchor";
 import { PublicKey, Connection, LAMPORTS_PER_SOL } from "@solana/web3.js";
 
-// Program IDs (deployed on devnet)
+// Program IDs (deployed on devnet) - Must match Anchor.toml [programs.devnet]
 export const PROGRAM_IDS = {
-  srwaFactory: "G2TVaEY5pxLZbdBUq28Q7ZPGxQaxTxZzaSRTAEMh3z2A",
-  srwaController: "HnPCaGFDW2Y7B9J1q8ZHnwKNZZ9ZhXfcnAGcEVK3Y6nA",
+  srwaFactory: "DgNZ6dzLSXzunGiaFnpUhS63B6Wu9WNZ79KF6fW3ETgY",
+  srwaController: "345oZiSawNcHLVLnQLjiE7bkycC3bS1DJcmhvYDDaMFH",
   identityClaims: "AuUzmKAAVyvR6NvDdd56SDjXHSE8dUePEnC5moECw9mE",
   complianceModules: "GD3ArP1GPKN9sWYPxiPia2i3iAKKsnbXxpcoB1gQK5D",
   offeringPool: "4D54H4NBA9Q7WtsAy2yaFs9BjEdT8DcdmXekKsf7n6KP",
@@ -168,9 +168,11 @@ export class SRWAClient {
           console.log(`🔧 Carregando ${config.name} via IDL local (devnet mode)...`);
           try {
             const localIdl = await this.fetchLocalIdl(config.idlFile);
-            program = new anchor.Program(localIdl, provider);
+            // Override the address field in the IDL with the correct program ID
+            const correctedIdl = { ...localIdl, address: config.programId };
+            program = new anchor.Program(correctedIdl, provider);
             loadSource = 'local';
-            console.log(`✅ ${config.name} carregado com sucesso via IDL local`);
+            console.log(`✅ ${config.name} carregado com sucesso via IDL local com program ID: ${config.programId}`);
           } catch (localError: any) {
             console.error(`❌ Erro ao carregar ${config.name} via IDL local:`, localError.message);
 
@@ -192,9 +194,11 @@ export class SRWAClient {
 
             try {
               const fallbackIdl = await this.fetchLocalIdl(config.idlFile);
-              program = new anchor.Program(fallbackIdl, provider);
+              // Override the address field in the IDL with the correct program ID
+              const correctedIdl = { ...fallbackIdl, address: config.programId };
+              program = new anchor.Program(correctedIdl, provider);
               loadSource = 'local';
-              console.log(`🧩 ${config.name} carregado usando IDL local (fallback)`);
+              console.log(`🧩 ${config.name} carregado usando IDL local (fallback) com program ID: ${config.programId}`);
             } catch (fallbackError: any) {
               console.error(`❌ Erro ao carregar ${config.name} via fallback:`, fallbackError.message);
 

@@ -1,5 +1,20 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::spl_token;
+use anchor_lang::solana_program::{
+    program::invoke,
+    system_instruction,
+    system_program,
+    sysvar::rent::Rent,
+};
+use spl_token_2022::{
+    extension::{
+        default_account_state,
+        metadata_pointer,
+        transfer_hook,
+        ExtensionType,
+    },
+    instruction as token_2022_ix,
+    state::AccountState,
+};
 
 use crate::{errors::*, events::*, state::*};
 
@@ -22,9 +37,9 @@ pub struct ApproveSrwa<'info> {
     )]
     pub request: Account<'info, SRWARequest>,
 
-    /// CHECK: SPL mint. If the request did not specify a mint, the admin-provided mint will be recorded.
-    #[account(mut)]
-    pub mint: UncheckedAccount<'info>,
+    /// CHECK: token-2022 mint account that will be created during approval.
+    #[account(mut, signer)]
+    pub mint: AccountInfo<'info>,
 
     #[account(
         init,
@@ -58,30 +73,41 @@ pub struct ApproveSrwa<'info> {
 
 pub fn handler(ctx: Context<ApproveSrwa>) -> Result<()> {
     let admin_registry = &ctx.accounts.admin_registry;
-    let request = &mut ctx.accounts.request;
     let srwa_config = &mut ctx.accounts.srwa_config;
     let offering_state = &mut ctx.accounts.offering_state;
     let valuation_data = &mut ctx.accounts.valuation_data;
     let mint_account = &ctx.accounts.mint;
     let clock = Clock::get()?;
 
-    // Verifica se o admin está autorizado
-    if !admin_registry.authorized_admins.contains(&ctx.accounts.admin.key()) {
+    // Ensure admin is authorized
+    if !admin_registry
+        .authorized_admins
+        .contains(&ctx.accounts.admin.key())
+    {
         return Err(SRWAError::AdminNotInAllowlist.into());
     }
 
-    if mint_account.owner != &spl_token::id() {
-        return Err(SRWAError::MintInvalidOwner.into());
-    }
-
+    // Clone data we need before taking mutable borrow of request
+    let config_init = ctx.accounts.request.config.clone();
+    let offering_init = ctx.accounts.request.offering.clone();
     let mint_key = mint_account.key();
-    if request.mint != Pubkey::default() && request.mint != mint_key {
+    let decimals = config_init.mint_decimals.max(ctx.accounts.request.decimals);
+
+    if ctx.accounts.request.mint != Pubkey::default() && ctx.accounts.request.mint != mint_key {
         return Err(SRWAError::MintMismatch.into());
     }
-    request.mint = mint_key;
 
-    let config_init = request.config.clone();
-    let offering_init = request.offering.clone();
+    initialise_token_2022_mint(
+        ctx.accounts.mint.to_account_info(),
+        ctx.accounts.admin.to_account_info(),
+        ctx.accounts.system_program.to_account_info(),
+        &config_init,
+        decimals,
+    )?;
+
+    // Now take mutable borrow of request
+    let request = &mut ctx.accounts.request;
+    request.mint = mint_key;
 
     // Initialize SRWA Config using data from the request
     srwa_config.version = 1;
@@ -104,6 +130,7 @@ pub fn handler(ctx: Context<ApproveSrwa>) -> Result<()> {
     };
     srwa_config.compliance_version = 1;
     srwa_config.metadata_uri = config_init.metadata_uri.clone();
+    srwa_config.paused = false;
     srwa_config.bump = ctx.bumps.srwa_config;
 
     // Offering state
@@ -176,6 +203,121 @@ pub fn handler(ctx: Context<ApproveSrwa>) -> Result<()> {
     request.offering_state = Some(offering_state.key());
     request.valuation_data = Some(valuation_data.key());
     request.reject_reason = None;
+
+    Ok(())
+}
+
+fn initialise_token_2022_mint<'info>(
+    mint_info: AccountInfo<'info>,
+    admin_info: AccountInfo<'info>,
+    system_program: AccountInfo<'info>,
+    config: &SRWAConfigInit,
+    decimals: u8
+) -> Result<()> {
+
+    // If the mint already exists and is owned by token-2022 we consider it initialized
+    if mint_info.owner == &spl_token_2022::id() && !mint_info.data_is_empty() {
+        return Ok(());
+    }
+
+    require!(
+        mint_info.owner == &system_program::ID || mint_info.data_is_empty(),
+        SRWAError::MintInvalidOwner
+    );
+
+    // allocate space with required extensions
+    let mut extensions = vec![
+        ExtensionType::TransferHook,
+        ExtensionType::DefaultAccountState,
+    ];
+
+    // Add PermanentDelegate only if configured
+    if config.permanent_delegate != Pubkey::default() {
+        extensions.push(ExtensionType::PermanentDelegate);
+    }
+
+    // Add MetadataPointer for on-chain metadata support
+    if !config.metadata_uri.is_empty() {
+        extensions.push(ExtensionType::MetadataPointer);
+    }
+    let mint_size = ExtensionType::try_calculate_account_len::<spl_token_2022::state::Mint>(&extensions[..])
+        .map_err(|_| SRWAError::MintInitializationFailed)?;
+    let rent = Rent::get()?;
+    let lamports = rent.minimum_balance(mint_size);
+
+    invoke(
+        &system_instruction::create_account(
+            admin_info.key,
+            mint_info.key,
+            lamports,
+            mint_size as u64,
+            &spl_token_2022::id(),
+        ),
+        &[admin_info.clone(), mint_info.clone(), system_program],
+    )?;
+
+    // Configure MetadataPointer if metadata_uri is provided
+    if !config.metadata_uri.is_empty() {
+        invoke(
+            &metadata_pointer::instruction::initialize(
+                &spl_token_2022::id(),
+                mint_info.key,
+                Some(config.roles.issuer_admin),
+                Some(*mint_info.key), // Points to itself for Token Metadata
+            )?,
+            &[mint_info.clone()],
+        )?;
+    }
+
+    // Configure transfer hook pointing to controller program
+    invoke(
+        &transfer_hook::instruction::initialize(
+            &spl_token_2022::id(),
+            mint_info.key,
+            Some(config.roles.compliance_officer),
+            Some(srwa_controller::ID),
+        )?,
+        &[mint_info.clone()],
+    )?;
+
+    // Default account state (frozen or initialized)
+    let default_state = if config.default_frozen {
+        AccountState::Frozen
+    } else {
+        AccountState::Initialized
+    };
+    invoke(
+        &default_account_state::instruction::initialize_default_account_state(
+            &spl_token_2022::id(),
+            mint_info.key,
+            &default_state,
+        )?,
+        &[mint_info.clone()],
+    )?;
+
+    // Permanent delegate if configured
+    if config.permanent_delegate != Pubkey::default() {
+        invoke(
+            &token_2022_ix::initialize_permanent_delegate(
+                &spl_token_2022::id(),
+                mint_info.key,
+                &config.permanent_delegate,
+            )?,
+            &[mint_info.clone()],
+        )?;
+    }
+
+    // Initialize mint authorities
+    invoke(
+        &token_2022_ix::initialize_mint2(
+            &spl_token_2022::id(),
+            mint_info.key,
+            &config.roles.issuer_admin,
+            Some(&config.roles.transfer_agent),
+            decimals,
+        )?,
+        &[mint_info],
+    )?;
 
     Ok(())
 }

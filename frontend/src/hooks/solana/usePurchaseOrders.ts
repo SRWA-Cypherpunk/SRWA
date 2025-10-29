@@ -99,10 +99,6 @@ export function usePurchaseOrders() {
 
         const { mint, quantity, pricePerTokenLamports, adminVault } = params;
 
-        // Generate a unique timestamp that fits in i64
-        // Strategy: use microseconds since epoch + random suffix
-        // Max i64: 9,223,372,036,854,775,807
-        // Current time in microseconds: ~1,730,000,000,000,000 (fits in i64)
 
         const nowMs = Date.now(); // milliseconds since epoch
         const nowMicros = nowMs * 1000; // convert to microseconds

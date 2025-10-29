@@ -111,4 +111,7 @@ pub enum SRWAError {
 
     #[msg("KYC provider is not approved for this token")]
     KYCProviderNotApproved,
+
+    #[msg("Failed to initialize token-2022 mint")]
+    MintInitializationFailed,
 }
