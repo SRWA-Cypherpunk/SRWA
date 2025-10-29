@@ -25,7 +25,7 @@ import { RaydiumPoolOperations } from '@/components/raydium/RaydiumPoolOperation
 import { UserRole } from '@/types/srwa-contracts';
 
 // Icons
-import { Plus, Zap, Loader2, RefreshCw, TrendingUp, DollarSign, Activity, ExternalLink, Shield } from "lucide-react";
+import { Plus, Zap, Loader2, RefreshCw, TrendingUp, DollarSign, Activity, ExternalLink, Shield, LayoutGrid, List } from "lucide-react";
 import { motion } from 'framer-motion';
 
 const formatCurrency = (value: number) => {
@@ -150,7 +150,7 @@ export default function DashboardMarkets() {
                 </p>
               </CardContent>
             </Card>
-          ) : (
+          ) : viewMode === 'grid' ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {/* SRWA Token Markets - Display as Pools */}
               {srwaMarkets.map((market, index) => {
@@ -265,6 +265,118 @@ export default function DashboardMarkets() {
                   </motion.div>
                 );
               })}
+            </div>
+          ) : (
+            /* List View */
+            <div className="overflow-x-auto">
+              <div className="min-w-full inline-block align-middle">
+                <div className="overflow-hidden border border-border/50 rounded-lg">
+                  <table className="min-w-full divide-y divide-border/50">
+                    <thead className="bg-card/50">
+                      <tr>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          Token Pair
+                        </th>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          TVL
+                        </th>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          APY
+                        </th>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          Available SOL
+                        </th>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          Risk
+                        </th>
+                        <th scope="col" className="px-4 py-3 text-left text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          Price
+                        </th>
+                        <th scope="col" className="px-4 py-3 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/50 bg-background">
+                      {raydiumPools.map((pool, index) => {
+                        const tokenInfo = deployedTokens.find(t => t.mint.toBase58() === pool.tokenMint.toBase58());
+                        const metrics = getMockPoolMetrics(pool.poolId.toBase58());
+
+                        return (
+                          <motion.tr
+                            key={pool.publicKey.toBase58()}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ duration: 0.2, delay: index * 0.03 }}
+                            className="hover:bg-purple-500/5 transition-colors"
+                          >
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-semibold text-foreground">
+                                  {tokenInfo?.symbol || 'SRWA'} / SOL
+                                </span>
+                                <Badge variant="outline" className="text-[10px] bg-purple-500/10 text-purple-400 border-purple-500/30">
+                                  CPMM
+                                </Badge>
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <span className="text-sm font-semibold text-purple-400">
+                                {formatCurrency(metrics.tvl)}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <div className="flex items-center gap-1">
+                                <TrendingUp className="h-3 w-3 text-purple-400" />
+                                <span className="text-sm font-semibold text-purple-400">
+                                  {metrics.apy.toFixed(2)}%
+                                </span>
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <span className="text-sm text-foreground">
+                                {metrics.availableSOL.toFixed(2)} SOL
+                              </span>
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <Badge variant="outline" className={`text-xs ${getRiskBadgeColor(metrics.riskLevel)}`}>
+                                {metrics.riskLevel}
+                              </Badge>
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <span className="text-sm text-foreground">
+                                {metrics.price.toFixed(4)}
+                              </span>
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  className="bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border-purple-500/30"
+                                  onClick={() => handleViewPoolDetails(pool.poolId.toBase58())}
+                                >
+                                  <Zap className="h-3 w-3 mr-1" />
+                                  Earn
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    window.open(`https://solscan.io/account/${pool.poolId.toBase58()}?cluster=devnet`, '_blank');
+                                  }}
+                                >
+                                  <ExternalLink className="h-3 w-3" />
+                                </Button>
+                              </div>
+                            </td>
+                          </motion.tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           )}
         </div>
