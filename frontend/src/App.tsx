@@ -5,6 +5,7 @@ import { CombinedProvider } from "@/contexts/CombinedProvider";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UserRole } from "@/types/srwa-contracts";
 import { FEATURES } from "@/lib/constants/features";
+import { InstallPrompt } from "@/components/mobile/InstallPrompt";
 import Index from "./pages/Index";
 import Markets from "./pages/markets/Markets";
 import Portfolio from "./pages/portfolio/Portfolio";
@@ -32,6 +33,7 @@ const App = () => (
   <CombinedProvider>
     <Toaster />
     <Sonner />
+    <InstallPrompt />
     <BrowserRouter>
       <Routes>
         {/* Public routes - always available */}

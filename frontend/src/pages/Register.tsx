@@ -50,10 +50,10 @@ export default function Register() {
   if (!connected) {
     return (
       <div className="flex items-center justify-center min-h-screen p-4">
-        <Card className="max-w-md w-full">
+        <Card className="max-w-md w-full backdrop-blur-md bg-white/[0.03] border-white/10 animate-fade-in">
           <CardHeader>
-            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-              <Wallet className="w-8 h-8 text-primary" />
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[hsl(var(--brand-500))] to-[hsl(var(--brand-600))] flex items-center justify-center mx-auto mb-4 shadow-[0_0_20px_rgba(153,69,255,0.3)]">
+              <Wallet className="w-8 h-8 text-white" />
             </div>
             <CardTitle className="text-center text-2xl">
               Connect Your Wallet
@@ -76,10 +76,10 @@ export default function Register() {
   if (roleRoute) {
     return (
       <div className="flex items-center justify-center min-h-screen p-4">
-        <Card className="max-w-md w-full">
+        <Card className="max-w-md w-full backdrop-blur-md bg-white/[0.03] border-white/10 animate-fade-in">
           <CardHeader>
-            <div className="w-16 h-16 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-4">
-              <CheckCircle className="w-8 h-8 text-green-500" />
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[hsl(var(--accent-green-500))] to-[hsl(var(--accent-green-400))] flex items-center justify-center mx-auto mb-4 shadow-[0_0_20px_rgba(20,241,149,0.3)]">
+              <CheckCircle className="w-8 h-8 text-white" />
             </div>
             <CardTitle className="text-center text-2xl">
               You are already registered!

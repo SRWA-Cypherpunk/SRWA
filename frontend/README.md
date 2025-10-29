@@ -752,6 +752,65 @@ This documentation is licensed under the MIT License. See [LICENSE](./LICENSE) f
 
 ---
 
+## Mobile & PWA Support
+
+SRWA Platform is optimized for mobile devices and available as a Progressive Web App (PWA) for both Android and iOS.
+
+### Features
+
+- **Native App Experience**: Install SRWA as a standalone app on your mobile device
+- **Offline Support**: Access cached data and portfolio information without internet connection
+- **Performance Optimized**: Fast loading with service worker caching
+- **Mobile Wallet Integration**: Seamless integration with Solana mobile wallets
+- **Responsive Design**: Fully optimized UI for mobile screens
+
+### Installation
+
+#### Android (Chrome/Brave)
+
+1. Visit the SRWA Platform website on your mobile browser
+2. Tap the "Install" prompt that appears at the bottom of the screen
+3. Alternatively, tap the menu (⋮) → "Add to Home Screen" or "Install App"
+4. The app will be added to your home screen
+
+#### iOS (Safari)
+
+1. Open the SRWA Platform in Safari
+2. Tap the Share button (□↑) at the bottom of the screen
+3. Scroll down and tap "Add to Home Screen"
+4. Tap "Add" in the top right corner
+5. The app icon will appear on your home screen
+
+### Mobile Wallet Compatibility
+
+SRWA Platform supports the following mobile wallets through the Solana Mobile Wallet Adapter:
+
+- **Phantom Wallet**: Full support for mobile transactions
+- **Backpack Wallet**: Native mobile integration
+- **Solflare Wallet**: Mobile wallet support
+- **Torus Wallet**: Web-based mobile wallet
+
+### Features for Mobile Users
+
+- **Install Prompt**: Automatic prompt to install the app when browsing on mobile
+- **Mobile Badge**: Visual indicator when running in PWA mode
+- **Optimized Navigation**: Touch-friendly interface with mobile-specific navigation
+- **Responsive Tables**: Horizontal scrolling for data tables on small screens
+- **Mobile-First Design**: All features accessible on mobile devices
+
+### Technical Details
+
+- **Service Worker**: Aggressive caching for Solana RPC calls (5-10 minute cache)
+- **Offline Mode**: Portfolio data available offline with cached information
+- **Push Notifications**: Ready for future notification features
+- **Auto-Update**: Automatic updates when new versions are deployed
+
+### Publishing
+
+**Solana dApp Store**: SRWA is available on the Solana dApp Store for easy discovery and installation.
+
+---
+
 ## Project Setup
 
 This project is built with:

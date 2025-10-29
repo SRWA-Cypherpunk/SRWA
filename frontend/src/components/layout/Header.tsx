@@ -1,11 +1,13 @@
 import { useState, useEffect, useMemo, type MouseEvent } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Menu, X, Smartphone } from "lucide-react";
 import { SolanaWalletButton } from "@/components/wallet/SolanaWalletButton";
 import { FEATURES } from "@/lib/constants/features";
 import { useQueryClient } from '@tanstack/react-query';
 import { useProgramsSafe } from '@/contexts/ProgramContext';
+import { useMobileDetection } from "@/hooks/ui/useMobileDetection";
 
 // Route constants
 const ROUTES = {
@@ -38,6 +40,7 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
   const { connected } = useWallet();
   const queryClient = useQueryClient();
   const { programs } = useProgramsSafe();
+  const { isMobile, isStandalone } = useMobileDetection();
 
   const roleNavItems = useMemo(() => {
     if (!userRegistry) return [];
@@ -148,11 +151,20 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
       <div className="container mx-auto flex h-14 sm:h-16 max-w-7xl items-center px-4 sm:px-6">
 
         {/* Logo */}
-        <div className="flex flex-1 items-center">
+        <div className="flex flex-1 items-center gap-2 sm:gap-3">
           <Link to={ROUTES.HOME} className="flex items-center gap-2 sm:gap-3 group">
             <img src={Logo} alt="SRWA Logo" className="h-auto w-4 sm:w-6 md:w-8 transition-transform group-hover:scale-105" />
             <img src={SRWALetters} alt="SRWA" className="h-auto w-16 sm:w-20 md:w-24 transition-transform group-hover:scale-105" />
           </Link>
+          {(isMobile || isStandalone) && (
+            <Badge
+              variant="outline"
+              className="hidden sm:flex items-center gap-1 border-purple-500/30 bg-purple-500/10 text-purple-300 text-xs"
+            >
+              <Smartphone className="w-3 h-3" />
+              {isStandalone ? 'PWA' : 'Mobile'}
+            </Badge>
+          )}
         </div>
 
         {/* Desktop Navigation */}

@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
+import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -37,6 +38,70 @@ export default defineConfig(({ mode }) => ({
         global: true,
         process: true,
       },
+    }),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['icons/icon-192x192.png', 'icons/icon-512x512.png', 'manifest.json'],
+      manifest: {
+        name: 'SRWA - Real World Assets on Solana',
+        short_name: 'SRWA',
+        description: 'Institutional-grade DeFi for Real-World Assets on Solana with on-chain compliance, permissioned markets, and hybrid oracles',
+        theme_color: '#9945FF',
+        background_color: '#0a0a0a',
+        display: 'standalone',
+        orientation: 'portrait-primary',
+        start_url: '/',
+        icons: [
+          {
+            src: '/icons/icon-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any maskable'
+          },
+          {
+            src: '/icons/icon-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
+          }
+        ],
+        categories: ['finance', 'productivity', 'business']
+      },
+      workbox: {
+        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024, // 6 MB
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
+        globIgnores: ['**/partners/**', '**/docs/**'],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/api\.devnet\.solana\.com\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'solana-rpc-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 5 * 60, // 5 minutes
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            urlPattern: /^https:\/\/.*\.solana\.com\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'solana-api-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 10 * 60, // 10 minutes
+              }
+            }
+          }
+        ]
+      },
+      devOptions: {
+        enabled: true
+      }
     }),
   ].filter(Boolean),
   resolve: {
