@@ -54,7 +54,7 @@ export const API_ENDPOINTS = {
 
 // === Contract Addresses ===
 export const CONTRACTS = {
-  rwaToken: import.meta.env.VITE_RWA_TOKEN_PROGRAM_ID || '',
+  rwaToken: import.meta.env.VITE_RWA_it  || '',
   compliance: import.meta.env.VITE_COMPLIANCE_PROGRAM_ID || '',
   lending: import.meta.env.VITE_LENDING_PROGRAM_ID || '',
   tokenFactory: import.meta.env.VITE_TOKEN_FACTORY_PROGRAM_ID || '',

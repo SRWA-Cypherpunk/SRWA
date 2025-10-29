@@ -33,12 +33,14 @@ export class SRWAClient {
   public connection: Connection;
   public provider: anchor.AnchorProvider | null;
   private walletFundingPromise: Promise<void> | null;
+  private cachedWalletPubkey: string | null;
 
   constructor() {
     this.connection = new Connection(RPC_ENDPOINT, "confirmed");
     this.provider = null;
     this.programs = null;
     this.walletFundingPromise = null;
+    this.cachedWalletPubkey = null;
   }
 
   private async ensureWalletFunded(provider: anchor.AnchorProvider) {
@@ -121,16 +123,29 @@ export class SRWAClient {
   }
 
   public async loadPrograms() {
-    if (this.programs) {
-      console.log("✅ Programas já carregados, retornando cache");
-      return this.programs;
-    }
-
     if (!this.provider) {
       throw new Error("Provider not set. Call setProvider() first.");
     }
 
     const provider = this.provider as anchor.AnchorProvider;
+    const currentWalletPubkey = provider.wallet?.publicKey?.toString() || null;
+
+    // Invalidate cache if wallet has changed
+    if (this.programs && this.cachedWalletPubkey !== currentWalletPubkey) {
+      console.log("🔄 Wallet mudou, invalidando cache de programas", {
+        antigo: this.cachedWalletPubkey,
+        novo: currentWalletPubkey,
+      });
+      this.programs = null;
+      this.cachedWalletPubkey = null;
+    }
+
+    if (this.programs) {
+      console.log("✅ Programas já carregados, retornando cache", {
+        wallet: currentWalletPubkey,
+      });
+      return this.programs;
+    }
 
     try {
       await this.ensureWalletFunded(provider);
@@ -240,6 +255,11 @@ export class SRWAClient {
       const loadedPrograms = Object.keys(this.programs);
       console.log(`✅ Programas carregados com sucesso: ${loadedPrograms.join(', ')}`);
       console.log(`📊 Total de programas carregados: ${loadedPrograms.length}`);
+
+      // Save wallet pubkey to cache
+      this.cachedWalletPubkey = currentWalletPubkey;
+      console.log(`💾 Cache salvo para wallet: ${currentWalletPubkey}`);
+
       return this.programs;
     } catch (error) {
       console.error("❌ Erro ao carregar programas:", error);

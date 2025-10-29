@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { UserRole } from '@/types/srwa-contracts';
 import { useUserRegistry } from '@/hooks/solana';
+import { useWallet } from '@solana/wallet-adapter-react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -63,11 +64,18 @@ export function RegistrationWizard() {
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [isRegistering, setIsRegistering] = useState(false);
   const { registerUser } = useUserRegistry();
+  const wallet = useWallet();
   const navigate = useNavigate();
 
   const handleRegister = async () => {
     if (!selectedRole) {
       toast.error('Selecione um tipo de usuário');
+      return;
+    }
+
+    // Check if wallet is connected
+    if (!wallet.connected || !wallet.publicKey) {
+      toast.error('Conecte sua wallet primeiro');
       return;
     }
 
@@ -177,7 +185,7 @@ export function RegistrationWizard() {
         <Button
           size="lg"
           onClick={handleRegister}
-          disabled={!selectedRole || isRegistering}
+          disabled={!selectedRole || isRegistering || !wallet.connected}
           className="min-w-[200px]"
         >
           {isRegistering ? (
@@ -185,6 +193,10 @@ export function RegistrationWizard() {
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Registrando...
             </>
+          ) : !wallet.connected ? (
+            'Conecte sua Wallet'
+          ) : !selectedRole ? (
+            'Selecione um Tipo'
           ) : (
             'Confirmar Registro'
           )}

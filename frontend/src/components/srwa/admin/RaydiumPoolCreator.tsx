@@ -14,9 +14,9 @@ import { PublicKey, Transaction } from '@solana/web3.js';
 import {
   getAssociatedTokenAddressSync,
   createAssociatedTokenAccountInstruction,
-  TOKEN_PROGRAM_ID,
+  pu,
   TOKEN_2022_PROGRAM_ID,
-  ASSOCIATED_TOKEN_PROGRAM_ID,
+  ASSOCIATED_g,
   unpackMint,
   getMint,
   getAccount
