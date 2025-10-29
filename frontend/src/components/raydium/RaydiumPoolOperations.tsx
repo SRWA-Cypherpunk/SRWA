@@ -1,21 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { HeroButton } from '@/components/ui/hero-button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useWallet } from '@/contexts/wallet/WalletContext';
-import { useRaydiumCpmm, type RaydiumPoolDisplay, type SwapDirection } from '@/hooks/raydium/useRaydiumCpmm';
+import { useRaydiumCpmm, type RaydiumPoolDisplay } from '@/hooks/raydium/useRaydiumCpmm';
 import { useRaydiumPools } from '@/hooks/solana';
 import { useDeployedTokens } from '@/hooks/solana/useDeployedTokens';
-import { ArrowRight, Loader2, RefreshCw } from 'lucide-react';
+import { Loader2, RefreshCw, Plus, Minus } from 'lucide-react';
 import { toast } from 'sonner';
-
-interface SwapFormState {
-  direction: SwapDirection;
-  amount: string;
-  slippage: string;
-}
 
 interface LiquidityFormState {
   amount: string;
@@ -41,16 +36,11 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
   const wallet = useWallet();
   const { pools } = useRaydiumPools();
   const { tokens: deployedTokens } = useDeployedTokens();
-  const { loadPoolInfo, swap, addLiquidity, removeLiquidity } = useRaydiumCpmm();
+  const { loadPoolInfo, addLiquidity, removeLiquidity } = useRaydiumCpmm();
 
   const [poolInfo, setPoolInfo] = useState<RaydiumPoolDisplay | null>(null);
   const [loading, setLoading] = useState(false);
   const [txLoading, setTxLoading] = useState(false);
-  const [swapForm, setSwapForm] = useState<SwapFormState>({
-    direction: 'AtoB',
-    amount: '',
-    slippage: '1',
-  });
   const [liquidityForm, setLiquidityForm] = useState<LiquidityFormState>({
     amount: '',
     slippage: '1',
@@ -58,9 +48,9 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
 
   const sections: { id: SectionId; label: string }[] = useMemo(
     () => [
-      { id: 'info', label: 'Informações do Pool' },
-      { id: 'ops', label: 'Operações' },
-      { id: 'onchain', label: 'Registro On-chain' },
+      { id: 'info', label: 'Pool Details' },
+      { id: 'ops', label: 'Operations' },
+      { id: 'onchain', label: 'On-chain Data' },
     ],
     []
   );
@@ -124,24 +114,6 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
     return resolveTokenMeta(poolInfo.mintB.address, poolInfo.mintB.symbol ?? undefined, 'Token B');
   }, [poolInfo, resolveTokenMeta]);
 
-  const activeInputMeta = useMemo(() => {
-    if (!poolInfo) return null;
-    return swapForm.direction === 'AtoB' ? tokenAMeta : tokenBMeta;
-  }, [poolInfo, swapForm.direction, tokenAMeta, tokenBMeta]);
-
-  const activeOutputMeta = useMemo(() => {
-    if (!poolInfo) return null;
-    return swapForm.direction === 'AtoB' ? tokenBMeta : tokenAMeta;
-  }, [poolInfo, swapForm.direction, tokenAMeta, tokenBMeta]);
-
-  const swapLabelForward = useMemo(() => {
-    return `${tokenAMeta?.symbol ?? 'Token A'} → ${tokenBMeta?.symbol ?? 'Token B'}`;
-  }, [tokenAMeta?.symbol, tokenBMeta?.symbol]);
-
-  const swapLabelReverse = useMemo(() => {
-    return `${tokenBMeta?.symbol ?? 'Token B'} → ${tokenAMeta?.symbol ?? 'Token A'}`;
-  }, [tokenAMeta?.symbol, tokenBMeta?.symbol]);
-
   const refreshPoolInfo = useCallback(async () => {
     if (!poolId) {
       setPoolInfo(null);
@@ -180,32 +152,6 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
     }
     return true;
   }, [wallet.publicKey]);
-
-  const handleSwap = async () => {
-    if (!poolId || !swapForm.amount) {
-      toast.error('Informe uma quantidade para swap');
-      return;
-    }
-    if (!ensureWallet()) return;
-
-    setTxLoading(true);
-    try {
-      const txId = await swap(poolId, swapForm.direction, swapForm.amount, swapForm.slippage);
-      toast.success('Swap realizado!', {
-        action: {
-          label: 'Explorer',
-          onClick: () => window.open(`https://explorer.solana.com/tx/${txId}?cluster=devnet`, '_blank'),
-        },
-      });
-      setSwapForm((prev) => ({ ...prev, amount: '' }));
-      await refreshPoolInfo();
-    } catch (error: any) {
-      console.error('[RaydiumPoolOperations] Swap error:', error);
-      toast.error(error?.message ?? 'Erro ao realizar swap');
-    } finally {
-      setTxLoading(false);
-    }
-  };
 
   const handleAddLiquidity = async () => {
     if (!poolId || !liquidityForm.amount) {
@@ -260,60 +206,61 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
   };
 
   const isBusy = loading || txLoading;
-  const activeIndex = sections.findIndex((section) => section.id === activeSection);
-  const goToPrev = () => {
-    if (activeIndex > 0) {
-      setActiveSection(sections[activeIndex - 1].id);
-    }
-  };
-  const goToNext = () => {
-    if (activeIndex < sections.length - 1) {
-      setActiveSection(sections[activeIndex + 1].id);
-    }
-  };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2 text-[11px] font-medium">
-        {sections.map((section, index) => {
-          const isActive = section.id === activeSection;
-          return (
-            <div key={section.id} className="flex items-center gap-2">
-              <Button
-                variant={isActive ? 'default' : 'outline'}
-                size="sm"
-                className="h-8 whitespace-nowrap"
+    <div className="space-y-6">
+      {/* Segmented Control Navigation */}
+      <div className="flex items-center justify-center">
+        <div className="inline-flex items-center gap-1 rounded-xl bg-muted/40 p-1.5 backdrop-blur-sm border border-border/50">
+          {sections.map((section) => {
+            const isActive = section.id === activeSection;
+            return (
+              <button
+                key={section.id}
                 onClick={() => setActiveSection(section.id)}
+                className={`
+                  relative px-4 py-2.5 rounded-lg text-sm font-semibold whitespace-nowrap
+                  transition-all duration-300 ease-out
+                  ${isActive
+                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg shadow-purple-500/30'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-background/60'
+                  }
+                `}
               >
                 {section.label}
-              </Button>
-              {index < sections.length - 1 && <ArrowRight className="h-3 w-3 text-muted-foreground" />}
-            </div>
-          );
-        })}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {activeSection === 'info' && (
-        <Card>
+        <Card className="border-purple-500/20 shadow-lg shadow-purple-500/5">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Informações do Pool</CardTitle>
-            <Button variant="outline" size="icon" onClick={refreshPoolInfo} disabled={isBusy}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+            <CardTitle className="text-xl">Pool Details</CardTitle>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={refreshPoolInfo}
+              disabled={isBusy}
+              className="hover:border-purple-500/50 hover:bg-purple-500/10 transition-colors"
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin text-purple-400" /> : <RefreshCw className="h-4 w-4" />}
             </Button>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
             {!wallet.publicKey ? (
               <p className="text-sm text-muted-foreground">
-                Conecte sua wallet para carregar os dados do pool e executar operações.
+                Connect your wallet to load pool data and execute operations.
               </p>
             ) : loading ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Carregando dados do pool...
+                <Loader2 className="h-4 w-4 animate-spin text-purple-400" />
+                Loading pool data...
               </div>
             ) : poolInfo ? (
               <div className="space-y-3">
-                <div className="rounded-lg border border-border/40 bg-muted/5 p-3 space-y-2">
+                <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 p-3 space-y-2 hover:border-purple-500/30 transition-colors">
                   <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">Tokens</h3>
                   <div className="space-y-2">
                     <div>
@@ -338,8 +285,8 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
                     </div>
                   </div>
                 </div>
-                <div className="rounded-lg border border-border/40 bg-muted/5 p-3 space-y-2">
-                  <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">Identificadores</h3>
+                <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 p-3 space-y-2 hover:border-purple-500/30 transition-colors">
+                  <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">Identifiers</h3>
                   <div className="space-y-2 text-xs font-mono">
                     <p>
                       <span className="font-semibold text-muted-foreground uppercase tracking-wide">Pool ID:</span>{' '}
@@ -361,8 +308,8 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
                     </p>
                   </div>
                 </div>
-                <div className="rounded-lg border border-border/40 bg-muted/5 p-3">
-                  <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">Estatísticas</h3>
+                <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 p-3 hover:border-purple-500/30 transition-colors">
+                  <h3 className="text-xs font-semibold uppercase text-muted-foreground tracking-wide">Statistics</h3>
                   <dl className="grid grid-cols-2 gap-3 text-sm mt-2">
                     <div>
                       <dt className="text-muted-foreground text-xs uppercase tracking-wide">
@@ -391,7 +338,7 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Não foi possível carregar os dados do pool. Verifique o ID e tente novamente.
+                Unable to load pool data. Please check the ID and try again.
               </p>
             )}
           </CardContent>
@@ -399,86 +346,30 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
       )}
 
       {activeSection === 'ops' && (
-        <Card>
+        <Card className="border-purple-500/20 shadow-lg shadow-purple-500/5">
           <CardHeader>
-            <CardTitle>Operações</CardTitle>
+            <CardTitle className="text-xl">Operations</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {!poolInfo ? (
               <p className="text-sm text-muted-foreground">
-                Carregue as informações do pool primeiro para executar operações.
+                Load pool information first to execute operations.
               </p>
             ) : (
-              <Tabs defaultValue="swap" className="w-full">
-                <TabsList className="grid w-full grid-cols-3 text-xs">
-                  <TabsTrigger value="swap" className="py-2">
-                    Swap
-                  </TabsTrigger>
+              <Tabs defaultValue="add" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 text-xs">
                   <TabsTrigger value="add" className="py-2">
-                    Adicionar Liquidez
+                    Invest
                   </TabsTrigger>
                   <TabsTrigger value="remove" className="py-2">
-                    Remover Liquidez
+                    Withdraw
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="swap" className="pt-4 space-y-3">
-                  <div className="flex flex-wrap gap-2">
-                    <Button
-                      type="button"
-                      variant={swapForm.direction === 'AtoB' ? 'default' : 'outline'}
-                      onClick={() => setSwapForm((prev) => ({ ...prev, direction: 'AtoB' }))}
-                    >
-                      {swapLabelForward}
-                    </Button>
-                    <Button
-                      type="button"
-                      variant={swapForm.direction === 'BtoA' ? 'default' : 'outline'}
-                      onClick={() => setSwapForm((prev) => ({ ...prev, direction: 'BtoA' }))}
-                    >
-                      {swapLabelReverse}
-                    </Button>
-                  </div>
-
+                <TabsContent value="add" className="pt-4 space-y-3 min-h-[280px]">
                   <div className="space-y-2">
                     <Label>
-                      Quantidade ({activeInputMeta?.symbol ?? 'Token'})
-                    </Label>
-                    <Input
-                      type="number"
-                      inputMode="decimal"
-                      placeholder={`0.0 ${activeInputMeta?.symbol ?? ''}`}
-                      value={swapForm.amount}
-                      onChange={(event) => setSwapForm((prev) => ({ ...prev, amount: event.target.value }))}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Slippage (%)</Label>
-                    <Input
-                      type="number"
-                      inputMode="decimal"
-                      value={swapForm.slippage}
-                      onChange={(event) => setSwapForm((prev) => ({ ...prev, slippage: event.target.value }))}
-                    />
-                    <p className="text-[11px] text-muted-foreground">
-                      Recebe aproximadamente {activeOutputMeta?.symbol ?? 'token'} considerando slippage.
-                    </p>
-                  </div>
-
-                  <Button
-                    onClick={handleSwap}
-                    disabled={txLoading || !poolInfo}
-                    className="w-full"
-                  >
-                    {txLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Executar Swap'}
-                  </Button>
-                </TabsContent>
-
-                <TabsContent value="add" className="pt-4 space-y-3">
-                  <div className="space-y-2">
-                    <Label>
-                      Quantidade ({tokenAMeta?.symbol ?? 'Token A'})
+                      Amount ({tokenAMeta?.symbol ?? 'Token A'})
                     </Label>
                     <Input
                       type="number"
@@ -488,6 +379,7 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
                       onChange={(event) =>
                         setLiquidityForm((prev) => ({ ...prev, amount: event.target.value }))
                       }
+                      className="border-purple-500/20 focus:border-purple-500"
                     />
                   </div>
                   <div className="space-y-2">
@@ -499,20 +391,23 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
                       onChange={(event) =>
                         setLiquidityForm((prev) => ({ ...prev, slippage: event.target.value }))
                       }
+                      className="border-purple-500/20 focus:border-purple-500"
                     />
                   </div>
-                  <Button
+                  <HeroButton
                     onClick={handleAddLiquidity}
                     disabled={txLoading || !poolInfo}
+                    variant="brand"
                     className="w-full"
+                    icon={txLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
                   >
-                    {txLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Adicionar Liquidez'}
-                  </Button>
+                    {txLoading ? 'Processing...' : 'Invest'}
+                  </HeroButton>
                 </TabsContent>
 
-                <TabsContent value="remove" className="pt-4 space-y-3">
+                <TabsContent value="remove" className="pt-4 space-y-3 min-h-[280px]">
                   <div className="space-y-2">
-                    <Label>Quantidade de LP tokens</Label>
+                    <Label>LP Token Amount</Label>
                     <Input
                       type="number"
                       inputMode="decimal"
@@ -521,6 +416,7 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
                       onChange={(event) =>
                         setLiquidityForm((prev) => ({ ...prev, amount: event.target.value }))
                       }
+                      className="border-purple-500/20 focus:border-purple-500"
                     />
                   </div>
                   <div className="space-y-2">
@@ -532,15 +428,18 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
                       onChange={(event) =>
                         setLiquidityForm((prev) => ({ ...prev, slippage: event.target.value }))
                       }
+                      className="border-purple-500/20 focus:border-purple-500"
                     />
                   </div>
-                  <Button
+                  <HeroButton
                     onClick={handleRemoveLiquidity}
                     disabled={txLoading || !poolInfo}
-                    className="w-full"
+                    variant="outline"
+                    className="w-full border-2 hover:border-red-500/50 hover:bg-red-500/10"
+                    icon={txLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Minus className="h-4 w-4" />}
                   >
-                    {txLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Remover Liquidez'}
-                  </Button>
+                    {txLoading ? 'Processing...' : 'Withdraw'}
+                  </HeroButton>
                 </TabsContent>
               </Tabs>
             )}
@@ -550,55 +449,50 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
 
       {activeSection === 'onchain' && (
         raydiumPool ? (
-          <Card>
+          <Card className="border-purple-500/20 shadow-lg shadow-purple-500/5">
             <CardHeader>
-              <CardTitle>Registro On-chain</CardTitle>
+              <CardTitle className="text-xl">On-chain Data</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-2 text-xs">
-              <p className="font-mono">
-                <span className="font-semibold text-muted-foreground uppercase tracking-wide">Conta do Pool:</span>{' '}
-                {shortenAddress(raydiumPool.publicKey.toBase58(), 6)}
-              </p>
-              <p className="font-mono">
-                <span className="font-semibold text-muted-foreground uppercase tracking-wide">Administrador:</span>{' '}
-                {shortenAddress(raydiumPool.admin.toBase58(), 6)}
-              </p>
-              <p className="font-mono">
-                <span className="font-semibold text-muted-foreground uppercase tracking-wide">Token SRWA:</span>{' '}
-                {tokenBMeta?.symbol ?? '—'} — {shortenAddress(raydiumPool.tokenMint.toBase58(), 6)}
-              </p>
-              <p className="font-mono">
-                <span className="font-semibold text-muted-foreground uppercase tracking-wide">Token Base:</span>{' '}
-                {tokenAMeta?.symbol ?? '—'} — {shortenAddress(raydiumPool.baseMint.toBase58(), 6)}
-              </p>
-              <p className="font-mono">
-                <span className="font-semibold text-muted-foreground uppercase tracking-wide">Ativa:</span>{' '}
-                {raydiumPool.isActive ? 'Sim' : 'Não'}
-              </p>
+            <CardContent className="space-y-3">
+              <div className="rounded-lg border border-purple-500/20 bg-purple-500/5 p-3 space-y-2.5 hover:border-purple-500/30 transition-colors">
+                <p className="font-mono text-xs">
+                  <span className="font-semibold text-muted-foreground uppercase tracking-wide">Pool Account:</span>{' '}
+                  {shortenAddress(raydiumPool.publicKey.toBase58(), 6)}
+                </p>
+                <p className="font-mono text-xs">
+                  <span className="font-semibold text-muted-foreground uppercase tracking-wide">Administrator:</span>{' '}
+                  {shortenAddress(raydiumPool.admin.toBase58(), 6)}
+                </p>
+                <p className="font-mono text-xs">
+                  <span className="font-semibold text-muted-foreground uppercase tracking-wide">SRWA Token:</span>{' '}
+                  {tokenBMeta?.symbol ?? '—'} — {shortenAddress(raydiumPool.tokenMint.toBase58(), 6)}
+                </p>
+                <p className="font-mono text-xs">
+                  <span className="font-semibold text-muted-foreground uppercase tracking-wide">Base Token:</span>{' '}
+                  {tokenAMeta?.symbol ?? '—'} — {shortenAddress(raydiumPool.baseMint.toBase58(), 6)}
+                </p>
+                <p className="font-mono text-xs">
+                  <span className="font-semibold text-muted-foreground uppercase tracking-wide">Active:</span>{' '}
+                  <span className={raydiumPool.isActive ? 'text-green-400' : 'text-red-400'}>
+                    {raydiumPool.isActive ? 'Yes' : 'No'}
+                  </span>
+                </p>
+              </div>
             </CardContent>
           </Card>
         ) : (
-          <Card>
+          <Card className="border-purple-500/20 shadow-lg shadow-purple-500/5">
             <CardHeader>
-              <CardTitle>Registro On-chain</CardTitle>
+              <CardTitle className="text-xl">On-chain Data</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">
-                Nenhum registro on-chain encontrado para este pool.
+                No on-chain record found for this pool.
               </p>
             </CardContent>
           </Card>
         )
       )}
-
-      <div className="flex items-center justify-between pt-2">
-        <Button variant="ghost" size="sm" onClick={goToPrev} disabled={activeIndex === 0}>
-          Anterior
-        </Button>
-        <Button variant="ghost" size="sm" onClick={goToNext} disabled={activeIndex === sections.length - 1}>
-          Próximo
-        </Button>
-      </div>
     </div>
   );
 }

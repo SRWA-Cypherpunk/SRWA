@@ -3,7 +3,7 @@ import '@/styles/features/dashboard.css';
 import { DashboardLayout, DashboardSection } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { HeroButton } from "@/components/ui/hero-button";
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, Legend } from "recharts";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
 import { DashboardNav } from "@/components/dashboard/DashboardNav";
 
 // Hooks
@@ -15,7 +15,7 @@ import { useUserRegistry } from '@/hooks/solana';
 import { UserRole } from '@/types/srwa-contracts';
 
 // Icons
-import { Plus, BarChart3 } from "lucide-react";
+import { Plus, BarChart3, TrendingUp, DollarSign, Package, Users } from "lucide-react";
 
 export default function DashboardOverview() {
   const navigate = useNavigate();
@@ -58,12 +58,12 @@ export default function DashboardOverview() {
   const dashboardStats = allMarkets.length > 0 ? {
     totalValueLocked: `$${(allMarkets.reduce((sum, pool) => sum + pool.tvl, 0) / 1e6).toFixed(1)}M`,
     averageAPY: `${(allMarkets.reduce((sum, pool) => sum + pool.supplyAPY, 0) / allMarkets.length).toFixed(2)}%`,
-    activePools: allMarkets.filter(pool => pool.status === 'Active').length,
+    tokenizedAssets: allMarkets.filter(pool => pool.status === 'Active').length,
     totalUsers: allMarkets.reduce((sum, pool) => sum + pool.activeUsers, 0)
   } : {
     totalValueLocked: "$0.0M",
     averageAPY: "0.00%",
-    activePools: 0,
+    tokenizedAssets: 0,
     totalUsers: 0
   };
 
@@ -76,17 +76,21 @@ export default function DashboardOverview() {
       }))
     : [{ name: "No Data", tvl: 0, poolAddress: "" }];
 
-  // Pie chart data for TVL distribution (including SRWA)
-  const pieChartData = allMarkets.length > 0
-    ? allMarkets.map((pool, index) => ({
-        name: pool.name.length > 20 ? pool.name.slice(0, 20) + '...' : pool.name,
-        value: pool.tvl / 1e6, // Convert to millions
-        poolAddress: pool.address
-      }))
-    : [{ name: "No Data", value: 0, poolAddress: "" }];
 
-  // Colors for pie chart
-  const pieColors = ['#60A5FA', '#34D399', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899'];
+  // Custom Tooltip for Charts
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div className="bg-card border border-purple-500/30 rounded-lg p-3 shadow-lg backdrop-blur-sm">
+          <p className="text-sm font-semibold text-foreground mb-1">{label}</p>
+          <p className="text-xs text-muted-foreground">
+            TVL: <span className="text-purple-400 font-semibold">${payload[0].value.toFixed(1)}M</span>
+          </p>
+        </div>
+      );
+    }
+    return null;
+  };
 
   const handleRefresh = () => {
     refetchPools();
@@ -125,97 +129,85 @@ export default function DashboardOverview() {
           <DashboardNav />
 
           {/* Dashboard Content */}
-          <DashboardSection decorativeColor="blue">
+          <DashboardSection decorativeColor="purple">
               {/* Admin Quick Stats */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                <div className="p-6 card-institutional hover-lift rounded-lg border bg-card text-card-foreground shadow-sm">
-                  <div className="space-y-1">
-                    <p className="text-micro text-fg-muted uppercase">Total Value Locked</p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-h3 font-semibold text-fg-primary">{loading ? "Loading..." : dashboardStats.totalValueLocked}</p>
-                      {!loading && enhancedPools.length > 0 && <Badge variant="outline" className="text-green-400 border-green-500/30 bg-green-500/10">Live</Badge>}
+                <div className="p-6 card-institutional rounded-lg border border-purple-500/20 bg-card text-card-foreground shadow-sm hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1 flex-1">
+                      <p className="text-micro text-fg-muted uppercase">Total Value Locked</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-h3 font-semibold text-fg-primary">{loading ? "Loading..." : dashboardStats.totalValueLocked}</p>
+                        {!loading && enhancedPools.length > 0 && <Badge variant="outline" className="text-green-400 border-green-500/30 bg-green-500/10">Live</Badge>}
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-purple-500/10">
+                      <DollarSign className="h-5 w-5 text-purple-400" />
                     </div>
                   </div>
                 </div>
 
-                <div className="p-6 card-institutional hover-lift rounded-lg border bg-card text-card-foreground shadow-sm">
-                  <div className="space-y-1">
-                    <p className="text-micro text-fg-muted uppercase">Average APY</p>
-                    <p className="text-h3 font-semibold text-fg-primary">{loading ? "Loading..." : dashboardStats.averageAPY}</p>
+                <div className="p-6 card-institutional rounded-lg border border-purple-500/20 bg-card text-card-foreground shadow-sm hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1 flex-1">
+                      <p className="text-micro text-fg-muted uppercase">Average APY</p>
+                      <p className="text-h3 font-semibold text-fg-primary">{loading ? "Loading..." : dashboardStats.averageAPY}</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-purple-500/10">
+                      <TrendingUp className="h-5 w-5 text-purple-400" />
+                    </div>
                   </div>
                 </div>
 
-                <div className="p-6 card-institutional hover-lift rounded-lg border bg-card text-card-foreground shadow-sm">
-                  <div className="space-y-1">
-                    <p className="text-micro text-fg-muted uppercase">Active Pools</p>
-                    <p className="text-h3 font-semibold text-fg-primary">{loading ? "..." : dashboardStats.activePools}</p>
+                <div className="p-6 card-institutional rounded-lg border border-purple-500/20 bg-card text-card-foreground shadow-sm hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1 flex-1">
+                      <p className="text-micro text-fg-muted uppercase">Tokenized Assets</p>
+                      <p className="text-h3 font-semibold text-fg-primary">{loading ? "..." : dashboardStats.tokenizedAssets}</p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-purple-500/10">
+                      <Package className="h-5 w-5 text-purple-400" />
+                    </div>
                   </div>
                 </div>
 
-                <div className="p-6 card-institutional hover-lift rounded-lg border bg-card text-card-foreground shadow-sm">
-                  <div className="space-y-1">
-                    <p className="text-micro text-fg-muted uppercase">Total Users</p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-h3 font-semibold text-fg-primary">{loading ? "..." : dashboardStats.totalUsers.toLocaleString()}</p>
-                      {!loading && enhancedPools.length > 0 && <Badge variant="outline" className="text-brand-400 border-brand-500/30 bg-brand-500/10">Active</Badge>}
+                <div className="p-6 card-institutional rounded-lg border border-purple-500/20 bg-card text-card-foreground shadow-sm hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1 flex-1">
+                      <p className="text-micro text-fg-muted uppercase">Total Users</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-h3 font-semibold text-fg-primary">{loading ? "..." : dashboardStats.totalUsers.toLocaleString()}</p>
+                        {!loading && enhancedPools.length > 0 && <Badge variant="outline" className="text-purple-400 border-purple-500/30 bg-purple-500/10">Active</Badge>}
+                      </div>
+                    </div>
+                    <div className="p-3 rounded-lg bg-purple-500/10">
+                      <Users className="h-5 w-5 text-purple-400" />
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Dashboard Charts */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-6">
                 {/* TVL Trend Chart */}
-                <div className="p-6 card-institutional hover-lift rounded-lg border bg-card text-card-foreground shadow-sm">
+                <div className="p-6 card-institutional rounded-lg border border-purple-500/20 bg-card text-card-foreground shadow-sm hover:border-purple-500/50 hover:shadow-lg hover:shadow-purple-500/10 transition-all duration-300">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-h3 font-medium text-fg-primary">TVL Trend</h3>
                   </div>
-                  <div className="h-80">
+                  <div className="h-96">
                     <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={poolTVLChartData} margin={{ top: 5, right: 10, bottom: 0, left: 0 }}>
+                      <BarChart data={poolTVLChartData} margin={{ top: 5, right: 10, bottom: 0, left: 0 }}>
                         <defs>
-                          <linearGradient id="areaFillAdmin" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#60A5FA" stopOpacity={0.35} />
-                            <stop offset="95%" stopColor="#60A5FA" stopOpacity={0} />
+                          <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor="#9945FF" stopOpacity={0.8} />
+                            <stop offset="95%" stopColor="#FF6B35" stopOpacity={0.3} />
                           </linearGradient>
                         </defs>
                         <XAxis dataKey="name" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={80} />
                         <YAxis tick={{ fontSize: 12 }} domain={[0, "dataMax+0.5"]} />
-                        <Tooltip formatter={(value: any) => [`$${value.toFixed(1)}M`, 'TVL']} />
-                        <Area type="monotone" dataKey="tvl" stroke="#60A5FA" strokeWidth={2} fill="url(#areaFillAdmin)" />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
-
-                {/* TVL Distribution Pie Chart */}
-                <div className="p-6 card-institutional hover-lift rounded-lg border bg-card text-card-foreground shadow-sm">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-h3 font-medium text-fg-primary">TVL Distribution</h3>
-                  </div>
-                  <div className="h-80">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
-                        <Pie
-                          data={pieChartData}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          label={({ name, percent }) => `${name} ${(percent * 100).toFixed(1)}%`}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="value"
-                        >
-                          {pieChartData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={pieColors[index % pieColors.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip
-                          formatter={(value: any) => [`$${value.toFixed(1)}M`, 'TVL']}
-                          labelFormatter={(label) => `Pool: ${label}`}
-                        />
-                        <Legend />
-                      </PieChart>
+                        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(153, 69, 255, 0.1)' }} />
+                        <Bar dataKey="tvl" fill="url(#barGradient)" radius={[8, 8, 0, 0]} />
+                      </BarChart>
                     </ResponsiveContainer>
                   </div>
                 </div>

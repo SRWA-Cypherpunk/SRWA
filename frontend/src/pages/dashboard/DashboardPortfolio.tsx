@@ -173,6 +173,8 @@ export default function DashboardPortfolio() {
     ? blendPositions.summary.totalBorrowed / 1000000 // Convert to millions
     : userPositions.reduce((acc, pos) => acc + parseFloat(pos.borrowed.replace(/[$M,K]/g, '')), 0);
 
+  const tvl = totalSupplied + totalBorrowed;
+
   const avgHealthFactor = connected && blendPositions.summary
     ? blendPositions.summary.averageHealthFactor
     : userPositions.length > 0
@@ -273,29 +275,16 @@ export default function DashboardPortfolio() {
       {/* Portfolio Stats */}
       {connected && (
         <DashboardSection decorativeColor="purple">
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <KPICard
-                title="Total Supplied"
+                title="TVL"
                 value={walletAssets.loading || blendPositions.loading
                   ? "Loading..."
                   : userPositions.length > 0
-                    ? `$${totalSupplied.toFixed(1)}M`
+                    ? `$${tvl.toFixed(1)}M`
                     : "$0.0M"}
-                subtitle="Volume deposited in SRWA protocols"
+                subtitle="Total Value Locked"
                 icon={DollarSign}
-                className="!cursor-default hover:shadow-none transition-none"
-              />
-              <KPICard
-                title="Total Borrowed"
-                value={walletAssets.loading || blendPositions.loading
-                  ? "Loading..."
-                  : userPositions.length > 0
-                    ? `$${totalBorrowed.toFixed(1)}M`
-                    : "$0.0M"}
-                subtitle={userPositions.length > 0
-                  ? "Active positions in your wallet"
-                  : "No active positions"}
-                icon={TrendingUp}
                 trend={userPositions.length > 0 ? "neutral" : undefined}
                 trendValue={userPositions.length > 0
                   ? `${userPositions.length} position${userPositions.length > 1 ? 's' : ''}`
