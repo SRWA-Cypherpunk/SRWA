@@ -230,13 +230,7 @@ export function AdminPanel() {
       }
       */
 
-      // 2. Approve the request
-      const approvalResult = await approvePurchaseRequest(request.id);
-      if (!approvalResult.success) {
-        throw new Error(approvalResult.error);
-      }
-
-      // 3. Transfer tokens to investor
+      // 2. Transfer tokens to investor FIRST (antes de aprovar!)
       toast.info('📤 Transferindo tokens para o investidor...');
       const investorPubkey = new PublicKey(request.investor);
       const tokenMintPubkey = new PublicKey(request.tokenMint);
@@ -256,7 +250,17 @@ export function AdminPanel() {
           description: distributionResult.error,
           duration: 8000,
         });
+        // NÃO aprovar o request - manter visível para retry
         return;
+      }
+
+      // 3. Approve the request ONLY after successful transfer
+      const approvalResult = await approvePurchaseRequest(request.id);
+      if (!approvalResult.success) {
+        toast.warning('⚠️ Tokens transferidos mas erro ao marcar como aprovado', {
+          description: approvalResult.error,
+        });
+        // Não retornar - a transferência funcionou, só o update do DB falhou
       }
 
       toast.success('✅ Purchase aprovada com sucesso!', {
