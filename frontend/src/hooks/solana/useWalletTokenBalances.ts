@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
 import { useConnection } from '@solana/wallet-adapter-react';
 import { useWallet } from '@/contexts/wallet/WalletContext';
 
@@ -51,11 +51,20 @@ export function useWalletTokenBalances(options: UseWalletTokenBalancesOptions = 
     setError(null);
 
     try {
-      const response = await connection.getParsedTokenAccountsByOwner(publicKey, {
-        programId: TOKEN_PROGRAM_ID,
-      });
+      // Fetch tokens from both Token Program and Token-2022 Program
+      const [legacyResponse, token2022Response] = await Promise.all([
+        connection.getParsedTokenAccountsByOwner(publicKey, {
+          programId: TOKEN_PROGRAM_ID,
+        }),
+        connection.getParsedTokenAccountsByOwner(publicKey, {
+          programId: TOKEN_2022_PROGRAM_ID,
+        }),
+      ]);
 
-      const balances: WalletTokenBalance[] = response.value
+      // Combine both responses
+      const allAccounts = [...legacyResponse.value, ...token2022Response.value];
+
+      const balances: WalletTokenBalance[] = allAccounts
         .map(({ pubkey, account }) => {
           const parsed = account.data as ParsedSplTokenAccount;
           const info = parsed.parsed?.info;
@@ -83,6 +92,12 @@ export function useWalletTokenBalances(options: UseWalletTokenBalancesOptions = 
           };
         })
         .filter((token) => includeZeroBalances || token.uiAmount > 0);
+
+      console.log('[useWalletTokenBalances] Found tokens:', {
+        legacy: legacyResponse.value.length,
+        token2022: token2022Response.value.length,
+        total: balances.length,
+      });
 
       setTokens(balances);
     } catch (err: unknown) {
