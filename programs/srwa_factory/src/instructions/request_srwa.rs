@@ -27,7 +27,7 @@ pub fn handler(
     name: String,
     symbol: String,
     decimals: u8,
-    config_init: SRWAConfigInit,
+    mut config_init: SRWAConfigInit,
     offering_init: OfferingInit,
     yield_config: YieldConfig,
 ) -> Result<()> {
@@ -47,6 +47,9 @@ pub fn handler(
     request.status = RequestStatus::Pending;
     request.created_at = clock.unix_timestamp;
     request.updated_at = clock.unix_timestamp;
+    if config_init.mint_decimals == 0 {
+        config_init.mint_decimals = decimals;
+    }
     request.config = config_init;
     request.offering = offering_init;
     request.yield_config = yield_config;

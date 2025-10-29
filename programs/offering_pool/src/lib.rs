@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("GShjrSQhcZJLP2xRGAvpoLyU2ndZN1k8A8fwPPqxm73W");
+declare_id!("4D54H4NBA9Q7WtsAy2yaFs9BjEdT8DcdmXekKsf7n6KP");
 
 #[program]
 pub mod offering_pool {

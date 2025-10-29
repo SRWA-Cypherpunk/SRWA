@@ -24,7 +24,6 @@ import {
   FileText,
   TrendingUp,
   Users,
-  PlusCircle,
   ExternalLink,
   Wallet,
   Send,
@@ -73,12 +72,21 @@ export function AdminPanel() {
   }, [issuance.requests]);
 
   const handleApprove = async (request: any) => {
+    // Prevent double-click
+    if (loading) {
+      console.log('[AdminPanel.handleApprove] Already processing, skipping...');
+      return;
+    }
+
     try {
       setLoading(true);
+      console.log('[AdminPanel.handleApprove] Starting approval for:', request.publicKey.toBase58());
       await issuance.approveSrwa(request);
       toast.success('Request approved and deployed!');
+      console.log('[AdminPanel.handleApprove] Approval completed successfully');
     } catch (err: any) {
-      toast.error(err.message);
+      console.error('[AdminPanel.handleApprove] Error:', err);
+      toast.error(err.message || 'Failed to approve request');
     } finally {
       setLoading(false);
     }
@@ -186,28 +194,13 @@ export function AdminPanel() {
   const RequestCard = ({ request, status }: { request: any; status: RequestStatus }) => {
     const [showDetails, setShowDetails] = useState(false);
     const [showRejectDialog, setShowRejectDialog] = useState(false);
-    const [actionLoading, setActionLoading] = useState<'mint' | null>(null);
     const yieldProtocol = mapProtocol(request.account.yieldConfig?.protocol);
     const targetApy = Number(request.account.yieldConfig?.targetApyBps ?? 0) / 100;
     const config = request.account.config;
     const offering = request.account.offering;
     const effectiveMint: PublicKey = issuance.getEffectiveMintKey(request);
-    // Verificar se o mint foi criado (não é zero/default)
+    // Verificar se o mint foi criado (não é zero/default) - só para display, não bloqueia approve
     const mintCreated = !effectiveMint.equals(PublicKey.default);
-
-    const handleCreateMint = async () => {
-      try {
-        setActionLoading('mint');
-        const mintKey = await issuance.createMintForRequest(request);
-        toast.success('Mint criado com sucesso', {
-          description: mintKey.toBase58(),
-        });
-      } catch (err: any) {
-        toast.error(err.message ?? 'Falha ao criar mint');
-      } finally {
-        setActionLoading(null);
-      }
-    };
 
     const isDeployed = status === 'deployed';
 
@@ -304,26 +297,14 @@ export function AdminPanel() {
               </div>
             )}
 
-            {/* Mint Actions */}
-            {status === 'pending' && (
-              <div className="space-y-2">
-                <Label className="text-xs text-fg-muted">Ação necessária</Label>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-2 w-full"
-                  disabled={mintCreated || actionLoading === 'mint' || loading}
-                  onClick={handleCreateMint}
-                >
-                  {actionLoading === 'mint' ? <Loader2 className="h-4 w-4 animate-spin" /> : <PlusCircle className="h-4 w-4" />}
-                  {mintCreated ? 'Mint Criado ✓' : 'Criar Mint'}
-                </Button>
-                {mintCreated && (
-                  <p className="text-xs text-green-400">
-                    ✓ Mint criado. Agora você pode aprovar a request (os tokens serão mintados direto para o issuer).
-                  </p>
-                )}
-              </div>
+            {/* Info sobre criação do mint */}
+            {status === 'pending' && !mintCreated && (
+              <Alert>
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="text-xs">
+                  O mint Token-2022 será criado automaticamente quando você aprovar esta request.
+                </AlertDescription>
+              </Alert>
             )}
 
             {/* Metadata URI */}
@@ -581,7 +562,7 @@ export function AdminPanel() {
               <div className="flex gap-2 pt-2">
                 <Button
                   onClick={() => handleApprove(request)}
-                  disabled={loading || !mintCreated || actionLoading !== null}
+                  disabled={loading}
                   className="flex-1 btn-primary"
                 >
                   {loading ? (
@@ -601,6 +582,7 @@ export function AdminPanel() {
                     setSelectedRequest(request);
                     setShowRejectDialog(true);
                   }}
+                  disabled={loading}
                 >
                   <XCircle className="mr-2 h-4 w-4" />
                   Reject

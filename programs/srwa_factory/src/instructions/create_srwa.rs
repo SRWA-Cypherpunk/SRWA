@@ -75,6 +75,7 @@ pub fn handler(
     };
     srwa_config.compliance_version = 1;
     srwa_config.metadata_uri = config_init.metadata_uri.clone();
+    srwa_config.paused = false;
     srwa_config.bump = ctx.bumps.srwa_config;
 
     // Initialize Offering State

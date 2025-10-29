@@ -1,8 +1,21 @@
 [workspace]
 members = [
-    "programs/*"
+    "programs/srwa_factory",
+    "programs/srwa_controller",
+    "programs/offering_pool",
+    "programs/identity_claims",
+    "programs/compliance_modules",
+    "programs/yield_adapter",
+    "programs/valuation_oracle",
+    "programs/cashflow_engine",
+]
+exclude = [
+    "programs/purchase_order",
 ]
 resolver = "2"
+
+[workspace.dependencies]
+bincode = "=1.3.3"
 
 [patch.crates-io]
 anchor-syn = { path = "patches/anchor-syn-0.32.1" }

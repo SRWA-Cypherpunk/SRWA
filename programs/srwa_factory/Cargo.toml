@@ -19,5 +19,7 @@ idl-build = ["anchor-lang/idl-build"]
 
 [dependencies]
 anchor-lang = { version = "0.31.1", features = ["init-if-needed", "idl-build"] }
-anchor-spl = { version = "0.31.1", features = ["idl-build"] }
-
+anchor-spl = { version = "0.31.1", features = ["idl-build", "token_2022"] }
+spl-token-2022 = { version = "6.0", features = ["no-entrypoint"] }
+srwa_controller = { path = "../srwa_controller", features = ["no-entrypoint"] }
+bincode = "1.3.3"

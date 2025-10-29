@@ -58,6 +58,7 @@ export function useIssuer() {
       metadataUri: token.uri,
       defaultFrozen: false,
       permanentDelegate: wallet.publicKey,
+      mintDecimals: effectiveDecimals,
     } as any;
 
     const now = Math.floor(Date.now() / 1000);
