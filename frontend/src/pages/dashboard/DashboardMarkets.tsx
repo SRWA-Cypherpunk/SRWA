@@ -79,6 +79,7 @@ export default function DashboardMarkets() {
   const [selectedRaydiumPoolId, setSelectedRaydiumPoolId] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedSRWAMarket, setSelectedSRWAMarket] = useState<SRWAMarketData | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
   // SRWA market handler
   const handleViewSRWAMarket = (market: SRWAMarketData) => {
