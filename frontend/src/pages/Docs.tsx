@@ -34,6 +34,7 @@ import {
   BarChart3,
   DollarSign,
   Map,
+  Smartphone,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import FlywheelDiagram from '@/assets/diagrams/ecossystem-flyweel.png';
@@ -373,6 +374,84 @@ export default function Docs() {
           content:
             'Validate whether two parties can transfer SRWA before submitting a transaction:',
           code: `const canTransfer = await srwa.compliance.simulate({\n  mint: srwaMint,\n  from: investorA,\n  to: investorB,\n  amount: 1_000_000,\n});\n\nif (!canTransfer.ok) {\n  console.error(canTransfer.reason);\n}`,
+        },
+      ],
+    },
+    {
+      id: 'pwa-mobile',
+      title: 'Progressive Web App & Mobile',
+      icon: Smartphone,
+      category: 'Integration',
+      content:
+        'SRWA Platform is available as a mobile-first Progressive Web App, bringing institutional RWA tokenization to mobile devices without app store friction. The PWA implements service workers for offline access, mobile wallet integration, and native app experience.',
+      features: [
+        'Installable on Android & iOS without app stores',
+        'Service worker with intelligent Solana RPC caching (5-10 min TTL)',
+        'Offline portfolio viewing with precached assets',
+        'Mobile wallet integration (Phantom, Backpack, Solflare, Torus)',
+        'Custom mobile detection and install prompt system',
+        'Touch-optimized UI with responsive design',
+      ],
+      subsections: [
+        {
+          title: 'PWA Configuration',
+          content:
+            'Built with vite-plugin-pwa and Workbox for production-ready service workers. The manifest configures standalone display mode, purple theme (#9945FF), and portrait-primary orientation for mobile devices.',
+          code: `// vite.config.ts
+VitePWA({
+  registerType: 'autoUpdate',
+  manifest: {
+    name: 'SRWA - Real World Assets on Solana',
+    short_name: 'SRWA',
+    theme_color: '#9945FF',
+    display: 'standalone',
+  },
+  workbox: {
+    runtimeCaching: [{
+      urlPattern: /^https:\\/\\/api\\.devnet\\.solana\\.com\\/.*/i,
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'solana-rpc-cache',
+        expiration: { maxAgeSeconds: 5 * 60 }
+      }
+    }]
+  }
+})`,
+        },
+        {
+          title: 'Mobile Detection Hook',
+          content:
+            'Custom useMobileDetection hook provides comprehensive device detection, install prompt handling, and platform-specific behavior for Android and iOS.',
+          code: `import { useMobileDetection } from '@/hooks/ui/useMobileDetection';
+
+const {
+  isMobile,      // Is mobile device
+  isStandalone,  // PWA installed
+  canInstall,    // Can show install prompt
+  isIOS,         // iOS device
+  isAndroid,     // Android device
+  promptInstall  // Trigger install
+} = useMobileDetection();
+
+// Trigger install prompt
+if (canInstall) {
+  await promptInstall();
+}`,
+        },
+        {
+          title: 'Service Worker Caching',
+          content:
+            'NetworkFirst strategy for Solana RPC calls provides fresh data when online with fallback to cache when offline. Cached data expires after 5 minutes for blockchain data and 10 minutes for API calls.',
+        },
+        {
+          title: 'Mobile Wallet Integration',
+          content:
+            'Seamless integration with Solana mobile wallets via @solana/wallet-adapter-react. Deep linking enables smooth transaction signing flow: user initiates → app opens wallet → user signs → returns to SRWA.',
+        },
+        {
+          title: 'Installation',
+          content:
+            'Android: Visit site → Tap install prompt → Add to home screen. iOS: Open in Safari → Share → Add to Home Screen. App launches in standalone mode without browser UI.',
         },
       ],
     },

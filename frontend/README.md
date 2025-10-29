@@ -1,5 +1,7 @@
 # SRWA Platform - Solana Real-World Asset Documentation
 
+📱 **Mobile-First PWA Available** - Install on Android & iOS without app stores | [View PWA Docs](/docs#pwa-mobile)
+
 Welcome to the SRWA Platform technical documentation. This repository contains comprehensive documentation for the SRWA (Solana Real-World Asset) standard and ecosystem for institutional RWA lending on Solana with on-chain compliance.
 
 ## 📚 Table of Contents
