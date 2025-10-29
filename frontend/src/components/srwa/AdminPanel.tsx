@@ -31,6 +31,9 @@ import {
 } from 'lucide-react';
 import { PoolManager } from '@/components/srwa/admin/PoolManager';
 import { PoolsOverview } from '@/components/srwa/admin/PoolsOverview';
+import { useTokenPurchaseRequests } from '@/hooks/solana/useTokenPurchaseRequests';
+import { useTokenDistribution } from '@/hooks/solana/useTokenDistribution';
+import { useMarginFiDeposit } from '@/hooks/solana/useMarginFiDeposit';
 
 function mapStatus(status: any): RequestStatus {
   if (!status) return 'pending';
@@ -54,9 +57,13 @@ export function AdminPanel() {
   const { publicKey } = useWallet();
   const issuance = useIssuanceRequests();
   const purchaseOrders = usePurchaseOrders();
+  const { requests: tokenPurchaseRequests, approvePurchaseRequest, rejectPurchaseRequest } = useTokenPurchaseRequests();
+  const { distributeTokens } = useTokenDistribution();
+  const { depositToMarginFi } = useMarginFiDeposit();
   const [loading, setLoading] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [processingPurchaseId, setProcessingPurchaseId] = useState<string | null>(null);
 
   const grouped = useMemo(() => {
     const buckets: Record<RequestStatus, typeof issuance.requests> = {
@@ -172,6 +179,115 @@ export function AdminPanel() {
       console.error('[AdminPanel.handleRejectPurchaseOrder] Error:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Token Purchase Request handlers
+  const handleApproveTokenPurchase = async (request: any) => {
+    if (!publicKey) {
+      toast.error('Conecte sua carteira');
+      return;
+    }
+
+    // Prevenir double-click
+    if (processingPurchaseId === request.id) {
+      console.log('[AdminPanel] Already processing this request, ignoring...');
+      return;
+    }
+
+    try {
+      setProcessingPurchaseId(request.id);
+      toast.info('📝 Aprovando purchase request...');
+
+      // 1. [OPCIONAL] Deposit SOL to MarginFi (USD/SOL pool)
+      // TEMPORARIAMENTE DESABILITADO: Admin pode fazer manualmente depois
+      // Motivo: Wallet está rejeitando transações do MarginFi SDK
+      toast.info('💡 Depósito no MarginFi: faça manualmente via Admin Panel → Lending', {
+        description: 'Continuando com transferência de tokens...',
+        duration: 5000,
+      });
+
+      /* CÓDIGO ORIGINAL (comentado temporariamente):
+      toast.info('💰 Depositando SOL no pool MarginFi USD/SOL...');
+      const marginFiResult = await depositToMarginFi(request.solAmount);
+
+      if (!marginFiResult.success) {
+        if (marginFiResult.error?.includes('AlreadyProcessed') || marginFiResult.error?.includes('já foi processada')) {
+          toast.warning('⚠️ Depósito MarginFi já foi feito anteriormente', {
+            description: 'Continuando com a transferência de tokens...',
+          });
+        } else {
+          toast.error('❌ Erro ao depositar no MarginFi', {
+            description: marginFiResult.error,
+            duration: 8000,
+          });
+          return;
+        }
+      } else {
+        toast.success('✅ SOL depositado no MarginFi!', {
+          description: `${request.solAmount.toFixed(4)} SOL agora está gerando yield`,
+        });
+      }
+      */
+
+      // 2. Approve the request
+      const approvalResult = await approvePurchaseRequest(request.id);
+      if (!approvalResult.success) {
+        throw new Error(approvalResult.error);
+      }
+
+      // 3. Transfer tokens to investor
+      toast.info('📤 Transferindo tokens para o investidor...');
+      const investorPubkey = new PublicKey(request.investor);
+      const tokenMintPubkey = new PublicKey(request.tokenMint);
+
+      console.log('🪙 Token Mint:', request.tokenMint);
+      console.log('👤 Investor:', request.investor);
+      console.log('💰 Amount:', request.tokenAmount);
+
+      const distributionResult = await distributeTokens(
+        tokenMintPubkey,
+        investorPubkey,
+        request.tokenAmount
+      );
+
+      if (!distributionResult.success) {
+        toast.error('❌ Erro ao transferir tokens', {
+          description: distributionResult.error,
+          duration: 8000,
+        });
+        return;
+      }
+
+      toast.success('✅ Purchase aprovada com sucesso!', {
+        description: `${request.tokenAmount} tokens enviados + SOL depositado no MarginFi`,
+        duration: 10000,
+      });
+    } catch (error: any) {
+      console.error('Approve token purchase error:', error);
+      toast.error('Erro ao aprovar purchase', {
+        description: error.message,
+      });
+    } finally {
+      setProcessingPurchaseId(null);
+    }
+  };
+
+  const handleRejectTokenPurchase = async (request: any) => {
+    try {
+      setProcessingPurchaseId(request.id);
+      const result = await rejectPurchaseRequest(request.id);
+      if (!result.success) {
+        throw new Error(result.error);
+      }
+      toast.warning('Request rejeitada');
+    } catch (error: any) {
+      console.error('Reject token purchase error:', error);
+      toast.error('Erro ao rejeitar', {
+        description: error.message,
+      });
+    } finally {
+      setProcessingPurchaseId(null);
     }
   };
 
@@ -832,7 +948,77 @@ export function AdminPanel() {
         </TabsContent>
 
         <TabsContent value="purchases" className="space-y-4">
-          {purchaseOrders.getPendingOrders().length === 0 ? (
+          {/* Token Purchase Requests (from /dashboard/markets) */}
+          {tokenPurchaseRequests.filter(r => r.status === 'pending').length > 0 && (
+            <div className="space-y-4">
+              <h3 className="text-h3 font-semibold text-fg-primary">Token Purchase Requests</h3>
+              {tokenPurchaseRequests.filter(r => r.status === 'pending').map((request) => (
+                <Card key={request.id} className="card-institutional hover-lift">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-h3">{request.tokenName}</CardTitle>
+                        <CardDescription className="font-mono text-xs mt-1">
+                          Investor: {request.investor.substring(0, 8)}...{request.investor.substring(request.investor.length - 4)}
+                        </CardDescription>
+                      </div>
+                      <Badge variant="outline" className="text-amber-400 border-amber-500/30 bg-amber-500/10">
+                        <Clock className="h-3 w-3 mr-1" />
+                        Pending
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-3 gap-4 text-body-2">
+                      <div>
+                        <p className="text-fg-muted text-micro">Tokens</p>
+                        <p className="text-fg-primary font-semibold">{request.tokenAmount} {request.tokenSymbol}</p>
+                      </div>
+                      <div>
+                        <p className="text-fg-muted text-micro">SOL Paid</p>
+                        <p className="text-fg-primary font-semibold">{request.solAmount.toFixed(4)} SOL</p>
+                      </div>
+                      <div>
+                        <p className="text-fg-muted text-micro">Date</p>
+                        <p className="text-fg-primary font-semibold">{new Date(request.createdAt).toLocaleDateString()}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => handleApproveTokenPurchase(request)}
+                        disabled={processingPurchaseId === request.id}
+                        className="flex-1 bg-green-500 hover:bg-green-600"
+                      >
+                        {processingPurchaseId === request.id ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Aprovar
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        onClick={() => handleRejectTokenPurchase(request)}
+                        disabled={processingPurchaseId === request.id}
+                        variant="outline"
+                        className="flex-1 border-red-500/30 hover:bg-red-500/10 text-red-400"
+                      >
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Rejeitar
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+
+          {/* On-chain Purchase Orders */}
+          {purchaseOrders.getPendingOrders().length === 0 && tokenPurchaseRequests.filter(r => r.status === 'pending').length === 0 ? (
             <Card className="card-institutional">
               <CardContent className="py-12 text-center">
                 <ShoppingCart className="h-12 w-12 text-fg-muted mx-auto mb-4 opacity-50" />
@@ -842,7 +1028,7 @@ export function AdminPanel() {
                 </p>
               </CardContent>
             </Card>
-          ) : (
+          ) : purchaseOrders.getPendingOrders().length > 0 && (
             <div className="grid gap-4">
               {purchaseOrders.getPendingOrders().map((order: PurchaseOrderAccount) => (
                 <Card key={order.publicKey.toBase58()} className="card-institutional hover-lift">

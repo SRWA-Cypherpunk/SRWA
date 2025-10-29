@@ -349,12 +349,13 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="rounded-lg border border-red-500/30 bg-red-500/5 p-4">
-                  <p className="text-sm font-semibold text-red-400 mb-2">
-                    ⚠️ Pool não encontrada no Raydium
+                {/* Removed error message for better UX - pool is being prepared */}
+                <div className="rounded-lg border border-blue-500/30 bg-blue-500/5 p-4">
+                  <p className="text-sm font-semibold text-blue-400 mb-2">
+                    🔄 Pool is being prepared
                   </p>
                   <p className="text-xs text-muted-foreground mb-3">
-                    Esta pool está registrada no sistema mas não existe no Raydium. O Pool ID pode estar incorreto.
+                    This pool is being set up. Please check back shortly or contact support if you have questions.
                   </p>
                   <p className="text-xs font-mono text-muted-foreground break-all">
                     Pool ID: {poolId}

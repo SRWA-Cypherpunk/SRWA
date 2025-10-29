@@ -9,13 +9,16 @@ import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
 import { IssuerWizard } from "@/components/srwa/IssuerWizard";
 
 // Hooks
+
+import { useSRWAMarkets } from '@/hooks/markets/useSRWAMarkets';
+import { LendingModal } from '@/components/markets/LendingModal';
+import type { SRWAMarketData } from '@/hooks/markets/useSRWAMarkets';
 import { useRaydiumPools, useUserRegistry } from '@/hooks/solana';
 import { useDeployedTokens } from '@/hooks/solana/useDeployedTokens';
 import { RaydiumPoolOperations } from '@/components/raydium/RaydiumPoolOperations';
@@ -61,16 +64,12 @@ const getRiskBadgeColor = (risk: 'Low' | 'Medium' | 'High') => {
 };
 
 export default function DashboardMarkets() {
-  // Fetch deployed tokens (for token info display in cards)
-  const { tokens: deployedTokens } = useDeployedTokens();
-
-  // Fetch Raydium pools registered on-chain
+  // Fetch SRWA markets (displayed as pools)
   const {
-    pools: raydiumPools,
-    loading: raydiumPoolsLoading,
-    error: raydiumPoolsError,
-    refresh: refreshRaydiumPools
-  } = useRaydiumPools();
+    srwaMarkets,
+    loading: srwaLoading,
+    refetch: refetchSRWA
+  } = useSRWAMarkets();
 
   // Check user role
   const { userRegistry } = useUserRegistry();
@@ -79,13 +78,11 @@ export default function DashboardMarkets() {
   // State for pool operations dialog
   const [selectedRaydiumPoolId, setSelectedRaydiumPoolId] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedSRWAMarket, setSelectedSRWAMarket] = useState<SRWAMarketData | null>(null);
 
-  // State for view mode (grid or list)
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-
-  // Navigation handler
-  const handleViewPoolDetails = (poolAddress: string) => {
-    setSelectedRaydiumPoolId(poolAddress);
+  // SRWA market handler
+  const handleViewSRWAMarket = (market: SRWAMarketData) => {
+    setSelectedSRWAMarket(market);
   };
 
   return (
@@ -124,89 +121,68 @@ export default function DashboardMarkets() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="rounded-full px-3 py-1">
-                {raydiumPools.length} registered pools
+                {srwaMarkets.length} available pools
               </Badge>
             </div>
-            <div className="flex items-center gap-2">
-              {/* View Mode Toggle */}
-              <div className="flex items-center bg-card/50 border border-border/50 rounded-lg p-1">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`h-8 px-3 ${viewMode === 'grid' ? 'bg-purple-500/20 text-purple-300' : 'text-muted-foreground'}`}
-                  onClick={() => setViewMode('grid')}
-                >
-                  <LayoutGrid className="h-4 w-4 mr-1.5" />
-                  <span className="hidden sm:inline">Grid</span>
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={`h-8 px-3 ${viewMode === 'list' ? 'bg-purple-500/20 text-purple-300' : 'text-muted-foreground'}`}
-                  onClick={() => setViewMode('list')}
-                >
-                  <List className="h-4 w-4 mr-1.5" />
-                  <span className="hidden sm:inline">List</span>
-                </Button>
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={refreshRaydiumPools}
-                disabled={raydiumPoolsLoading}
-              >
-                <RefreshCw className={`h-5 w-5 ${raydiumPoolsLoading ? 'animate-spin' : ''}`} />
-              </Button>
-            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={refetchSRWA}
+              disabled={srwaLoading}
+            >
+              <RefreshCw className={`h-5 w-5 ${srwaLoading ? 'animate-spin' : ''}`} />
+            </Button>
           </div>
 
-          {raydiumPoolsLoading ? (
+          {srwaLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-purple-400" />
             </div>
-          ) : raydiumPoolsError ? (
-            <Card className="border-red-500/30">
-              <CardContent className="p-6 text-center">
-                <p className="text-sm text-red-400">{raydiumPoolsError}</p>
-              </CardContent>
-            </Card>
-          ) : raydiumPools.length === 0 ? (
+          ) : srwaMarkets.length === 0 ? (
             <Card className="border-border/50">
               <CardContent className="p-8 text-center">
                 <Activity className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />
                 <p className="text-base font-medium text-muted-foreground">
-                  No Raydium pools registered yet
+                  No investment pools available yet
                 </p>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Create a pool in the admin panel to see it here
+                  Deploy SRWA tokens in the admin panel to see them here
                 </p>
               </CardContent>
             </Card>
           ) : viewMode === 'grid' ? (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {raydiumPools.map((pool, index) => {
-                const tokenInfo = deployedTokens.find(t => t.mint.toBase58() === pool.tokenMint.toBase58());
-                const metrics = getMockPoolMetrics(pool.poolId.toBase58());
+              {/* SRWA Token Markets - Display as Pools */}
+              {srwaMarkets.map((market, index) => {
+                const metrics = {
+                  apy: market.supplyAPY,
+                  tvl: market.tvl,
+                  minInvestment: 0.1,
+                  riskLevel: 'Medium' as 'Low' | 'Medium' | 'High',
+                  availableSOL: market.availableLiquidity * 0.01, // Mock conversion
+                  availableToken: market.availableLiquidity,
+                  price: 0.01, // Mock price: 1 SOL = 100 tokens
+                };
 
                 return (
                   <motion.div
-                    key={pool.publicKey.toBase58()}
+                    key={market.address}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.05 }}
                   >
-                    <Card className="border-purple-500/30 bg-background hover:border-purple-500/50 transition-all hover:shadow-lg hover:shadow-purple-500/10">
+                    <Card className="border-cyan-500/30 bg-background hover:border-cyan-500/50 transition-all hover:shadow-lg hover:shadow-cyan-500/10">
                       <CardContent className="p-6">
                         <div className="space-y-5">
                           {/* Header with Token Pair and TVL */}
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <h3 className="text-xl font-bold mb-2">
-                                {tokenInfo?.symbol || 'SRWA'} / SOL
+                                {market.name.replace(' Lending Market', '')} / SOL
                               </h3>
                               <div className="flex gap-2">
-                                <Badge variant="outline" className="text-xs bg-purple-500/10 text-purple-400 border-purple-500/30">
-                                  CPMM
+                                <Badge variant="outline" className="text-xs bg-cyan-500/10 text-cyan-400 border-cyan-500/30">
+                                  SRWA
                                 </Badge>
                                 <Badge variant="outline" className={`text-xs ${getRiskBadgeColor(metrics.riskLevel)}`}>
                                   {metrics.riskLevel} Risk
@@ -215,18 +191,18 @@ export default function DashboardMarkets() {
                             </div>
                             <div className="text-right">
                               <p className="text-[10px] font-semibold uppercase text-muted-foreground mb-1">TVL</p>
-                              <p className="text-2xl font-bold text-purple-400">{formatCurrency(metrics.tvl)}</p>
+                              <p className="text-2xl font-bold text-cyan-400">{formatCurrency(metrics.tvl)}</p>
                             </div>
                           </div>
 
                           {/* APY Section */}
-                          <div className="rounded-lg bg-purple-500/5 border border-purple-500/20 p-4">
+                          <div className="rounded-lg bg-cyan-500/5 border border-cyan-500/20 p-4">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
-                                <TrendingUp className="h-4 w-4 text-purple-400" />
+                                <TrendingUp className="h-4 w-4 text-cyan-400" />
                                 <span className="text-xs font-semibold text-muted-foreground uppercase">APY</span>
                               </div>
-                              <p className="text-3xl font-bold text-purple-400">{metrics.apy.toFixed(2)}%</p>
+                              <p className="text-3xl font-bold text-cyan-400">{metrics.apy.toFixed(2)}%</p>
                             </div>
                           </div>
 
@@ -266,9 +242,9 @@ export default function DashboardMarkets() {
                           <div className="flex items-center gap-2 pt-2 border-t border-border/30">
                             <HeroButton
                               variant="brand"
-                              className="flex-1 h-11 !text-sm !px-4 !py-2.5"
+                              className="flex-1 h-11 !text-sm !px-4 !py-2.5 !bg-cyan-500 hover:!bg-cyan-600"
                               icon={<Zap className="h-4 w-4" />}
-                              onClick={() => handleViewPoolDetails(pool.poolId.toBase58())}
+                              onClick={() => handleViewSRWAMarket(market)}
                             >
                               Earn
                             </HeroButton>
@@ -277,7 +253,7 @@ export default function DashboardMarkets() {
                               size="icon"
                               className="h-11 w-11"
                               onClick={() => {
-                                window.open(`https://solscan.io/account/${pool.poolId.toBase58()}?cluster=devnet`, '_blank');
+                                window.open(`https://solscan.io/account/${market.address}?cluster=devnet`, '_blank');
                               }}
                             >
                               <ExternalLink className="h-5 w-5" />
@@ -416,23 +392,13 @@ export default function DashboardMarkets() {
         </DialogContent>
       </Dialog>
 
-      {/* Raydium Pool Dialog */}
-      <Dialog
-        open={!!selectedRaydiumPoolId}
-        onOpenChange={(open) => !open && setSelectedRaydiumPoolId(null)}
-      >
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-2xl">Investment Management</DialogTitle>
-            <DialogDescription>
-              Invest or withdraw funds from this liquidity pool
-            </DialogDescription>
-          </DialogHeader>
-          {selectedRaydiumPoolId && (
-            <RaydiumPoolOperations poolId={selectedRaydiumPoolId} />
-          )}
-        </DialogContent>
-      </Dialog>
+      {/* SRWA Token Purchase Modal */}
+      <LendingModal
+        isOpen={!!selectedSRWAMarket}
+        onClose={() => setSelectedSRWAMarket(null)}
+        pool={selectedSRWAMarket}
+        mode="supply"
+      />
     </DashboardLayout>
   );
 }
