@@ -15,6 +15,7 @@ import { WalletSendTransactionError } from '@solana/wallet-adapter-base';
 import {
   MINT_SIZE,
   TOKEN_PROGRAM_ID,
+  TOKEN_2022_PROGRAM_ID,
   createAssociatedTokenAccountInstruction,
   createInitializeMintInstruction,
   createMintToInstruction,
@@ -238,7 +239,8 @@ export function useIssuanceRequests() {
       targetApyBps: Math.round(input.yieldConfig.targetApy * 100),
     } as any;
 
-    await programs.srwaFactory.methods
+    // Build instruction
+    const ix = await programs.srwaFactory.methods
       .requestSrwa(
         requestIdBn,
         input.mint,
@@ -254,10 +256,58 @@ export function useIssuanceRequests() {
         request: requestPda,
         systemProgram: SystemProgram.programId,
       })
-      .rpc();
+      .instruction();
 
-    await refresh();
-    return requestPda;
+    // Create and sign transaction manually
+    const tx = new Transaction().add(ix);
+
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+    tx.recentBlockhash = blockhash;
+    tx.lastValidBlockHeight = lastValidBlockHeight;
+    tx.feePayer = wallet.publicKey;
+
+    const signedTx = await wallet.signTransaction(tx);
+
+    try {
+      const signature = await connection.sendRawTransaction(signedTx.serialize(), {
+        skipPreflight: false,
+        preflightCommitment: 'confirmed',
+      });
+
+      await connection.confirmTransaction(
+        {
+          signature,
+          blockhash,
+          lastValidBlockHeight,
+        },
+        'confirmed'
+      );
+
+      console.log('[useIssuanceRequests.requestSrwa] Request created successfully:', signature);
+
+      await refresh();
+      return requestPda;
+    } catch (err: any) {
+      // Check if the request was actually created despite the error
+      console.log('[useIssuanceRequests.requestSrwa] Error during transaction, checking if request exists:', err.message);
+
+      // Wait a bit for the transaction to potentially settle
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      try {
+        const requestAccount = await programs.srwaFactory.account.srwaRequest.fetch(requestPda);
+        if (requestAccount) {
+          console.log('[useIssuanceRequests.requestSrwa] Request was created successfully despite error');
+          await refresh();
+          return requestPda;
+        }
+      } catch (fetchErr) {
+        // Request doesn't exist, throw original error
+        console.error('[useIssuanceRequests.requestSrwa] Request not found, original error:', err);
+      }
+
+      throw err;
+    }
   }, [wallet?.publicKey, programs?.srwaFactory, refresh, walletAdapter]);
 
   const approveSrwa = useCallback(async (request: SrwaRequestAccount) => {
@@ -294,6 +344,9 @@ export function useIssuanceRequests() {
       programs.srwaFactory.programId
     );
 
+    // Token-2022 program ID
+    const TOKEN_2022_PROGRAM_ID = new PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
+
     // Create the instruction
     const ix = await programs.srwaFactory.methods
       .approveSrwa()
@@ -306,6 +359,7 @@ export function useIssuanceRequests() {
         offeringState: offeringStatePda,
         valuationData: valuationPda,
         systemProgram: SystemProgram.programId,
+        tokenProgram: TOKEN_2022_PROGRAM_ID,
       })
       .instruction();
 
@@ -359,7 +413,8 @@ export function useIssuanceRequests() {
       if (!mintAccountInfo) {
         console.warn('[useIssuanceRequests.approveSrwa] Mint account not found on-chain, skipping initial mint');
       } else {
-        const mintInfo = await getMint(connection, mint);
+        // Use TOKEN_2022_PROGRAM_ID since this is a Token-2022 mint
+        const mintInfo = await getMint(connection, mint, 'confirmed', TOKEN_2022_PROGRAM_ID);
         if (!mintInfo.mintAuthority || !mintInfo.mintAuthority.equals(wallet.publicKey)) {
           console.warn('[useIssuanceRequests.approveSrwa] Admin wallet is not mint authority, skipping initial mint', {
             mint: mint.toBase58(),
@@ -369,7 +424,12 @@ export function useIssuanceRequests() {
           return;
         }
 
-        const adminAta = await getAssociatedTokenAddress(mint, wallet.publicKey);
+        const adminAta = await getAssociatedTokenAddress(
+          mint,
+          wallet.publicKey,
+          false,
+          TOKEN_2022_PROGRAM_ID
+        );
         const instructions: TransactionInstruction[] = [];
 
         const adminAtaInfo = await connection.getAccountInfo(adminAta);
@@ -379,7 +439,9 @@ export function useIssuanceRequests() {
               wallet.publicKey,
               adminAta,
               wallet.publicKey,
-              mint
+              mint,
+              TOKEN_PROGRAM_ID,
+              TOKEN_2022_PROGRAM_ID
             )
           );
         }
@@ -409,14 +471,32 @@ export function useIssuanceRequests() {
           });
           throw new Error('Mint amount exceeds supported range');
         }
-        instructions.push(
-          createMintToInstruction(
-            mint,
-            adminAta,
-            wallet.publicKey,
-            mintAmount
-          )
+
+        // Create mint instruction manually for Token-2022
+        // Convert bigint to number for the instruction
+        const amountAsNumber = Number(mintAmount);
+
+        console.log('[useIssuanceRequests.approveSrwa] Preparing mint instruction', {
+          mint: mint.toBase58(),
+          destination: adminAta.toBase58(),
+          authority: wallet.publicKey.toBase58(),
+          amountBigInt: mintAmount.toString(),
+          amountNumber: amountAsNumber,
+          programId: TOKEN_2022_PROGRAM_ID.toBase58(),
+        });
+
+        const mintToIx = createMintToInstruction(
+          mint,
+          adminAta,
+          wallet.publicKey,
+          amountAsNumber,
+          [],
+          TOKEN_2022_PROGRAM_ID
         );
+
+        console.log('[useIssuanceRequests.approveSrwa] Mint instruction created successfully');
+
+        instructions.push(mintToIx);
 
         const tx = new Transaction().add(...instructions);
         const signature = await sendWithWallet(tx, { preflightCommitment: 'confirmed' });
@@ -445,16 +525,43 @@ export function useIssuanceRequests() {
       throw new Error('SRWA Factory program not loaded');
     }
 
-    await programs.srwaFactory.methods
+    // Build instruction
+    const ix = await programs.srwaFactory.methods
       .rejectSrwa(reason)
       .accounts({
         admin: wallet.publicKey,
         request: request.publicKey,
       })
-      .rpc();
+      .instruction();
+
+    // Create and sign transaction manually
+    const tx = new Transaction().add(ix);
+
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+    tx.recentBlockhash = blockhash;
+    tx.lastValidBlockHeight = lastValidBlockHeight;
+    tx.feePayer = wallet.publicKey;
+
+    const signedTx = await wallet.signTransaction(tx);
+
+    const signature = await connection.sendRawTransaction(signedTx.serialize(), {
+      skipPreflight: false,
+      preflightCommitment: 'confirmed',
+    });
+
+    await connection.confirmTransaction(
+      {
+        signature,
+        blockhash,
+        lastValidBlockHeight,
+      },
+      'confirmed'
+    );
+
+    console.log('[useIssuanceRequests.rejectSrwa] Request rejected successfully:', signature);
 
     await refresh();
-  }, [wallet?.publicKey, programs?.srwaFactory, refresh]);
+  }, [wallet?.publicKey, programs?.srwaFactory, refresh, connection]);
 
   const sendTokensToIssuer = useCallback(async (request: SrwaRequestAccount, amount?: number) => {
     if (!wallet?.publicKey) {

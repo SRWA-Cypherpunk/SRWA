@@ -69,6 +69,9 @@ pub struct ApproveSrwa<'info> {
     pub valuation_data: Account<'info, ValuationData>,
 
     pub system_program: Program<'info, System>,
+
+    /// CHECK: Token-2022 program for mint initialization
+    pub token_program: AccountInfo<'info>,
 }
 
 pub fn handler(ctx: Context<ApproveSrwa>) -> Result<()> {
@@ -101,6 +104,7 @@ pub fn handler(ctx: Context<ApproveSrwa>) -> Result<()> {
         ctx.accounts.mint.to_account_info(),
         ctx.accounts.admin.to_account_info(),
         ctx.accounts.system_program.to_account_info(),
+        ctx.accounts.token_program.to_account_info(),
         &config_init,
         decimals,
     )?;
@@ -211,6 +215,7 @@ fn initialise_token_2022_mint<'info>(
     mint_info: AccountInfo<'info>,
     admin_info: AccountInfo<'info>,
     system_program: AccountInfo<'info>,
+    _token_program_info: AccountInfo<'info>,
     config: &SRWAConfigInit,
     decimals: u8
 ) -> Result<()> {
@@ -308,11 +313,13 @@ fn initialise_token_2022_mint<'info>(
     }
 
     // Initialize mint authorities
+    // Set admin as mint authority so they can mint the initial supply
+    // The issuer_admin will control other aspects via the SRWA config
     invoke(
         &token_2022_ix::initialize_mint2(
             &spl_token_2022::id(),
             mint_info.key,
-            &config.roles.issuer_admin,
+            admin_info.key,  // Admin is the mint authority
             Some(&config.roles.transfer_agent),
             decimals,
         )?,

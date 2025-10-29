@@ -21,16 +21,44 @@ export class AdminAllowlistServiceImpl implements AdminAllowlistService {
       this.program.programId
     );
 
-    const tx = await this.program.methods
+    // Build instruction
+    const ix = await this.program.methods
       .initializeAdminRegistry()
       .accounts({
         superAdmin: this.provider.wallet.publicKey,
         adminRegistry,
         systemProgram: web3.SystemProgram.programId,
       })
-      .rpc();
+      .instruction();
 
-    return tx;
+    // Create transaction manually
+    const tx = new web3.Transaction().add(ix);
+
+    // Get blockhash
+    const { blockhash, lastValidBlockHeight } = await this.provider.connection.getLatestBlockhash('confirmed');
+    tx.recentBlockhash = blockhash;
+    tx.lastValidBlockHeight = lastValidBlockHeight;
+    tx.feePayer = this.provider.wallet.publicKey;
+
+    // Sign with wallet
+    const signedTx = await this.provider.wallet.signTransaction(tx);
+
+    // Send and confirm
+    const signature = await this.provider.connection.sendRawTransaction(signedTx.serialize(), {
+      skipPreflight: false,
+      preflightCommitment: 'confirmed',
+    });
+
+    await this.provider.connection.confirmTransaction(
+      {
+        signature,
+        blockhash,
+        lastValidBlockHeight,
+      },
+      'confirmed'
+    );
+
+    return signature;
   }
 
   async addPlatformAdmin(newAdmin: PublicKey): Promise<string> {

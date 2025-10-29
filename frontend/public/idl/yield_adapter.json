@@ -279,36 +279,7 @@
         143,
         77,
         154
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "admin",
-            "type": "pubkey"
-          },
-          {
-            "name": "pool_id",
-            "type": "pubkey"
-          },
-          {
-            "name": "token_mint",
-            "type": "pubkey"
-          },
-          {
-            "name": "base_mint",
-            "type": "pubkey"
-          },
-          {
-            "name": "created_at",
-            "type": "i64"
-          },
-          {
-            "name": "is_active",
-            "type": "bool"
-          }
-        ]
-      }
+      ]
     }
   ],
   "errors": [
