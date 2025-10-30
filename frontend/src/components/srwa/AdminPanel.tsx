@@ -418,7 +418,7 @@ export function AdminPanel() {
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription className="text-xs">
-                  O mint Token-2022 será criado automaticamente quando você aprovar esta request.
+                  The Token-2022 mint will be created automatically when you approve this request.
                 </AlertDescription>
               </Alert>
             )}
@@ -483,14 +483,14 @@ export function AdminPanel() {
 
                   {/* Token Configuration */}
                   <div>
-                    <h3 className="text-lg font-semibold mb-3">Configuração do Token</h3>
+                    <h3 className="text-lg font-semibold mb-3">Token Configuration</h3>
                     <div className="grid grid-cols-2 gap-4 bg-muted/30 p-4 rounded-lg">
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">Nome</p>
+                        <p className="text-xs text-muted-foreground mb-1">Name</p>
                         <p className="text-sm font-semibold">{request.account.name}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-muted-foreground mb-1">Símbolo</p>
+                        <p className="text-xs text-muted-foreground mb-1">Symbol</p>
                         <p className="text-sm font-semibold">{request.account.symbol}</p>
                       </div>
                       <div>
@@ -520,7 +520,7 @@ export function AdminPanel() {
                     <div>
                       <h3 className="text-lg font-semibold mb-3 flex items-center">
                         <Shield className="h-5 w-5 mr-2 text-brand-400" />
-                        Requisitos KYC
+                        KYC Requirements
                       </h3>
                       <div className="flex flex-wrap gap-2 bg-muted/30 p-4 rounded-lg">
                         {config.requiredTopics.map((topic: number) => (
@@ -678,9 +678,9 @@ export function AdminPanel() {
               <Alert className="bg-amber-500/10 border-amber-500/30">
                 <AlertCircle className="h-4 w-4 text-amber-500" />
                 <AlertDescription className="text-xs text-amber-200">
-                  <strong>Importante:</strong> Este token usa Token-2022. Raydium CPMM NÃO suporta Token-2022 no devnet.
-                  Após aprovação, você precisará criar uma pool manualmente no <strong>Orca Whirlpools</strong> ou outro AMM compatível.
-                  Instruções completas aparecerão no console após aprovação.
+                  <strong>Important:</strong> This token uses Token-2022. Raydium CPMM does NOT support Token-2022 on devnet.
+                  After approval, you will need to manually create a pool on <strong>Orca Whirlpools</strong> or another compatible AMM.
+                  Complete instructions will appear in the console after approval.
                 </AlertDescription>
               </Alert>
             )}
@@ -997,7 +997,7 @@ export function AdminPanel() {
                         ) : (
                           <>
                             <CheckCircle className="h-4 w-4 mr-2" />
-                            Aprovar
+                            Approve
                           </>
                         )}
                       </Button>
@@ -1008,7 +1008,7 @@ export function AdminPanel() {
                         className="flex-1 border-red-500/30 hover:bg-red-500/10 text-red-400"
                       >
                         <XCircle className="h-4 w-4 mr-2" />
-                        Rejeitar
+                        Reject
                       </Button>
                     </div>
                   </CardContent>
@@ -1095,7 +1095,7 @@ export function AdminPanel() {
                         ) : (
                           <>
                             <CheckCircle className="mr-2 h-4 w-4" />
-                            Aprovar e Enviar Tokens
+                            Approve and Send Tokens
                           </>
                         )}
                       </Button>
@@ -1108,22 +1108,22 @@ export function AdminPanel() {
                             disabled={loading}
                           >
                             <XCircle className="mr-2 h-4 w-4" />
-                            Rejeitar
+                            Reject
                           </Button>
                         </DialogTrigger>
                         <DialogContent>
                           <DialogHeader>
-                            <DialogTitle>Rejeitar Purchase Order</DialogTitle>
+                            <DialogTitle>Reject Purchase Order</DialogTitle>
                             <DialogDescription>
-                              Informe o motivo da rejeição. O SOL será automaticamente reembolsado.
+                              Enter the reason for rejection. SOL will be automatically refunded.
                             </DialogDescription>
                           </DialogHeader>
                           <div className="space-y-4">
                             <div>
-                              <Label htmlFor="reject-reason">Motivo da Rejeição</Label>
+                              <Label htmlFor="reject-reason">Rejection Reason</Label>
                               <Input
                                 id="reject-reason"
-                                placeholder="Ex: KYC pendente, valor incorreto..."
+                                placeholder="e.g., Pending KYC, incorrect amount..."
                                 value={rejectReason}
                                 onChange={(e) => setRejectReason(e.target.value)}
                                 maxLength={200}
@@ -1140,7 +1140,7 @@ export function AdminPanel() {
                               variant="destructive"
                               className="w-full"
                             >
-                              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirmar Rejeição'}
+                              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirm Rejection'}
                             </Button>
                           </div>
                         </DialogContent>

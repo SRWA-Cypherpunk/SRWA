@@ -198,8 +198,8 @@ export function PurchaseRequestsManager() {
       <Alert className="border-blue-500/50 bg-blue-500/10">
         <Info className="h-4 w-4 text-blue-400" />
         <AlertDescription className="text-sm text-brand-100">
-          <strong>Ao aprovar:</strong> Os tokens serão transferidos automaticamente para o investidor e o SOL recebido
-          deverá ser enviado para a pool USD/SOL para liquidez.
+          <strong>Upon approval:</strong> Tokens will be automatically transferred to the investor and the SOL received
+          should be sent to the USD/SOL pool for liquidity.
         </AlertDescription>
       </Alert>
 
@@ -324,7 +324,7 @@ export function PurchaseRequestsManager() {
                           ) : (
                             <>
                               <CheckCircle2 className="h-4 w-4 mr-2" />
-                              Aprovar
+                              Approve
                             </>
                           )}
                         </Button>
@@ -336,7 +336,7 @@ export function PurchaseRequestsManager() {
                           className="flex-1 border-red-500/30 hover:bg-red-500/10 text-red-400"
                         >
                           <XCircle className="h-4 w-4 mr-2" />
-                          Rejeitar
+                          Reject
                         </Button>
                       </div>
                     </div>

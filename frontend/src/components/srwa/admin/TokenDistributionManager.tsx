@@ -70,7 +70,7 @@ export function TokenDistributionManager() {
         toast.success('✅ Distribuição concluída!', {
           description: `${amount} tokens enviados para ${recipientAddress.substring(0, 8)}...`,
           action: result.signature ? {
-            label: 'Ver Transação',
+            label: 'View Transaction',
             onClick: () => window.open(`https://explorer.solana.com/tx/${result.signature}?cluster=devnet`, '_blank')
           } : undefined,
         });
@@ -112,8 +112,8 @@ export function TokenDistributionManager() {
       <Alert className="border-blue-500/50 bg-blue-500/10">
         <UserCheck className="h-4 w-4 text-blue-400" />
         <AlertDescription className="text-sm text-brand-100">
-          <strong>Validação KYC Automática:</strong> Seu Transfer Hook valida automaticamente o KYC do destinatário.
-          Se o investidor não tiver KYC válido, a transação será rejeitada on-chain.
+          <strong>Automatic KYC Validation:</strong> Your Transfer Hook automatically validates the recipient's KYC.
+          If the investor doesn't have valid KYC, the transaction will be rejected on-chain.
         </AlertDescription>
       </Alert>
 
@@ -145,7 +145,7 @@ export function TokenDistributionManager() {
               className="bg-brand-900/50 border-brand-600 text-brand-50"
             />
             <p className="text-xs text-brand-400">
-              Endereço do token RWA que será distribuído
+              RWA token address that will be distributed
             </p>
           </div>
 
@@ -240,9 +240,9 @@ export function TokenDistributionManager() {
               3
             </div>
             <div>
-              <p className="text-sm text-brand-100 font-medium">Validação KYC</p>
+              <p className="text-sm text-brand-100 font-medium">KYC Validation</p>
               <p className="text-xs text-brand-400">
-                Transfer Hook verifica se o destinatário possui KYC válido
+                Transfer Hook verifies if the recipient has valid KYC
               </p>
             </div>
           </div>
@@ -252,9 +252,9 @@ export function TokenDistributionManager() {
               <CheckCircle2 className="h-3 w-3" />
             </div>
             <div>
-              <p className="text-sm text-brand-100 font-medium">Transferência Concluída</p>
+              <p className="text-sm text-brand-100 font-medium">Transfer Completed</p>
               <p className="text-xs text-brand-400">
-                Se KYC OK: tokens são transferidos. Se KYC falha: transação é revertida
+                If KYC OK: tokens are transferred. If KYC fails: transaction is reverted
               </p>
             </div>
           </div>
@@ -270,7 +270,7 @@ export function TokenDistributionManager() {
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
             <p className="text-sm text-brand-100">
-              <strong>Compliance Garantido:</strong> KYC validado on-chain em toda transferência
+              <strong>Guaranteed Compliance:</strong> KYC validated on-chain in every transfer
             </p>
           </div>
           <div className="flex items-center gap-2">

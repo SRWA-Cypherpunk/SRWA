@@ -302,8 +302,8 @@ export function IssuerWizard() {
                       <FileText className="h-8 w-8 text-muted-foreground mb-2" />
                       <p className="text-sm text-fg-secondary text-center">
                         {tokenConfig.collateralDocs && tokenConfig.collateralDocs.length > 0
-                          ? `${tokenConfig.collateralDocs.length} arquivo(s) selecionado(s)`
-                          : 'Clique para enviar documentos (PDF, imagens)'}
+                          ? `${tokenConfig.collateralDocs.length} file(s) selected`
+                          : 'Click to upload documents (PDF, images)'}
                       </p>
                     </label>
                   </div>

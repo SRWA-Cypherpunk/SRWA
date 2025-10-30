@@ -402,7 +402,7 @@ export function Footer({
 
                   {/* Discord Button */}
                   <motion.a
-                    href="https://discord.gg/your-discord-link"
+                    href="https://discord.gg/mhaVFP9Q"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="relative group overflow-hidden"

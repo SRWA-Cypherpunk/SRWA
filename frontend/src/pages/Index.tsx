@@ -884,7 +884,7 @@ const Index = () => {
                             animate={isMobile ? {} : { opacity: [0.6, 1, 0.6] }}
                             transition={isMobile ? {} : { duration: 3, repeat: Infinity, ease: "easeInOut" }}
                           />
-                          Disponível
+                          Available
                         </Badge>
                       </div>
 
@@ -1126,7 +1126,7 @@ const Index = () => {
           ) : (
             // No SRWA tokens state
             <div className="col-span-3 text-center py-12">
-              <p className="text-body-1 text-fg-muted">Nenhum token SRWA disponível no momento.</p>
+              <p className="text-body-1 text-fg-muted">No SRWA tokens available at the moment.</p>
             </div>
           )}
 
