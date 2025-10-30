@@ -4,7 +4,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CombinedProvider } from "@/contexts/CombinedProvider";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UserRole } from "@/types/srwa-contracts";
-import { FEATURES } from "@/lib/constants/features";
 import { InstallPrompt } from "@/components/mobile/InstallPrompt";
 import Index from "./pages/Index";
 import Markets from "./pages/markets/Markets";
@@ -40,76 +39,74 @@ const App = () => (
         <Route path="/" element={<Index />} />
         <Route path="/docs" element={<Docs />} />
 
-        {/* Feature-gated routes - only available when VITE_ENABLE_DASHBOARD=true (development) */}
-        {FEATURES.DASHBOARD && (
-          <>
-            {/* Registration route - requires wallet but not registration */}
-            <Route path="/register" element={<Register />} />
+        {/* Feature-gated routes - now always available */}
+        <>
+          {/* Registration route - requires wallet but not registration */}
+          <Route path="/register" element={<Register />} />
 
-            {/* Investor routes - PUBLIC in dev for easy testing */}
-            <Route path="/markets" element={<Markets />} />
-            <Route path="/market/:id" element={<MarketDetail />} />
-            <Route path="/portfolio" element={<Portfolio />} />
-            <Route path="/investor" element={<Investor />} />
+          {/* Investor routes - PUBLIC in dev for easy testing */}
+          <Route path="/markets" element={<Markets />} />
+          <Route path="/market/:id" element={<MarketDetail />} />
+          <Route path="/portfolio" element={<Portfolio />} />
+          <Route path="/investor" element={<Investor />} />
 
-            {/* Dashboard routes - Refactored structure */}
-            <Route path="/dashboard" element={<DashboardOverview />} />
-            <Route path="/dashboard/markets" element={<DashboardMarkets />} />
-            <Route path="/dashboard/portfolio" element={<DashboardPortfolio />} />
-            <Route
-              path="/dashboard/admin"
-              element={
-                <ProtectedRoute allowedRoles={[UserRole.Admin]}>
-                  <DashboardAdmin />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/dashboard/investor"
-              element={
-                <ProtectedRoute allowedRoles={[UserRole.Investor]}>
-                  <DashboardInvestor />
-                </ProtectedRoute>
-              }
-            />
+          {/* Dashboard routes - Refactored structure */}
+          <Route path="/dashboard" element={<DashboardOverview />} />
+          <Route path="/dashboard/markets" element={<DashboardMarkets />} />
+          <Route path="/dashboard/portfolio" element={<DashboardPortfolio />} />
+          <Route
+            path="/dashboard/admin"
+            element={
+              <ProtectedRoute allowedRoles={[UserRole.Admin]}>
+                <DashboardAdmin />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/investor"
+            element={
+              <ProtectedRoute allowedRoles={[UserRole.Investor]}>
+                <DashboardInvestor />
+              </ProtectedRoute>
+            }
+          />
 
-            {/* Other routes */}
-            <Route path="/pools" element={<Pools />} />
-            <Route path="/pool/:id" element={<PoolDetail />} />
-            <Route path="/kyc" element={<KYC />} />
-            <Route path="/kyc-eligibility" element={<KYCEligibility />} />
-            <Route path="/optimizer" element={<Optimizer />} />
-            <Route path="/oracle-nav" element={<OracleNav />} />
+          {/* Other routes */}
+          <Route path="/pools" element={<Pools />} />
+          <Route path="/pool/:id" element={<PoolDetail />} />
+          <Route path="/kyc" element={<KYC />} />
+          <Route path="/kyc-eligibility" element={<KYCEligibility />} />
+          <Route path="/optimizer" element={<Optimizer />} />
+          <Route path="/oracle-nav" element={<OracleNav />} />
 
-            {/* Issuer routes - still protected by role */}
-            <Route
-              path="/srwa-issuance"
-              element={
-                <ProtectedRoute allowedRoles={[UserRole.Issuer, UserRole.Admin]}>
-                  <SRWAIssuance />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/create-pool"
-              element={
-                <ProtectedRoute allowedRoles={[UserRole.Issuer, UserRole.Admin]}>
-                  <CreatePool />
-                </ProtectedRoute>
-              }
-            />
+          {/* Issuer routes - still protected by role */}
+          <Route
+            path="/srwa-issuance"
+            element={
+              <ProtectedRoute allowedRoles={[UserRole.Issuer, UserRole.Admin]}>
+                <SRWAIssuance />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/create-pool"
+            element={
+              <ProtectedRoute allowedRoles={[UserRole.Issuer, UserRole.Admin]}>
+                <CreatePool />
+              </ProtectedRoute>
+            }
+          />
 
-            {/* Admin routes - still protected by role */}
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute allowedRoles={[UserRole.Admin]}>
-                  <Admin />
-                </ProtectedRoute>
-              }
-            />
-          </>
-        )}
+          {/* Admin routes - still protected by role */}
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute allowedRoles={[UserRole.Admin]}>
+                <Admin />
+              </ProtectedRoute>
+            }
+          />
+        </>
 
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
         <Route path="*" element={<NotFound />} />

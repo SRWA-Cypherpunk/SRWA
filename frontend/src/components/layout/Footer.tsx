@@ -4,8 +4,6 @@ import { motion } from "framer-motion";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { SolanaWalletButton } from "@/components/wallet/SolanaWalletButton";
 import { HeroButton } from "@/components/ui/hero-button";
-import { LaunchCountdownButton } from "@/components/ui/launch-countdown-button";
-import { FEATURES } from "@/lib/constants/features";
 
 // Route constants
 const ROUTES = {
@@ -129,25 +127,25 @@ export function Footer({
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3 flex-shrink-0 sm:items-center md:items-end">
                   {connected ? (
-                    <LaunchCountdownButton
-                      className="w-full sm:w-auto items-center md:items-end text-center md:text-right"
-                      buttonClassName="!px-6 !py-3 !text-sm"
+                    <HeroButton
+                      onClick={handleCtaAction}
+                      variant="primary"
+                      className="w-full sm:w-auto !px-6 !py-3 !text-sm"
                       icon={<ArrowRight className="h-4 w-4" />}
-                      onLaunch={handleCtaAction}
-                    />
+                    >
+                      Launch App
+                    </HeroButton>
                   ) : (
                     <SolanaWalletButton className="w-full sm:w-auto !px-6 !py-3 !text-sm" />
                   )}
-                  {FEATURES.DASHBOARD && (
-                    <HeroButton
-                      onClick={() => navigate(ROUTES.DASHBOARD)}
-                      variant="solana"
-                      className="!px-6 !py-3 !text-sm"
-                      icon={<ArrowRight className="h-4 w-4" />}
-                    >
-                      View Dashboard
-                    </HeroButton>
-                  )}
+                  <HeroButton
+                    onClick={() => navigate(ROUTES.DASHBOARD)}
+                    variant="solana"
+                    className="!px-6 !py-3 !text-sm"
+                    icon={<ArrowRight className="h-4 w-4" />}
+                  >
+                    View Dashboard
+                  </HeroButton>
                 </div>
               </div>
             </div>
@@ -199,16 +197,11 @@ export function Footer({
                 </h4>
                 <ul className="space-y-3">
                   {[
-                    FEATURES.DASHBOARD && {
-                      href: ROUTES.DASHBOARD,
-                      label: "Dashboard",
-                    },
+                    { href: ROUTES.DASHBOARD, label: "Dashboard" },
                     { href: ROUTES.MARKETS, label: "Markets" },
                     { href: ROUTES.PORTFOLIO, label: "Portfolio" },
                     { href: ROUTES.KYC, label: "KYC Portal" },
-                  ]
-                    .filter(Boolean)
-                    .map((link: any) => (
+                  ].map((link: any) => (
                       <li key={link.href}>
                         <motion.a
                           href={link.href}

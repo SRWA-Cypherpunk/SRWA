@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Menu, X, Smartphone } from "lucide-react";
 import { SolanaWalletButton } from "@/components/wallet/SolanaWalletButton";
-import { FEATURES } from "@/lib/constants/features";
 import { useQueryClient } from '@tanstack/react-query';
 import { useProgramsSafe } from '@/contexts/ProgramContext';
 import { useMobileDetection } from "@/hooks/ui/useMobileDetection";
@@ -174,17 +173,15 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
               Home
               <span className="absolute bottom-0 left-0 w-0 h-px bg-brand-400 group-hover:w-full transition-all duration-300" />
             </Link>
-            {FEATURES.DASHBOARD && (
-              <Link
-                to={disableDashboardLink ? "#" : ROUTES.DASHBOARD}
-                onClick={handleDashboardLink}
-                onMouseEnter={handleDashboardHover}
-                className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group font-medium"
-              >
-                Dashboard
-                <span className="absolute bottom-0 left-0 w-0 h-px bg-brand-400 group-hover:w-full transition-all duration-300" />
-              </Link>
-            )}
+            <Link
+              to={disableDashboardLink ? "#" : ROUTES.DASHBOARD}
+              onClick={handleDashboardLink}
+              onMouseEnter={handleDashboardHover}
+              className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group font-medium"
+            >
+              Dashboard
+              <span className="absolute bottom-0 left-0 w-0 h-px bg-brand-400 group-hover:w-full transition-all duration-300" />
+            </Link>
             <a href={ROUTES.DOCS} target="_blank" rel="noopener noreferrer" className="text-sm lg:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors relative group">
               Documentation
               <span className="absolute bottom-0 left-0 w-0 h-px bg-brand-400 group-hover:w-full transition-all duration-300" />
@@ -262,18 +259,16 @@ export function Header({ disableDashboardLink = false, onDashboardLinkClick }: H
                 >
                   Home
                 </Link>
-                {FEATURES.DASHBOARD && (
-                  <Link
-                    to={disableDashboardLink ? "#" : ROUTES.DASHBOARD}
-                    onClick={(e) => {
-                      handleDashboardLink(e);
-                      setMobileMenuOpen(false);
-                    }}
-                    className="block py-2 text-sm sm:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors font-medium"
-                  >
-                    Dashboard
-                  </Link>
-                )}
+                <Link
+                  to={disableDashboardLink ? "#" : ROUTES.DASHBOARD}
+                  onClick={(e) => {
+                    handleDashboardLink(e);
+                    setMobileMenuOpen(false);
+                  }}
+                  className="block py-2 text-sm sm:text-body-2 text-fg-secondary hover:text-brand-400 transition-colors font-medium"
+                >
+                  Dashboard
+                </Link>
                 <a
                   href={ROUTES.DOCS}
                   target="_blank"

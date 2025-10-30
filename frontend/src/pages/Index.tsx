@@ -3,10 +3,8 @@ import { Header, Footer } from "@/components/layout";
 import { KPICard } from "@/components/ui/kpi-card";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AnimatedCounter } from "@/components/ui/animated-counter";
 import { MarketChart } from "@/components/ui/market-chart";
 import { HeroButton } from "@/components/ui/hero-button";
-import { LaunchCountdownButton } from "@/components/ui/launch-countdown-button";
 import { Globe as GlobeComponent } from "@/components/ui/globe";
 import { RoadmapSection } from "@/components/sections/RoadmapSection";
 import { FlowDiagram } from "@/components/FlowDiagram";
@@ -414,12 +412,13 @@ const Index = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.8 }}
             >
-              <LaunchCountdownButton
+              <HeroButton
                 className="w-full sm:w-auto"
-                buttonClassName="w-full sm:w-auto"
                 icon={<ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />}
-                onLaunch={scrollToTop}
-              />
+                onClick={scrollToTop}
+              >
+                Launch App
+              </HeroButton>
             </motion.div>
 
           </motion.div>
@@ -916,10 +915,9 @@ const Index = () => {
                             style={{ borderRadius: "calc(0.75rem - 2px)" }}
                           >
                             <p className="text-micro text-fg-muted uppercase tracking-wide">Target APY</p>
-                            <AnimatedCounter
-                              value={apyDisplay}
-                              className="text-h3 font-semibold text-fg-primary tabular-nums"
-                            />
+                            <span className="text-h3 font-semibold text-fg-primary tabular-nums">
+                              {apyDisplay}
+                            </span>
                           </div>
                         </motion.div>
                         <motion.div
@@ -1044,10 +1042,9 @@ const Index = () => {
                           style={{ borderRadius: "calc(0.75rem - 2px)" }}
                         >
                           <p className="text-micro text-fg-muted uppercase tracking-wide">Supply APY</p>
-                          <AnimatedCounter 
-                            value={`${(market.supplyAPY * 100).toFixed(2)}%`} 
-                            className="text-h3 font-semibold text-fg-primary tabular-nums"
-                          />
+                          <span className="text-h3 font-semibold text-fg-primary tabular-nums">
+                            {`${(market.supplyAPY * 100).toFixed(2)}%`}
+                          </span>
                         </div>
                       </motion.div>
                       <motion.div
@@ -1067,10 +1064,7 @@ const Index = () => {
                           <p className="text-micro text-fg-muted uppercase tracking-wide">TVL</p>
                           <div className="text-h3 font-semibold text-fg-primary tabular-nums">
                             <span className="mr-1 text-fg-muted">$</span>
-                            <AnimatedCounter 
-                              value={market.tvl > 0 ? `${(market.tvl / 1e6).toFixed(1)}M` : '0.0M'} 
-                              className=""
-                            />
+                            <span>{market.tvl > 0 ? `${(market.tvl / 1e6).toFixed(1)}M` : '0.0M'}</span>
                           </div>
                         </div>
                       </motion.div>
@@ -1139,11 +1133,13 @@ const Index = () => {
           transition={{ duration: 0.6, delay: 0.8 }}
           viewport={viewportConfig}
         >
-          <LaunchCountdownButton
+          <HeroButton
             icon={<ArrowRight className="h-5 w-5" />}
-            onLaunch={scrollToTop}
+            onClick={scrollToTop}
             className="w-full sm:w-auto mx-auto"
-          />
+          >
+            Launch App
+          </HeroButton>
         </motion.div>
         </div>
       </section>
