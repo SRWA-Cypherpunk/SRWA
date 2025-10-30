@@ -8,126 +8,162 @@
   },
   "instructions": [
     {
-      "name": "on_transfer",
+      "name": "initialize_extra_account_meta_list",
       "docs": [
-        "Transfer Hook - called automatically on every transfer, ensuring baseline compliance.",
-        "This should be configured as the transfer hook for the Token-2022 mint."
+        "Initialize the ExtraAccountMetaList account"
       ],
       "discriminator": [
-        109,
-        85,
-        228,
-        126,
-        32,
-        128,
-        206,
-        77
+        92,
+        197,
+        174,
+        197,
+        41,
+        124,
+        19,
+        3
       ],
       "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
         {
           "name": "mint"
         },
         {
-          "name": "from",
-          "writable": true
+          "name": "extra_account_meta_list",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  120,
+                  116,
+                  114,
+                  97,
+                  45,
+                  97,
+                  99,
+                  99,
+                  111,
+                  117,
+                  110,
+                  116,
+                  45,
+                  109,
+                  101,
+                  116,
+                  97,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
         },
         {
-          "name": "to",
-          "writable": true
-        },
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize_kyc_registry",
+      "docs": [
+        "Initialize KYC Registry for a user"
+      ],
+      "discriminator": [
+        165,
+        108,
+        71,
+        201,
+        167,
+        150,
+        89,
+        27
+      ],
+      "accounts": [
         {
           "name": "authority",
-          "docs": [
-            "Owner/delegate executing the transfer"
-          ],
+          "writable": true,
           "signer": true
         },
         {
-          "name": "config",
+          "name": "user"
+        },
+        {
+          "name": "kyc_registry",
+          "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
-                  115,
-                  114,
-                  119,
-                  97,
-                  95,
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
+                  107,
+                  121,
+                  99
                 ]
               },
               {
                 "kind": "account",
-                "path": "mint"
+                "path": "user"
               }
             ]
           }
         },
         {
-          "name": "offering",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  111,
-                  102,
-                  102,
-                  101,
-                  114,
-                  105,
-                  110,
-                  103
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "mint"
-              }
-            ]
-          }
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "kyc_completed",
+          "type": "bool"
         },
         {
-          "name": "from_registry",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  117,
-                  115,
-                  101,
-                  114,
-                  95,
-                  114,
-                  101,
-                  103,
-                  105,
-                  115,
-                  116,
-                  114,
-                  121
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "authority"
-              }
-            ]
-          }
+          "name": "is_active",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "transfer_hook",
+      "docs": [
+        "Transfer Hook - validates KYC for both sender and recipient"
+      ],
+      "discriminator": [
+        105,
+        37,
+        101,
+        197,
+        75,
+        251,
+        102,
+        26
+      ],
+      "accounts": [
+        {
+          "name": "source_token"
         },
         {
-          "name": "to_registry",
-          "docs": [
-            "Optional destination registry for KYC validation"
-          ],
-          "optional": true
+          "name": "mint"
+        },
+        {
+          "name": "destination_token"
+        },
+        {
+          "name": "authority"
+        },
+        {
+          "name": "extra_account_meta_list"
         }
       ],
       "args": [
@@ -138,19 +174,19 @@
       ]
     },
     {
-      "name": "set_offering_phase",
+      "name": "update_kyc_status",
       "docs": [
-        "Admin function to update offering phase"
+        "Update KYC status for existing registry"
       ],
       "discriminator": [
-        128,
-        107,
-        37,
-        253,
-        131,
-        45,
-        55,
-        169
+        182,
+        90,
+        72,
+        162,
+        173,
+        39,
+        52,
+        147
       ],
       "accounts": [
         {
@@ -159,56 +195,22 @@
           "signer": true
         },
         {
-          "name": "mint"
-        },
-        {
-          "name": "config",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  114,
-                  119,
-                  97,
-                  95,
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "mint"
-              }
-            ]
-          }
-        },
-        {
-          "name": "offering",
+          "name": "kyc_registry",
           "writable": true,
           "pda": {
             "seeds": [
               {
                 "kind": "const",
                 "value": [
-                  111,
-                  102,
-                  102,
-                  101,
-                  114,
-                  105,
-                  110,
-                  103
+                  107,
+                  121,
+                  99
                 ]
               },
               {
                 "kind": "account",
-                "path": "mint"
+                "path": "kyc_registry.user",
+                "account": "KYCRegistry"
               }
             ]
           }
@@ -216,71 +218,11 @@
       ],
       "args": [
         {
-          "name": "new_phase",
-          "type": {
-            "defined": {
-              "name": "OfferingPhase"
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "set_paused",
-      "docs": [
-        "Admin function to pause/unpause transfers"
-      ],
-      "discriminator": [
-        91,
-        60,
-        125,
-        192,
-        176,
-        225,
-        166,
-        218
-      ],
-      "accounts": [
-        {
-          "name": "authority",
-          "writable": true,
-          "signer": true
+          "name": "kyc_completed",
+          "type": "bool"
         },
         {
-          "name": "mint"
-        },
-        {
-          "name": "config",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  115,
-                  114,
-                  119,
-                  97,
-                  95,
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "mint"
-              }
-            ]
-          }
-        }
-      ],
-      "args": [
-        {
-          "name": "paused",
+          "name": "is_active",
           "type": "bool"
         }
       ]
@@ -288,724 +230,50 @@
   ],
   "accounts": [
     {
-      "name": "OfferingState",
+      "name": "KYCRegistry",
       "discriminator": [
+        234,
+        201,
         232,
-        27,
-        7,
-        145,
-        97,
-        42,
-        93,
-        187
-      ]
-    },
-    {
-      "name": "SRWAConfig",
-      "discriminator": [
-        194,
-        199,
-        237,
-        20,
-        148,
-        94,
-        25,
-        11
-      ]
-    },
-    {
-      "name": "UserRegistry",
-      "discriminator": [
-        37,
-        84,
-        98,
-        14,
-        130,
-        63,
-        210,
-        138
+        100,
+        142,
+        157,
+        248,
+        217
       ]
     }
   ],
   "errors": [
     {
       "code": 6000,
-      "name": "TransferPaused",
-      "msg": "Transfer paused"
+      "name": "MissingKYCAccounts",
+      "msg": "Missing KYC accounts in remaining_accounts"
     },
     {
       "code": 6001,
-      "name": "AccountFrozen",
-      "msg": "Account frozen"
+      "name": "InvalidKYCAccount",
+      "msg": "Invalid KYC account"
     },
     {
       "code": 6002,
-      "name": "KYCFailed",
-      "msg": "KYC verification failed"
+      "name": "KYCNotCompleted",
+      "msg": "KYC not completed"
     },
     {
       "code": 6003,
-      "name": "OfferingRulesViolated",
-      "msg": "Offering rules violated"
-    },
-    {
-      "code": 6004,
-      "name": "InvestorLimitExceeded",
-      "msg": "Investor limit exceeded"
-    },
-    {
-      "code": 6005,
-      "name": "LockupActive",
-      "msg": "Lockup active"
-    },
-    {
-      "code": 6006,
-      "name": "WindowClosed",
-      "msg": "Transfer window closed"
-    },
-    {
-      "code": 6007,
-      "name": "NotAllowlisted",
-      "msg": "Not allowlisted"
-    },
-    {
-      "code": 6008,
-      "name": "UnauthorizedAdmin",
-      "msg": "Unauthorized admin"
+      "name": "UserNotActive",
+      "msg": "User is not active"
     }
   ],
   "types": [
     {
-      "name": "Currency",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "USD"
-          },
-          {
-            "name": "BRL"
-          },
-          {
-            "name": "EUR"
-          }
-        ]
-      }
-    },
-    {
-      "name": "Distribution",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "oversub_policy",
-            "type": {
-              "defined": {
-                "name": "OversubPolicy"
-              }
-            }
-          },
-          {
-            "name": "lockups_data",
-            "type": "bytes"
-          }
-        ]
-      }
-    },
-    {
-      "name": "Eligibility",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "jurisdictions_allow",
-            "type": {
-              "vec": "u16"
-            }
-          },
-          {
-            "name": "investor_types",
-            "type": {
-              "vec": {
-                "defined": {
-                  "name": "InvestorType"
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "Fees",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "origination_bps",
-            "type": "u16"
-          },
-          {
-            "name": "platform_bps",
-            "type": "u16"
-          },
-          {
-            "name": "success_bps",
-            "type": "u16"
-          }
-        ]
-      }
-    },
-    {
-      "name": "Funding",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "raised",
-            "type": "u64"
-          },
-          {
-            "name": "investors",
-            "type": "u32"
-          }
-        ]
-      }
-    },
-    {
-      "name": "IdleStrategy",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "None"
-          },
-          {
-            "name": "Marginfi"
-          },
-          {
-            "name": "Solend"
-          }
-        ]
-      }
-    },
-    {
-      "name": "InvestorType",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "RetailQualified"
-          },
-          {
-            "name": "Accredited"
-          },
-          {
-            "name": "Institutional"
-          }
-        ]
-      }
-    },
-    {
-      "name": "ModuleId",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "Jurisdiction"
-          },
-          {
-            "name": "Sanctions"
-          },
-          {
-            "name": "Accredited"
-          },
-          {
-            "name": "Lockup"
-          },
-          {
-            "name": "MaxHolders"
-          },
-          {
-            "name": "VolumeCaps"
-          },
-          {
-            "name": "TransferWindow"
-          },
-          {
-            "name": "ProgramAllowlist"
-          },
-          {
-            "name": "AccountAllowlist"
-          },
-          {
-            "name": "OfferingRules"
-          },
-          {
-            "name": "InvestorLimits"
-          }
-        ]
-      }
-    },
-    {
-      "name": "OfferingPhase",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "Draft"
-          },
-          {
-            "name": "PreOffer"
-          },
-          {
-            "name": "OfferOpen"
-          },
-          {
-            "name": "OfferLocked"
-          },
-          {
-            "name": "OfferClosed"
-          },
-          {
-            "name": "Settlement"
-          },
-          {
-            "name": "Refund"
-          }
-        ]
-      }
-    },
-    {
-      "name": "OfferingRules",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "min_ticket",
-            "type": "u64"
-          },
-          {
-            "name": "per_investor_cap",
-            "type": "u64"
-          },
-          {
-            "name": "max_investors",
-            "type": "u32"
-          },
-          {
-            "name": "eligibility",
-            "type": {
-              "defined": {
-                "name": "Eligibility"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "OfferingState",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "mint",
-            "type": "pubkey"
-          },
-          {
-            "name": "phase",
-            "type": {
-              "defined": {
-                "name": "OfferingPhase"
-              }
-            }
-          },
-          {
-            "name": "window",
-            "type": {
-              "defined": {
-                "name": "TimeWindow"
-              }
-            }
-          },
-          {
-            "name": "target",
-            "type": {
-              "defined": {
-                "name": "Target"
-              }
-            }
-          },
-          {
-            "name": "pricing",
-            "type": {
-              "defined": {
-                "name": "Pricing"
-              }
-            }
-          },
-          {
-            "name": "rules",
-            "type": {
-              "defined": {
-                "name": "OfferingRules"
-              }
-            }
-          },
-          {
-            "name": "distribution",
-            "type": {
-              "defined": {
-                "name": "Distribution"
-              }
-            }
-          },
-          {
-            "name": "funding",
-            "type": {
-              "defined": {
-                "name": "Funding"
-              }
-            }
-          },
-          {
-            "name": "pool_vault",
-            "type": "pubkey"
-          },
-          {
-            "name": "idle_strategy",
-            "type": {
-              "defined": {
-                "name": "IdleStrategy"
-              }
-            }
-          },
-          {
-            "name": "fees_bps",
-            "type": {
-              "defined": {
-                "name": "Fees"
-              }
-            }
-          },
-          {
-            "name": "settlement",
-            "type": {
-              "defined": {
-                "name": "Settlement"
-              }
-            }
-          },
-          {
-            "name": "bump",
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "OracleConfig",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "pyth_feeds",
-            "type": {
-              "vec": "pubkey"
-            }
-          },
-          {
-            "name": "heartbeat",
-            "type": "u32"
-          },
-          {
-            "name": "max_dev_bps",
-            "type": "u32"
-          },
-          {
-            "name": "nav_feeder",
-            "type": "pubkey"
-          },
-          {
-            "name": "base_ccy",
-            "type": {
-              "defined": {
-                "name": "Currency"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "OversubPolicy",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "ProRata"
-          },
-          {
-            "name": "FCFS"
-          },
-          {
-            "name": "PriorityBuckets"
-          }
-        ]
-      }
-    },
-    {
-      "name": "Pricing",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "model",
-            "type": {
-              "defined": {
-                "name": "PricingModel"
-              }
-            }
-          },
-          {
-            "name": "unit_price",
-            "type": "u64"
-          },
-          {
-            "name": "currency",
-            "type": {
-              "defined": {
-                "name": "Currency"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "name": "PricingModel",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "Fixed"
-          },
-          {
-            "name": "NAV"
-          },
-          {
-            "name": "Hybrid"
-          }
-        ]
-      }
-    },
-    {
-      "name": "Roles",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "issuer_admin",
-            "type": "pubkey"
-          },
-          {
-            "name": "compliance_officer",
-            "type": "pubkey"
-          },
-          {
-            "name": "transfer_agent",
-            "type": "pubkey"
-          }
-        ]
-      }
-    },
-    {
-      "name": "SRWAConfig",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "version",
-            "type": "u8"
-          },
-          {
-            "name": "mint",
-            "type": "pubkey"
-          },
-          {
-            "name": "roles",
-            "type": {
-              "defined": {
-                "name": "Roles"
-              }
-            }
-          },
-          {
-            "name": "required_topics",
-            "type": {
-              "vec": "u32"
-            }
-          },
-          {
-            "name": "trusted_issuers_data",
-            "type": {
-              "vec": {
-                "defined": {
-                  "name": "TrustedIssuerEntry"
-                }
-              }
-            }
-          },
-          {
-            "name": "modules_enabled",
-            "type": {
-              "vec": {
-                "defined": {
-                  "name": "ModuleId"
-                }
-              }
-            }
-          },
-          {
-            "name": "params_by_module",
-            "type": "bytes"
-          },
-          {
-            "name": "token_controls",
-            "type": {
-              "defined": {
-                "name": "TokenControls"
-              }
-            }
-          },
-          {
-            "name": "oracle_cfg",
-            "type": {
-              "defined": {
-                "name": "OracleConfig"
-              }
-            }
-          },
-          {
-            "name": "compliance_version",
-            "type": "u16"
-          },
-          {
-            "name": "metadata_uri",
-            "type": "string"
-          },
-          {
-            "name": "paused",
-            "type": "bool"
-          },
-          {
-            "name": "bump",
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "Settlement",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "issuer_treasury",
-            "type": "pubkey"
-          },
-          {
-            "name": "fee_treasury",
-            "type": "pubkey"
-          }
-        ]
-      }
-    },
-    {
-      "name": "Target",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "soft_cap",
-            "type": "u64"
-          },
-          {
-            "name": "hard_cap",
-            "type": "u64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "TimeWindow",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "start_ts",
-            "type": "i64"
-          },
-          {
-            "name": "end_ts",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "TokenControls",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "default_frozen",
-            "type": "bool"
-          },
-          {
-            "name": "permanent_delegate",
-            "type": "pubkey"
-          }
-        ]
-      }
-    },
-    {
-      "name": "TrustedIssuerEntry",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "topic",
-            "type": "u32"
-          },
-          {
-            "name": "issuer",
-            "type": "pubkey"
-          }
-        ]
-      }
-    },
-    {
-      "name": "UserRegistry",
+      "name": "KYCRegistry",
       "type": {
         "kind": "struct",
         "fields": [
           {
             "name": "user",
             "type": "pubkey"
-          },
-          {
-            "name": "role",
-            "type": {
-              "defined": {
-                "name": "UserRole"
-              }
-            }
-          },
-          {
-            "name": "registered_at",
-            "type": "i64"
           },
           {
             "name": "kyc_completed",
@@ -1016,25 +284,12 @@
             "type": "bool"
           },
           {
+            "name": "updated_at",
+            "type": "i64"
+          },
+          {
             "name": "bump",
             "type": "u8"
-          }
-        ]
-      }
-    },
-    {
-      "name": "UserRole",
-      "type": {
-        "kind": "enum",
-        "variants": [
-          {
-            "name": "Issuer"
-          },
-          {
-            "name": "Investor"
-          },
-          {
-            "name": "Admin"
           }
         ]
       }

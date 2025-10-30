@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import '@/styles/features/dashboard.css';
 import { DashboardLayout, DashboardSection } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +20,6 @@ import { UserRole } from '@/types/srwa-contracts';
 import { Plus, BarChart3, TrendingUp, DollarSign, Package, Users } from "lucide-react";
 
 export default function DashboardOverview() {
-  const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // Wallet connection

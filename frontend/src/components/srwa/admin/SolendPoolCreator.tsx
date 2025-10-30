@@ -153,7 +153,7 @@ export function SolendPoolCreator() {
     event.preventDefault();
 
     if (!form.reserve.liquidityMint.trim()) {
-      toast.error('Informe o mint SPL do token SRWA que será listado na Solend');
+      toast.error('Enter the SPL mint of the SRWA token to be listed on Solend');
       return;
     }
     if (!form.reserve.initialLiquidity.trim() || Number(form.reserve.initialLiquidity) <= 0) {
@@ -162,10 +162,10 @@ export function SolendPoolCreator() {
     }
 
     // HARDCODED: Usar NULL_ORACLE (modo teste)
-    toast.info('✅ Usando NULL_ORACLE (modo teste - pool sem validação de preço)');
+    toast.info('✅ Using NULL_ORACLE (test mode - pool without price validation)');
 
     if (!form.market.createNewMarket && !form.market.existingMarket.trim()) {
-      toast.error('Informe o endereço do lending market que deseja reutilizar');
+      toast.error('Enter the lending market address you want to reuse');
       return;
     }
 
@@ -302,7 +302,7 @@ export function SolendPoolCreator() {
                 <div className="space-y-2">
                   <Label>Lending Market existente</Label>
                   <Input
-                    placeholder="Endereço do market (PublicKey)"
+                    placeholder="Market address (PublicKey)"
                     value={form.market.existingMarket}
                     onChange={(event) => updateMarket({ existingMarket: event.target.value })}
                   />
@@ -345,7 +345,7 @@ export function SolendPoolCreator() {
               <div className="space-y-2">
                 <Label>Pyth Price Account</Label>
                 <Input
-                  placeholder={form.reserve.useNullOracle ? NULL_ORACLE.toBase58() + " (NULL ORACLE)" : "Conta de preço Pyth"}
+                  placeholder={form.reserve.useNullOracle ? NULL_ORACLE.toBase58() + " (NULL ORACLE)" : "Pyth price account"}
                   value={form.reserve.useNullOracle ? NULL_ORACLE.toBase58() : form.reserve.pythPriceAccount}
                   onChange={(event) => updateReserve({ pythPriceAccount: event.target.value })}
                   disabled={form.reserve.useNullOracle}
@@ -574,7 +574,7 @@ export function SolendPoolCreator() {
                 <ResultField label="Fee Receiver" value={lastResult.reserveAccounts.liquidityFeeReceiver.toBase58()} />
               </div>
               <div className="space-y-2">
-                <Label>Transações</Label>
+                <Label>Transactions</Label>
                 <ul className="list-disc space-y-1 pl-6 text-xs font-mono text-muted-foreground">
                   {lastResult.signatures.map((sig) => (
                     <li key={sig}>{sig}</li>

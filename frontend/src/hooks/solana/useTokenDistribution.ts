@@ -22,28 +22,28 @@ export interface DistributionResult {
 }
 
 /**
- * Hook para distribuição direta de Token-2022 com Transfer Hook
+ * Hook for direct Token-2022 distribution with Transfer Hook
  *
- * IMPORTANTE:
- * - Este hook trabalha especificamente com Token-2022
- * - O Transfer Hook (KYC) é executado automaticamente pela SPL
- * - Se o destinatário não tiver KYC, a transação falhará on-chain
+ * IMPORTANT:
+ * - This hook works specifically with Token-2022
+ * - Transfer Hook (KYC) is executed automatically by SPL
+ * - If recipient doesn't have KYC, transaction will fail on-chain
  *
- * FLUXO:
- * 1. Valida mint (Token-2022)
- * 2. Busca/cria ATAs (source e destination)
- * 3. Cria instrução de transferência
- * 4. Transfer Hook executa automaticamente durante a transferência
- * 5. Se KYC OK: transferência concluída
- * 6. Se KYC falha: transação revertida
+ * FLOW:
+ * 1. Validate mint (Token-2022)
+ * 2. Fetch/create ATAs (source and destination)
+ * 3. Create transfer instruction
+ * 4. Transfer Hook executes automatically during transfer
+ * 5. If KYC OK: transfer completed
+ * 6. If KYC fails: transaction reverted
  */
 export function useTokenDistribution() {
   const { connection } = useConnection();
   const wallet = useWallet();
 
   /**
-   * Distribui tokens RWA diretamente para um investidor
-   * O Transfer Hook valida KYC automaticamente
+   * Distribute RWA tokens directly to an investor
+   * Transfer Hook validates KYC automatically
    */
   const distributeTokens = useCallback(
     async (
@@ -52,12 +52,11 @@ export function useTokenDistribution() {
       amount: number
     ): Promise<DistributionResult> => {
       if (!wallet.publicKey || !wallet.signTransaction) {
-        throw new Error('Wallet não conectada');
+        throw new Error('Wallet not connected');
       }
 
       try {
-        // 1. Buscar informações do mint
-        toast.info('🔍 Verificando token...');
+        // 1. Fetch mint information
         const mintInfo = await getMint(
           connection,
           tokenMint,
@@ -95,17 +94,16 @@ export function useTokenDistribution() {
           destination: destinationATA.toBase58(),
         });
 
-        // 4. Verificar se source ATA existe
-        toast.info('💼 Verificando contas...');
+        // 4. Check if source ATA exists
         let sourceAccountExists = true;
         try {
           await getAccount(connection, sourceATA, 'confirmed', TOKEN_2022_PROGRAM_ID);
         } catch (error) {
           sourceAccountExists = false;
-          throw new Error('Você não possui este token. Crie uma ATA primeiro.');
+          throw new Error('You do not own this token. Create an ATA first.');
         }
 
-        // 5. Registrar KYC para sender e recipient (se necessário)
+        // 5. Register KYC for sender and recipient (if necessary)
         const TRANSFER_HOOK_PROGRAM_ID = new PublicKey('345oZiSawNcHLVLnQLjiE7bkycC3bS1DJcmhvYDDaMFH');
 
         // Sender KYC
@@ -117,7 +115,6 @@ export function useTokenDistribution() {
         const senderKycInfo = await connection.getAccountInfo(senderKycPDA);
         if (!senderKycInfo) {
           console.log('[useTokenDistribution] Registering KYC for sender...');
-          toast.info('📝 Registrando KYC do remetente...');
 
           // Create discriminator for initialize_kyc_registry
           const encoder = new TextEncoder();
@@ -169,7 +166,6 @@ export function useTokenDistribution() {
         const recipientKycInfo = await connection.getAccountInfo(recipientKycPDA);
         if (!recipientKycInfo) {
           console.log('[useTokenDistribution] Registering KYC for recipient...');
-          toast.info('📝 Registrando KYC do destinatário...');
 
           // Create discriminator for initialize_kyc_registry
           const encoder = new TextEncoder();
@@ -212,19 +208,18 @@ export function useTokenDistribution() {
           console.log('[useTokenDistribution] Recipient KYC registered:', recipientKycSig);
         }
 
-        // 6. Verificar se destination ATA existe
+        // 6. Check if destination ATA exists
         let destinationAccountExists = true;
         try {
           await getAccount(connection, destinationATA, 'confirmed', TOKEN_2022_PROGRAM_ID);
         } catch (error) {
           destinationAccountExists = false;
-          console.log('Destination ATA não existe, será criada');
+          console.log('Destination ATA does not exist, will be created');
         }
 
-        // 7. CRITICAL: Criar ATA de destino PRIMEIRO (transação separada)
-        // Isso é necessário porque resolveExtraAccountMeta precisa ler dados da destination ATA
+        // 7. CRITICAL: Create destination ATA FIRST (separate transaction)
+        // This is necessary because resolveExtraAccountMeta needs to read data from destination ATA
         if (!destinationAccountExists) {
-          toast.info('📝 Criando conta de destino...');
           const createAtaTx = new Transaction().add(
             createAssociatedTokenAccountInstruction(
               wallet.publicKey,
@@ -248,13 +243,10 @@ export function useTokenDistribution() {
           });
 
           console.log('[useTokenDistribution] Destination ATA created:', ataSig);
-          toast.success('✅ Conta de destino criada');
         }
 
-        // 8. Construir transação de transferência
-        toast.info('📤 Criando instrução de transferência...');
-
-        // Criar instrução base simples - o Token-2022 resolve Transfer Hook automaticamente
+        // 8. Build transfer transaction
+        // Create simple base instruction - Token-2022 resolves Transfer Hook automatically
         const transferInstruction = createTransferCheckedInstruction(
           sourceATA,
           tokenMint,
@@ -268,8 +260,7 @@ export function useTokenDistribution() {
 
         console.log('[useTokenDistribution] Transfer instruction created with', transferInstruction.keys.length, 'base accounts');
 
-        // Resolver Transfer Hook extra accounts manualmente
-
+        // Manually resolve Transfer Hook extra accounts
         try {
           console.log('[useTokenDistribution] Resolving Transfer Hook extra accounts...');
 
@@ -287,7 +278,6 @@ export function useTokenDistribution() {
             let accountInfo = await connection.getAccountInfo(extraAccountMetaAddress);
             if (!accountInfo) {
               console.log('[useTokenDistribution] ExtraAccountMetaList not initialized, initializing now...');
-              toast.info('🔧 Inicializando Transfer Hook...');
 
               // Auto-initialize the ExtraAccountMetaList
               // This is needed for legacy tokens created before auto-initialization was added
@@ -370,10 +360,10 @@ export function useTokenDistribution() {
           }
         } catch (extraAccountsError: any) {
           console.error('[useTokenDistribution] Failed to resolve extra accounts:', extraAccountsError);
-          throw new Error(`Erro ao resolver contas do Transfer Hook: ${extraAccountsError.message}`);
+          throw new Error(`Error resolving Transfer Hook accounts: ${extraAccountsError.message}`);
         }
 
-        // 8. Criar e enviar transação de transferência
+        // 9. Create and send transfer transaction
         const transaction = new Transaction().add(transferInstruction);
         transaction.feePayer = wallet.publicKey;
 
@@ -393,7 +383,7 @@ export function useTokenDistribution() {
           })),
         });
 
-        toast.info('✍️ Assinando transação...');
+        toast.info('Validating KYC and processing transfer...');
 
         let signedTransaction;
         try {
@@ -401,13 +391,8 @@ export function useTokenDistribution() {
           console.log('[useTokenDistribution] Transaction signed successfully');
         } catch (signError: any) {
           console.error('[useTokenDistribution] Wallet sign error:', signError);
-          throw new Error(`Erro ao assinar transação: ${signError.message}`);
+          throw new Error(`Error signing transaction: ${signError.message}`);
         }
-
-        toast.info('📤 Enviando transação...');
-        toast.info('🔒 Transfer Hook validando KYC...', {
-          description: 'Aguarde enquanto o Transfer Hook verifica o KYC do destinatário on-chain',
-        });
 
         console.log('[useTokenDistribution] Sending transaction with Transfer Hook validation');
 
@@ -419,7 +404,6 @@ export function useTokenDistribution() {
         console.log('[useTokenDistribution] Transaction sent:', signature);
         console.log('[useTokenDistribution] Explorer:', `https://explorer.solana.com/tx/${signature}?cluster=devnet`);
 
-        toast.info('⏳ Confirmando transação...');
         const confirmation = await connection.confirmTransaction(
           {
             signature,
@@ -444,10 +428,10 @@ export function useTokenDistribution() {
             console.warn('[useTokenDistribution] Could not fetch transaction logs');
           }
 
-          throw new Error(`Transação falhou: ${JSON.stringify(confirmation.value.err)}`);
+          throw new Error(`Transaction failed: ${JSON.stringify(confirmation.value.err)}`);
         }
 
-        console.log('Distribuição bem-sucedida:', {
+        console.log('Distribution successful:', {
           signature,
           amount,
           recipient: recipientAddress.toBase58(),
@@ -460,18 +444,16 @@ export function useTokenDistribution() {
       } catch (error: any) {
         console.error('Distribution error:', error);
 
-        // Detectar erros específicos do Transfer Hook
+        // Detect specific Transfer Hook errors
         let errorMessage = error.message;
-        let errorTitle = 'Erro na distribuição';
 
         if (
           error.message?.includes('0x1') || // Custom program error
           error.message?.includes('custom program error') ||
           error.logs?.some((log: string) => log.includes('Transfer Hook'))
         ) {
-          errorTitle = '❌ KYC Inválido';
           errorMessage =
-            'O destinatário não possui KYC válido. O Transfer Hook bloqueou a transação on-chain.';
+            'Recipient does not have valid KYC. Transfer Hook blocked the transaction on-chain.';
         }
 
         return {
@@ -484,7 +466,7 @@ export function useTokenDistribution() {
   );
 
   /**
-   * Verifica se um endereço possui uma ATA para o token
+   * Check if an address has an ATA for the token
    */
   const checkTokenAccount = useCallback(
     async (tokenMint: PublicKey, owner: PublicKey): Promise<boolean> => {
@@ -506,7 +488,7 @@ export function useTokenDistribution() {
   );
 
   /**
-   * Busca o saldo de tokens de um endereço
+   * Fetch token balance of an address
    */
   const getTokenBalance = useCallback(
     async (tokenMint: PublicKey, owner: PublicKey): Promise<number> => {

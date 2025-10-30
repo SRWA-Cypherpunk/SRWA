@@ -108,7 +108,7 @@ export function RaydiumPoolCreator() {
 
   const handleLoadManualPool = async () => {
     if (!manualPoolId.trim()) {
-      toast.error('Informe um Pool ID válido');
+      toast.error('Please enter a valid Pool ID');
       return;
     }
 
@@ -125,8 +125,6 @@ export function RaydiumPoolCreator() {
 
     setLoadingPool(true);
     try {
-      toast.info('Carregando informações do pool...');
-
       const raydium = await Raydium.load({
         owner: wallet.publicKey,
         connection,
@@ -197,24 +195,23 @@ export function RaydiumPoolCreator() {
         price,
       });
 
-      toast.success('Pool carregado com sucesso!');
+      toast.success('Pool loaded successfully');
     } catch (error: any) {
       console.error('[RaydiumPoolCreator] Error loading pool:', error);
 
-      let errorMessage = 'Erro desconhecido';
+      let errorMessage = 'Unknown error';
       if (error.message?.includes('fetch pool info error')) {
-        errorMessage = 'Pool ainda não indexada pelo Raydium. Por favor, aguarde 1-2 minutos e clique em "Recarregar Info" ou recarregue a página.';
+        errorMessage = 'Pool not yet indexed by Raydium. Please wait 1-2 minutes and click "Reload Info" or refresh the page.';
         toast.warning(errorMessage, {
           duration: 10000,
         });
-        // Não limpar o result para que o usuário possa tentar recarregar
         setPoolInfo(null);
-        return; // Não limpar o result
+        return;
       } else if (error.message) {
         errorMessage = error.message;
       }
 
-      toast.error('Erro ao carregar pool: ' + errorMessage);
+      toast.error('Error loading pool: ' + errorMessage);
       setPoolInfo(null);
       setResult(null);
     } finally {
@@ -235,18 +232,17 @@ export function RaydiumPoolCreator() {
 
   const handleSwap = async () => {
     if (!wallet.publicKey || !wallet.signTransaction || !poolInfo) {
-      toast.error('Conecte sua wallet e crie um pool primeiro');
+      toast.error('Please connect your wallet and create a pool first');
       return;
     }
 
     if (!swapForm.inputAmount || parseFloat(swapForm.inputAmount) <= 0) {
-      toast.error('Informe um valor válido para swap');
+      toast.error('Please enter a valid swap amount');
       return;
     }
 
     setLoading(true);
     try {
-      toast.info('Preparando swap...');
 
       const raydium = await Raydium.load({
         owner: wallet.publicKey,
@@ -274,10 +270,9 @@ export function RaydiumPoolCreator() {
         txVersion: TxVersion.V0,
       });
 
-      toast.info('Enviando transação de swap...');
       const { txId } = await execute({ sendAndConfirm: true });
 
-      toast.success('Swap realizado com sucesso!');
+      toast.success('Swap completed successfully');
       console.log('[RaydiumPoolCreator] Swap txId:', txId);
 
       // Reload pool info
@@ -285,7 +280,7 @@ export function RaydiumPoolCreator() {
       setSwapForm({ inputAmount: '', slippage: '1', direction: 'AtoB' });
     } catch (error: any) {
       console.error('[RaydiumPoolCreator] Swap error:', error);
-      toast.error('Erro ao fazer swap: ' + (error.message || 'Erro desconhecido'));
+      toast.error('Swap failed: ' + (error.message || 'Unknown error'));
     } finally {
       setLoading(false);
     }
@@ -293,18 +288,17 @@ export function RaydiumPoolCreator() {
 
   const handleAddLiquidity = async () => {
     if (!wallet.publicKey || !wallet.signTransaction || !poolInfo) {
-      toast.error('Conecte sua wallet e crie um pool primeiro');
+      toast.error('Please connect your wallet and create a pool first');
       return;
     }
 
     if (!liquidityForm.amount || parseFloat(liquidityForm.amount) <= 0) {
-      toast.error('Informe um valor válido');
+      toast.error('Please enter a valid amount');
       return;
     }
 
     setLoading(true);
     try {
-      toast.info('Adicionando liquidez...');
 
       const raydium = await Raydium.load({
         owner: wallet.publicKey,
@@ -330,10 +324,9 @@ export function RaydiumPoolCreator() {
         txVersion: TxVersion.V0,
       });
 
-      toast.info('Enviando transação...');
       const { txId } = await execute({ sendAndConfirm: true });
 
-      toast.success('Liquidez adicionada com sucesso!');
+      toast.success('Liquidity added successfully');
       console.log('[RaydiumPoolCreator] Add liquidity txId:', txId);
 
       // Reload pool info
@@ -341,7 +334,7 @@ export function RaydiumPoolCreator() {
       setLiquidityForm({ amount: '', slippage: '1' });
     } catch (error: any) {
       console.error('[RaydiumPoolCreator] Add liquidity error:', error);
-      toast.error('Erro ao adicionar liquidez: ' + (error.message || 'Erro desconhecido'));
+      toast.error('Failed to add liquidity: ' + (error.message || 'Unknown error'));
     } finally {
       setLoading(false);
     }
@@ -349,18 +342,17 @@ export function RaydiumPoolCreator() {
 
   const handleRemoveLiquidity = async () => {
     if (!wallet.publicKey || !wallet.signTransaction || !poolInfo) {
-      toast.error('Conecte sua wallet e crie um pool primeiro');
+      toast.error('Please connect your wallet and create a pool first');
       return;
     }
 
     if (!liquidityForm.amount || parseFloat(liquidityForm.amount) <= 0) {
-      toast.error('Informe um valor válido de LP tokens');
+      toast.error('Please enter a valid LP token amount');
       return;
     }
 
     setLoading(true);
     try {
-      toast.info('Removendo liquidez...');
 
       const raydium = await Raydium.load({
         owner: wallet.publicKey,
@@ -388,10 +380,9 @@ export function RaydiumPoolCreator() {
         txVersion: TxVersion.V0,
       });
 
-      toast.info('Enviando transação...');
       const { txId } = await execute({ sendAndConfirm: true });
 
-      toast.success('Liquidez removida com sucesso!');
+      toast.success('Liquidity removed successfully');
       console.log('[RaydiumPoolCreator] Remove liquidity txId:', txId);
 
       // Reload pool info
@@ -399,7 +390,7 @@ export function RaydiumPoolCreator() {
       setLiquidityForm({ amount: '', slippage: '1' });
     } catch (error: any) {
       console.error('[RaydiumPoolCreator] Remove liquidity error:', error);
-      toast.error('Erro ao remover liquidez: ' + (error.message || 'Erro desconhecido'));
+      toast.error('Failed to remove liquidity: ' + (error.message || 'Unknown error'));
     } finally {
       setLoading(false);
     }
@@ -409,12 +400,12 @@ export function RaydiumPoolCreator() {
     event.preventDefault();
 
     if (!wallet.publicKey || !wallet.signTransaction) {
-      toast.error('Conecte sua wallet primeiro');
+      toast.error('Please connect your wallet first');
       return;
     }
 
     if (!form.tokenAMint.trim()) {
-      toast.error('Informe o endereço do token SRWA (Token A)');
+      toast.error('Please enter SRWA token address (Token A)');
       return;
     }
 
@@ -424,17 +415,14 @@ export function RaydiumPoolCreator() {
       const tokenAMint = new PublicKey(form.tokenAMint.trim());
       const tokenBMint = new PublicKey(form.tokenBMint.trim());
 
-      // Obter decimais dos tokens usando getMint (funciona com Token e Token-2022)
-      toast.info('Verificando tokens...');
-
-      // Verificar qual programa cada token usa
+      // Check which program each token uses
       const [accountAInfo, accountBInfo] = await Promise.all([
         connection.getAccountInfo(tokenAMint),
         connection.getAccountInfo(tokenBMint),
       ]);
 
       if (!accountAInfo || !accountBInfo) {
-        throw new Error('Um ou ambos os tokens não foram encontrados');
+        throw new Error('One or both tokens not found');
       }
 
       const programA = accountAInfo.owner;
@@ -445,26 +433,26 @@ export function RaydiumPoolCreator() {
         tokenB: programB.toBase58(),
       });
 
-      // Verificar se algum token é Token-2022
+      // Check if any token is Token-2022
       const isToken2022A = programA.toBase58() === TOKEN_2022_PROGRAM_ID.toBase58();
       const isToken2022B = programB.toBase58() === TOKEN_2022_PROGRAM_ID.toBase58();
       const hasToken2022 = isToken2022A || isToken2022B;
 
       if (hasToken2022) {
         console.log('[RaydiumPoolCreator] ⚠️ Token-2022 detected! Using CLMM instead of CPMM');
-        toast.info('Token-2022 detectado! Usando Raydium CLMM...', {
-          description: 'CLMM tem suporte completo para Token-2022',
+        toast.info('Token-2022 detected! Using Raydium CLMM...', {
+          description: 'CLMM has full Token-2022 support',
         });
 
-        // Usar CLMM para Token-2022
+        // Use CLMM for Token-2022
         const price = parseFloat(form.initialPrice);
         if (isNaN(price) || price <= 0) {
-          throw new Error('Preço inicial inválido');
+          throw new Error('Invalid initial price');
         }
 
         const clmmResult = await createClmmPool(tokenAMint, tokenBMint, price, form.feeTier);
 
-        toast.success('Pool CLMM criada com sucesso!');
+        toast.success('CLMM pool created successfully');
         setResult({
           poolId: clmmResult.poolId,
           signature: clmmResult.txId,
@@ -473,7 +461,7 @@ export function RaydiumPoolCreator() {
         return;
       }
 
-      // Usar getMint que funciona para ambos programas
+      // Use getMint which works for both programs
       const [mintAData, mintBData] = await Promise.all([
         getMint(connection, tokenAMint, 'confirmed', programA),
         getMint(connection, tokenBMint, 'confirmed', programB),
@@ -488,9 +476,6 @@ export function RaydiumPoolCreator() {
         mintASupply: mintAData.supply.toString(),
         mintBSupply: mintBData.supply.toString(),
       });
-
-      // Inicializar Raydium SDK
-      toast.info('Inicializando Raydium SDK...');
       const raydium = await Raydium.load({
         owner: wallet.publicKey,
         connection,
@@ -506,9 +491,7 @@ export function RaydiumPoolCreator() {
       console.log('[RaydiumPoolCreator] Raydium SDK loaded');
       console.log('[RaydiumPoolCreator] SDK owner:', raydium.owner);
 
-      toast.info('Carregando informações dos tokens...');
-
-      // Carregar info dos tokens via SDK
+      // Load token info via SDK
       const mintA = {
         address: tokenAMint.toBase58(),
         programId: programA.toBase58(),
@@ -523,11 +506,10 @@ export function RaydiumPoolCreator() {
 
       console.log('[RaydiumPoolCreator] Mint info:', { mintA, mintB });
 
-      // Obter fee configs
-      toast.info('Carregando fee configs...');
+      // Get fee configs
       const feeConfigs = await raydium.api.getCpmmConfigs();
 
-      // Para devnet, ajustar os config IDs
+      // For devnet, adjust config IDs
       if (raydium.cluster === 'devnet') {
         feeConfigs.forEach((config) => {
           config.id = getCpmmPdaAmmConfigId(
@@ -540,15 +522,13 @@ export function RaydiumPoolCreator() {
       console.log('[RaydiumPoolCreator] Fee configs:', feeConfigs);
 
       if (feeConfigs.length === 0) {
-        throw new Error('Nenhuma configuração de fee encontrada');
+        throw new Error('No fee configuration found');
       }
 
-      // Usar a primeira config (padrão)
+      // Use first config (default)
       const feeConfig = feeConfigs[0];
 
-      toast.info('Criando pool CPMM no Raydium...');
-
-      // Converter amounts para formato correto (considerar decimais)
+      // Convert amounts to correct format (considering decimals)
       const tokenAAmountRaw = Math.floor(parseFloat(form.tokenAAmount) * (10 ** mintADecimals));
       const tokenBAmountRaw = Math.floor(parseFloat(form.tokenBAmount) * (10 ** mintBDecimals));
 
@@ -584,20 +564,15 @@ export function RaydiumPoolCreator() {
 
       console.log('[RaydiumPoolCreator] Pool params:', poolParams);
 
-      // Criar pool CPMM (Constant Product Market Maker)
+      // Create CPMM pool (Constant Product Market Maker)
       const { execute, extInfo } = await raydium.cpmm.createPool(poolParams);
 
       console.log('[RaydiumPoolCreator] Pool creation prepared:', extInfo);
 
-      toast.info('Enviando transação...');
-
-      // Executar transação
+      // Execute transaction
       const { txId } = await execute({ sendAndConfirm: true });
 
       console.log('[RaydiumPoolCreator] Pool created! TxId:', txId);
-
-      // Wait for transaction to be confirmed and indexed
-      toast.info('Aguardando confirmação da transação...');
       await new Promise((resolve) => setTimeout(resolve, 3000));
 
       // Fetch the transaction to get the actual pool account
@@ -617,10 +592,6 @@ export function RaydiumPoolCreator() {
         const accountKeys = message.staticAccountKeys || [];
 
         console.log('[RaydiumPoolCreator] Transaction accounts:', accountKeys.map(k => k.toBase58()));
-
-        // The pool account is typically one of the first writable accounts
-        // created by the program. Let's test them.
-        toast.info('Procurando endereço da pool nos accounts da transação...');
 
         for (const accountKey of accountKeys) {
           const address = accountKey.toBase58();
@@ -662,17 +633,17 @@ export function RaydiumPoolCreator() {
         console.error('[RaydiumPoolCreator] Using poolId from extInfo as fallback');
         poolId = extInfo.address.poolId?.toBase58();
 
-        toast.success('Pool criada com sucesso!', {
-          description: 'Aguardando indexação pelo Raydium... (pode levar até 1 minuto)',
+        toast.success('Pool created successfully', {
+          description: 'Waiting for Raydium indexing... (may take up to 1 minute)',
           duration: 10000,
         });
 
-        console.log('[RaydiumPoolCreator] 📋 INFORMAÇÕES IMPORTANTES:');
+        console.log('[RaydiumPoolCreator] 📋 IMPORTANT INFORMATION:');
         console.log('[RaydiumPoolCreator] Transaction ID:', txId);
         console.log('[RaydiumPoolCreator] Pool ID (from extInfo):', poolId);
-        console.log('[RaydiumPoolCreator] Verifique no Explorer: https://explorer.solana.com/tx/' + txId + '?cluster=devnet');
+        console.log('[RaydiumPoolCreator] Check Explorer: https://explorer.solana.com/tx/' + txId + '?cluster=devnet');
       } else {
-        toast.success('Pool Raydium criado e verificado com sucesso!');
+        toast.success('Raydium pool created and verified successfully');
       }
 
       setResult({
@@ -684,29 +655,28 @@ export function RaydiumPoolCreator() {
       // Skip registration if pool couldn't be verified
       if (poolId && poolId !== 'undefined') {
         try {
-          toast.info('Registrando pool on-chain...');
           const poolIdPubkey = new PublicKey(poolId);
           const tokenMintPubkey = new PublicKey(form.tokenAMint);
           const baseMintPubkey = new PublicKey(form.tokenBMint);
 
           await registerPool(poolIdPubkey, tokenMintPubkey, baseMintPubkey);
 
-          toast.success('Pool registrada on-chain! Agora ela aparecerá automaticamente no dashboard.');
+          toast.success('Pool registered on-chain successfully');
           console.log('[RaydiumPoolCreator] Pool registered on-chain');
         } catch (registerError: any) {
           console.error('[RaydiumPoolCreator] Failed to register pool on-chain:', registerError);
 
           // Show more detailed error
-          let errorMsg = registerError.message || 'Erro desconhecido';
+          let errorMsg = registerError.message || 'Unknown error';
           if (registerError.logs) {
             console.error('[RaydiumPoolCreator] Transaction logs:', registerError.logs);
           }
 
-          toast.error('Falha ao registrar pool on-chain: ' + errorMsg, {
+          toast.error('Failed to register pool on-chain: ' + errorMsg, {
             duration: 10000,
           });
 
-          console.log('[RaydiumPoolCreator] 💡 Você pode tentar registrar manualmente depois com estes dados:');
+          console.log('[RaydiumPoolCreator] 💡 You can try to register manually later with this data:');
           console.log('[RaydiumPoolCreator]   Pool ID:', poolId);
           console.log('[RaydiumPoolCreator]   Token Mint:', form.tokenAMint);
           console.log('[RaydiumPoolCreator]   Base Mint:', form.tokenBMint);
@@ -724,7 +694,7 @@ export function RaydiumPoolCreator() {
       if (error?.message) {
         toast.error(error.message);
       } else {
-        toast.error('Erro ao criar pool Raydium');
+        toast.error('Failed to create Raydium pool');
       }
     } finally {
       setLoading(false);
@@ -734,9 +704,9 @@ export function RaydiumPoolCreator() {
   return (
     <Card className="card-institutional">
       <CardHeader>
-        <CardTitle>Integração Raydium (Devnet)</CardTitle>
+        <CardTitle>Raydium Integration (Devnet)</CardTitle>
         <CardDescription>
-          Crie um pool de liquidez CPMM (Constant Product Market Maker) no Raydium para tokens SRWA.
+          Create a CPMM (Constant Product Market Maker) liquidity pool on Raydium for SRWA tokens.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -753,7 +723,7 @@ export function RaydiumPoolCreator() {
               <CardContent>
                 <div className="flex gap-2">
                   <Input
-                    placeholder="Pool ID (endereço do pool)"
+                    placeholder="Pool ID (pool address)"
                     value={manualPoolId}
                     onChange={(e) => setManualPoolId(e.target.value)}
                     disabled={loadingPool}
@@ -864,7 +834,7 @@ export function RaydiumPoolCreator() {
               <Card className="border-2">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg">Informações do Pool</CardTitle>
+                    <CardTitle className="text-lg">Pool Information</CardTitle>
                     <Button
                       variant="outline"
                       size="sm"
@@ -896,7 +866,7 @@ export function RaydiumPoolCreator() {
                       </p>
                     </div>
                     <div className="p-4 bg-muted rounded-lg">
-                      <p className="text-xs text-muted-foreground mb-1">Preço (B/A)</p>
+                      <p className="text-xs text-muted-foreground mb-1">Price (B/A)</p>
                       <p className="text-xl font-bold">{poolInfo.price.toFixed(6)}</p>
                       <p className="text-xs text-muted-foreground mt-1">
                         1 Token A = {poolInfo.price.toFixed(6)} Token B
@@ -931,7 +901,7 @@ export function RaydiumPoolCreator() {
                   <Card>
                     <CardContent className="pt-6 space-y-4">
                       <div className="space-y-2">
-                        <Label>Direção do Swap</Label>
+                        <Label>Swap Direction</Label>
                         <div className="flex gap-2">
                           <Button
                             type="button"
@@ -1119,7 +1089,7 @@ export function RaydiumPoolCreator() {
                   <Label htmlFor="tokenBMint">Token B (Base)</Label>
                   <Input
                     id="tokenBMint"
-                    placeholder="Endereço do token base (SOL, USDC...)"
+                    placeholder="Base token address (SOL, USDC...)"
                     value={form.tokenBMint}
                     onChange={(e) => updateForm({ tokenBMint: e.target.value })}
                     disabled={loading}
@@ -1166,7 +1136,7 @@ export function RaydiumPoolCreator() {
 
               <div className="p-3 bg-muted rounded-md">
                 <p className="text-sm">
-                  <span className="font-medium">Preço inicial estimado:</span>{' '}
+                  <span className="font-medium">Estimated initial price:</span>{' '}
                   1 Token A ≈ {(parseFloat(form.tokenBAmount) / parseFloat(form.tokenAAmount) || 0).toFixed(6)} Token B
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">

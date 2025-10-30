@@ -19,7 +19,7 @@ import {
   TOKEN_2022_PROGRAM_ID,
   createAssociatedTokenAccountInstruction,
   createInitializeMintInstruction,
-  createMintToInstruction,
+  createMintToCheckedInstruction,
   createTransferCheckedInstruction,
   getAccount,
   getAssociatedTokenAddress,
@@ -568,6 +568,13 @@ export function useIssuanceRequests() {
       return extraAccountMetaListPDA;
     }
 
+    console.log('[useIssuanceRequests.initializeTransferHook] Available methods:',
+      Object.keys(programs.srwaController.methods));
+
+    if (!programs.srwaController.methods.initializeExtraAccountMetaList) {
+      throw new Error('Method initializeExtraAccountMetaList not found. Please hard reload the page (Ctrl+Shift+R)');
+    }
+
     const ix = await programs.srwaController.methods
       .initializeExtraAccountMetaList()
       .accounts({
@@ -801,14 +808,12 @@ export function useIssuanceRequests() {
       } else {
         // Use TOKEN_2022_PROGRAM_ID since this is a Token-2022 mint
         const mintInfo = await getMint(connection, mint, 'confirmed', TOKEN_2022_PROGRAM_ID);
-        if (!mintInfo.mintAuthority || !mintInfo.mintAuthority.equals(wallet.publicKey)) {
-          console.warn('[useIssuanceRequests.approveSrwa] Admin wallet is not mint authority, skipping initial mint', {
-            mint: mint.toBase58(),
-            expectedAuthority: wallet.publicKey.toBase58(),
-            onChainAuthority: mintInfo.mintAuthority?.toBase58() ?? null,
-          });
-          return;
-        }
+
+        console.log('[useIssuanceRequests.approveSrwa] Mint authority info:', {
+          mint: mint.toBase58(),
+          adminWallet: wallet.publicKey.toBase58(),
+          mintAuthority: mintInfo.mintAuthority?.toBase58() ?? null,
+        });
 
         const adminAta = await getAssociatedTokenAddress(
           mint,
@@ -871,11 +876,13 @@ export function useIssuanceRequests() {
           programId: TOKEN_2022_PROGRAM_ID.toBase58(),
         });
 
-        const mintToIx = createMintToInstruction(
+        // Use MintToChecked for Token-2022 with extensions
+        const mintToIx = createMintToCheckedInstruction(
           mint,
           adminAta,
           wallet.publicKey,
           amountAsNumber,
+          decimals,
           [],
           TOKEN_2022_PROGRAM_ID
         );

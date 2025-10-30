@@ -49,9 +49,9 @@ const DEFAULT_FORM_STATE: FormState = {
 };
 
 const FEE_TIERS = {
-  stable: { label: '0.01%', value: 'stable', description: 'Para pares estáveis (stablecoins)' },
+  stable: { label: '0.01%', value: 'stable', description: 'For stable pairs (stablecoins)' },
   standard: { label: '0.3%', value: 'standard', description: 'Para a maioria dos pares' },
-  volatile: { label: '1%', value: 'volatile', description: 'Para pares muito voláteis' },
+  volatile: { label: '1%', value: 'volatile', description: 'For highly volatile pairs' },
 };
 
 export function OrcaPoolCreator() {
@@ -73,18 +73,18 @@ export function OrcaPoolCreator() {
     event.preventDefault();
 
     if (!form.tokenMint.trim()) {
-      toast.error('Selecione um token SRWA');
+      toast.error('Select an SRWA token');
       return;
     }
 
     if (!publicKey) {
-      toast.error('Conecte sua wallet');
+      toast.error('Connect your wallet');
       return;
     }
 
     const price = parseFloat(form.initialPrice);
     if (isNaN(price) || price <= 0) {
-      toast.error('Preço inicial inválido');
+      toast.error('Invalid initial price');
       return;
     }
 
@@ -94,7 +94,7 @@ export function OrcaPoolCreator() {
       const baseMintPubkey = new PublicKey(form.baseMint);
 
       toast.info('Criando pool no Orca Whirlpools...', {
-        description: 'Aguarde a confirmação na sua wallet',
+        description: 'Awaiting wallet confirmation',
       });
 
       // Criar a pool usando o SDK
@@ -129,7 +129,7 @@ export function OrcaPoolCreator() {
     }
 
     if (!publicKey) {
-      toast.error('Conecte sua wallet');
+      toast.error('Connect your wallet');
       return;
     }
 
@@ -142,7 +142,7 @@ export function OrcaPoolCreator() {
       await registerPool(poolIdPubkey, tokenMintPubkey, baseMintPubkey);
 
       toast.success('Pool registrada com sucesso!', {
-        description: 'A pool agora aparecerá no dashboard de mercados.',
+        description: 'Pool will now appear in markets dashboard.',
       });
 
       setRegistered(true);
@@ -198,7 +198,7 @@ export function OrcaPoolCreator() {
               <Label htmlFor="poolAddress">Pool Address</Label>
               <Input
                 id="poolAddress"
-                placeholder="Endereço da pool criada no Orca"
+                placeholder="Orca pool address"
                 value={poolAddress}
                 onChange={(e) => setPoolAddress(e.target.value)}
                 className="font-mono text-sm"
@@ -221,7 +221,7 @@ export function OrcaPoolCreator() {
               <Label htmlFor="baseMint">Token Base (Token B)</Label>
               <Input
                 id="baseMint"
-                placeholder="Endereço do token base"
+                placeholder="Base token address"
                 value={form.baseMint}
                 onChange={(e) => updateForm({ baseMint: e.target.value })}
                 className="font-mono text-sm"
@@ -300,7 +300,7 @@ export function OrcaPoolCreator() {
           {/* Pool Info */}
           <Card className="border-2 border-brand-500/30">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Informações da Pool</CardTitle>
+              <CardTitle className="text-base">Pool Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
@@ -335,7 +335,7 @@ export function OrcaPoolCreator() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 bg-muted rounded-lg">
-                  <Label className="text-xs text-muted-foreground">Preço Inicial</Label>
+                  <Label className="text-xs text-muted-foreground">Initial Price</Label>
                   <p className="text-sm mt-1">{form.initialPrice} SOL</p>
                 </div>
                 <div className="p-3 bg-muted rounded-lg">
@@ -409,14 +409,7 @@ export function OrcaPoolCreator() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleCreatePool} className="space-y-6">
-          <Alert className="bg-blue-500/10 border-blue-500/30">
-            <Info className="h-4 w-4 text-blue-400" />
-            <AlertDescription className="text-sm">
-              <strong>Criação Manual:</strong> Devido a limitações do SDK, a criação de pools é feita
-              manualmente no site do Orca. Orca Whirlpools tem suporte COMPLETO para Token-2022!
-            </AlertDescription>
-          </Alert>
-
+          
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Token SRWA (Token A)</Label>
@@ -435,7 +428,7 @@ export function OrcaPoolCreator() {
               <Label htmlFor="baseMint">Token Base (Token B)</Label>
               <Input
                 id="baseMint"
-                placeholder="Endereço do token base"
+                placeholder="Base token address"
                 value={form.baseMint}
                 onChange={(e) => updateForm({ baseMint: e.target.value })}
                 disabled={loading}
@@ -475,7 +468,7 @@ export function OrcaPoolCreator() {
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="initialPrice">Preço Inicial (SOL por token)</Label>
+                <Label htmlFor="initialPrice">Initial Price (SOL por token)</Label>
                 <Input
                   id="initialPrice"
                   type="number"
@@ -488,7 +481,7 @@ export function OrcaPoolCreator() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="tokenAmount">Quantidade Token (sugestão)</Label>
+                <Label htmlFor="tokenAmount">Token Amount (suggestion)</Label>
                 <Input
                   id="tokenAmount"
                   type="number"
@@ -502,19 +495,7 @@ export function OrcaPoolCreator() {
             </div>
           </div>
 
-          <Alert className="bg-amber-500/10 border-amber-500/30">
-            <AlertCircle className="h-4 w-4 text-amber-400" />
-            <AlertDescription className="text-xs">
-              <strong>Como funciona:</strong>
-              <ol className="list-decimal ml-4 mt-2 space-y-1">
-                <li>Clique em "Ir para Orca.so" abaixo</li>
-                <li>Conecte sua wallet e crie a pool com seus tokens</li>
-                <li>Copie o endereço da pool criada</li>
-                <li>Volte aqui e clique em "Registrar Pool"</li>
-              </ol>
-            </AlertDescription>
-          </Alert>
-
+          
           <div className="flex gap-3">
             <Button
               type="button"

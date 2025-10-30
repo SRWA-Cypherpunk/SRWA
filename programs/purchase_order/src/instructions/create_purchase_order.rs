@@ -10,7 +10,8 @@ pub struct CreatePurchaseOrder<'info> {
     pub investor: Signer<'info>,
 
     /// Mint do token SRWA sendo comprado
-    pub mint: Account<'info, anchor_spl::token::Mint>,
+    /// CHECK: Validated as token mint via InterfaceAccount (supports both Token and Token-2022)
+    pub mint: InterfaceAccount<'info, anchor_spl::token_interface::Mint>,
 
     /// PDA da purchase order
     /// Derivado de: [b"purchase_order", mint, investor, timestamp]

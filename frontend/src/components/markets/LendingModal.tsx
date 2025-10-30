@@ -11,8 +11,10 @@ import { toast } from 'sonner';
 import { useWallet } from '@solana/wallet-adapter-react';
 import type { EnhancedPoolData } from '@/types/markets';
 import type { SRWAMarketData } from '@/hooks/markets/useSRWAMarkets';
-import { useTokenPurchaseRequests } from '@/hooks/solana/useTokenPurchaseRequests';
+import { usePurchaseOrders } from '@/hooks/solana/usePurchaseOrders';
 import { useKYCStatus } from '@/hooks/solana/useKYCStatus';
+import { PublicKey } from '@solana/web3.js';
+import { BN } from '@coral-xyz/anchor';
 
 interface LendingModalProps {
   isOpen: boolean;
@@ -32,7 +34,7 @@ export const LendingModal: React.FC<LendingModalProps> = ({
   const [amount, setAmount] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const wallet = useWallet();
-  const { createPurchaseRequest } = useTokenPurchaseRequests();
+  const { createOrder } = usePurchaseOrders();
   const { kycStatus } = useKYCStatus();
 
   // Check if this is an SRWA token
@@ -53,41 +55,54 @@ export const LendingModal: React.FC<LendingModalProps> = ({
     setIsProcessing(true);
 
     try {
-      // SRWA Token: Create purchase request
+      // SRWA Token: Create purchase order on-chain
       if (isSRWAToken && srwaPool && mode === 'supply') {
         // For SRWA tokens, "supply" means "buy"
-        // Calculate mock price (1 SOL = 100 tokens for now)
-        const tokenAmount = parseFloat(amount);
-        const solAmount = tokenAmount / 100; // Mock price
+        // Calculate price (1 SOL = 100 tokens for now)
+        const tokenQuantity = parseFloat(amount);
+        const pricePerToken = 0.01; // 0.01 SOL per token (1 SOL = 100 tokens)
+        const totalSol = tokenQuantity * pricePerToken;
 
-        // Get admin wallet from SRWA pool data
-        // For now, use a hardcoded devnet admin wallet
-        // TODO: Get this from on-chain SRWA program data
-        const adminWallet = srwaPool.isUserAdmin
-          ? wallet.publicKey.toBase58()
-          : '9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin'; // Default devnet admin
+        // Convert to lamports
+        const pricePerTokenLamports = Math.floor(pricePerToken * 1e9);
 
-        const result = await createPurchaseRequest(
-          srwaPool.tokenContract,
-          srwaPool.name,
-          'SRWA', // TODO: Get from token metadata
-          solAmount,
-          tokenAmount,
-          adminWallet
-        );
+        // Get admin wallet (issuer) - should come from SRWA token data
+        // For now, use hardcoded devnet admin
+        const adminVault = new PublicKey('9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin');
 
-        if (result.success) {
-          toast.success('✅ Purchase successful!', {
-            description: `You sent ${solAmount.toFixed(4)} SOL. You will receive ${tokenAmount} tokens shortly.`,
-            duration: 8000,
-          });
+        // Get token mint
+        const tokenMint = new PublicKey(srwaPool.tokenContract);
 
-          onTransactionComplete?.(pool.address, parseFloat(amount), mode);
-          setAmount('');
-          onClose();
-        } else {
-          throw new Error(result.error || 'Purchase failed');
-        }
+        console.log('[LendingModal] Creating purchase order:', {
+          mint: tokenMint.toBase58(),
+          quantity: tokenQuantity,
+          pricePerTokenLamports,
+          totalSol,
+          adminVault: adminVault.toBase58(),
+        });
+
+        const result = await createOrder({
+          mint: tokenMint,
+          quantity: tokenQuantity,
+          pricePerTokenLamports,
+          adminVault,
+        });
+
+        toast.success('✅ Purchase order created!', {
+          description: `Order sent on-chain! You will receive ${tokenQuantity} tokens after admin approval.`,
+          duration: 8000,
+          action: {
+            label: 'View TX',
+            onClick: () => window.open(
+              `https://explorer.solana.com/tx/${result.signature}?cluster=devnet`,
+              '_blank'
+            ),
+          },
+        });
+
+        onTransactionComplete?.(pool.address, parseFloat(amount), mode);
+        setAmount('');
+        onClose();
       } else {
         // Regular Blend pool: simulate API call
         await new Promise(resolve => setTimeout(resolve, 1500));

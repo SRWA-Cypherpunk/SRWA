@@ -260,29 +260,29 @@ export function IssuerWizard() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>CNPJ (Opcional)</Label>
+                  <Label>Tax ID (Optional)</Label>
                   <Input
                     placeholder="00.000.000/0000-00"
                     value={tokenConfig.cnpj}
                     onChange={(e) => setTokenConfig({ ...tokenConfig, cnpj: e.target.value })}
                     maxLength={18}
                   />
-                  <p className="text-micro text-fg-muted">CNPJ da empresa emissora (para issuers brasileiros)</p>
+                  <p className="text-micro text-fg-muted">Company tax identification number (for Brazilian issuers)</p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Garantia (Opcional)</Label>
+                  <Label>Collateral (Optional)</Label>
                   <Textarea
-                    placeholder="Descreva a garantia do token (ex: Apólice de imóvel, CRI, etc.)"
+                    placeholder="Describe the token collateral (e.g., Real estate deed, CRI, etc.)"
                     value={tokenConfig.collateral}
                     onChange={(e) => setTokenConfig({ ...tokenConfig, collateral: e.target.value })}
                     rows={4}
                   />
-                  <p className="text-micro text-fg-muted">Descrição da garantia ou lastro do token</p>
+                  <p className="text-micro text-fg-muted">Description of collateral or underlying assets</p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Documentos de Garantia (Opcional)</Label>
+                  <Label>Collateral Documents (Optional)</Label>
                   <div className="border-2 border-dashed border-muted rounded-lg p-4">
                     <input
                       type="file"
@@ -302,8 +302,8 @@ export function IssuerWizard() {
                       <FileText className="h-8 w-8 text-muted-foreground mb-2" />
                       <p className="text-sm text-fg-secondary text-center">
                         {tokenConfig.collateralDocs && tokenConfig.collateralDocs.length > 0
-                          ? `${tokenConfig.collateralDocs.length} arquivo(s) selecionado(s)`
-                          : 'Clique para enviar documentos (PDF, imagens)'}
+                          ? `${tokenConfig.collateralDocs.length} file(s) selected`
+                          : 'Click to upload documents (PDF, images)'}
                       </p>
                     </label>
                   </div>
