@@ -202,7 +202,7 @@ export const LendingModal: React.FC<LendingModalProps> = ({
                       <ul className="list-disc list-inside mt-1 space-y-1">
                         <li>Active User Registry</li>
                         <li>Approved KYC verification</li>
-                        <li>On-chain validated compliance</li>
+                        <li>Validated on-chain compliance</li>
                       </ul>
                       <div className="mt-2">
                         <strong>Contact the admin to complete KYC.</strong>

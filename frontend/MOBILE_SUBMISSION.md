@@ -297,7 +297,7 @@ Learn more: [Your URL]
 
 **For Questions:**
 - Documentation: [Your docs URL]
-- Discord: [If available]
+- Discord: https://discord.gg/mhaVFP9Q
 - Twitter: [If available]
 
 ---

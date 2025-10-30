@@ -140,13 +140,13 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
         mintB: info.mintB.address,
       });
     } catch (error: any) {
-      if (error?.message?.includes('Wallet não conectada')) {
+      if (error?.message?.includes('Wallet not connected')) {
         setPoolInfo(null);
         return;
       }
       console.error('[RaydiumPoolOperations] Failed to load pool:', error);
       console.error('[RaydiumPoolOperations] Pool ID that failed:', poolId);
-      toast.error(error?.message ?? 'Erro ao carregar informações do pool');
+      toast.error(error?.message ?? 'Error loading pool information');
     } finally {
       setLoading(false);
     }
@@ -158,7 +158,7 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
 
   const ensureWallet = useCallback(() => {
     if (!wallet.publicKey) {
-      toast.error('Conecte sua wallet para operar no pool');
+      toast.error('Connect your wallet to operate on the pool');
       return false;
     }
     return true;
@@ -166,7 +166,7 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
 
   const handleAddLiquidity = async () => {
     if (!poolId || !liquidityForm.amount) {
-      toast.error(`Informe a quantidade de ${tokenAMeta?.symbol ?? 'token base'}`);
+      toast.error(`Enter the amount of ${tokenAMeta?.symbol ?? 'base token'}`);
       return;
     }
     if (!ensureWallet()) return;
@@ -174,7 +174,7 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
     setTxLoading(true);
     try {
       const txId = await addLiquidity(poolId, liquidityForm.amount, liquidityForm.slippage);
-      toast.success('Liquidez adicionada!', {
+      toast.success('Liquidity added!', {
         action: {
           label: 'Explorer',
           onClick: () => window.open(`https://explorer.solana.com/tx/${txId}?cluster=devnet`, '_blank'),
@@ -184,7 +184,7 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
       await refreshPoolInfo();
     } catch (error: any) {
       console.error('[RaydiumPoolOperations] Add liquidity error:', error);
-      toast.error(error?.message ?? 'Erro ao adicionar liquidez');
+      toast.error(error?.message ?? 'Error adding liquidity');
     } finally {
       setTxLoading(false);
     }
@@ -192,7 +192,7 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
 
   const handleRemoveLiquidity = async () => {
     if (!poolId || !liquidityForm.amount) {
-      toast.error('Informe a quantidade de LP tokens');
+      toast.error('Enter the amount of LP tokens');
       return;
     }
     if (!ensureWallet()) return;
@@ -200,7 +200,7 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
     setTxLoading(true);
     try {
       const txId = await removeLiquidity(poolId, liquidityForm.amount, liquidityForm.slippage);
-      toast.success('Liquidez removida!', {
+      toast.success('Liquidity removed!', {
         action: {
           label: 'Explorer',
           onClick: () => window.open(`https://explorer.solana.com/tx/${txId}?cluster=devnet`, '_blank'),
@@ -210,7 +210,7 @@ export function RaydiumPoolOperations({ poolId }: RaydiumPoolOperationsProps) {
       await refreshPoolInfo();
     } catch (error: any) {
       console.error('[RaydiumPoolOperations] Remove liquidity error:', error);
-      toast.error(error?.message ?? 'Erro ao remover liquidez');
+      toast.error(error?.message ?? 'Error removing liquidity');
     } finally {
       setTxLoading(false);
     }

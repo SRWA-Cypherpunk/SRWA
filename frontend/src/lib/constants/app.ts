@@ -22,7 +22,7 @@ export const APP_INFO = {
 export const SOCIAL_LINKS = {
   twitter: 'https://twitter.com/srwa_platform',
   github: 'https://github.com/srwa',
-  discord: 'https://discord.gg/srwa',
+  discord: 'https://discord.gg/mhaVFP9Q',
   telegram: 'https://t.me/srwa',
   medium: 'https://medium.com/@srwa',
 } as const;
@@ -47,9 +47,9 @@ export const PARTNERS = [
     website: 'https://marginfi.com',
   },
   {
-    name: 'Solana Foundation',
-    logo: '/partners/solana-foundation.svg',
-    website: 'https://solana.org',
+    name: 'Solana Super Team Brasil',
+    logo: '/partners/vmCRxtom_400x400.jpg',
+    website: 'https://x.com/superteambr',
   },
   {
     name: 'Solana Superteam',
