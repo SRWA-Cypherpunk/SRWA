@@ -749,7 +749,7 @@ export function RaydiumPoolCreator() {
             <Alert className="border-green-500 bg-green-50 dark:bg-green-900/20">
               <AlertDescription className="space-y-2">
                 <p className="font-semibold text-green-700 dark:text-green-300">
-                  ✅ Pool criado com sucesso!
+                  ✅ Pool created successfully!
                 </p>
                 <div className="space-y-2 text-xs">
                   <div className="flex items-center justify-between gap-2 p-2 bg-white dark:bg-green-950 rounded border border-green-200 dark:border-green-800">
@@ -889,11 +889,11 @@ export function RaydiumPoolCreator() {
                   </TabsTrigger>
                   <TabsTrigger value="add">
                     <Plus className="h-4 w-4 mr-2" />
-                    Adicionar Liquidez
+                    Add Liquidity
                   </TabsTrigger>
                   <TabsTrigger value="remove">
                     <Minus className="h-4 w-4 mr-2" />
-                    Remover Liquidez
+                    Remove Liquidity
                   </TabsTrigger>
                 </TabsList>
 
@@ -968,7 +968,7 @@ export function RaydiumPoolCreator() {
                       <Alert>
                         <Info className="h-4 w-4" />
                         <AlertDescription className="text-xs">
-                          Você adicionará liquidez proporcional ao ratio atual do pool.
+                          You will add liquidity proportional to the current pool ratio.
                         </AlertDescription>
                       </Alert>
                       <div className="space-y-2">
@@ -1005,7 +1005,7 @@ export function RaydiumPoolCreator() {
                             Processando...
                           </>
                         ) : (
-                          'Adicionar Liquidez'
+                          'Add Liquidity'
                         )}
                       </Button>
                     </CardContent>
@@ -1033,7 +1033,7 @@ export function RaydiumPoolCreator() {
                           disabled={loading}
                         />
                         <p className="text-xs text-muted-foreground">
-                          Disponível: {poolInfo.lpSupply} LP
+                          Available: {poolInfo.lpSupply} LP
                         </p>
                       </div>
                       <div className="space-y-2">
@@ -1058,7 +1058,7 @@ export function RaydiumPoolCreator() {
                             Processando...
                           </>
                         ) : (
-                          'Remover Liquidez'
+                          'Remove Liquidity'
                         )}
                       </Button>
                     </CardContent>
@@ -1077,11 +1077,11 @@ export function RaydiumPoolCreator() {
                   <TokenSelect
                     value={form.tokenAMint}
                     onValueChange={(value) => updateForm({ tokenAMint: value })}
-                    placeholder="Selecione um token SRWA"
+                    placeholder="Select an SRWA token"
                     disabled={loading}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Selecione qual token RWA você quer adicionar no pool
+                    Select which RWA token you want to add to the pool
                   </p>
                 </div>
 
@@ -1153,10 +1153,10 @@ export function RaydiumPoolCreator() {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Criando pool...
+                  Creating pool...
                 </>
               ) : (
-                'Criar Pool Raydium'
+                'Create Raydium Pool'
               )}
             </Button>
           </form>

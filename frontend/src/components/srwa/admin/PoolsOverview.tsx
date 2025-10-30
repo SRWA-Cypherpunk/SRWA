@@ -140,7 +140,7 @@ export function PoolsOverview() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Simular carregamento de pools
+    // Simulate pool loading
     const timer = setTimeout(() => {
       setPools(MOCK_POOLS);
       setLoading(false);
@@ -161,7 +161,7 @@ export function PoolsOverview() {
     poolsContent = (
       <div className="rounded-lg border border-border/50 bg-muted/20 p-8 text-center">
         <p className="text-muted-foreground">
-          Nenhuma pool criada ainda. Use o Pool Manager para criar sua primeira pool.
+          No pools created yet. Use the Pool Manager to create your first pool.
         </p>
       </div>
     );

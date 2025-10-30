@@ -244,7 +244,7 @@ export function usePurchaseOrders() {
           tx = await program.methods
             .approvePurchaseOrder()
             .accounts({
-              admin: wallet.publicKey,
+              admin: publicKey,
               purchaseOrder: purchaseOrderPda,
               adminTokenAccount,
               investorTokenAccount,
@@ -260,7 +260,7 @@ export function usePurchaseOrders() {
           tx = await program.methods
             .approvePurchaseOrder()
             .accounts({
-              admin: wallet.publicKey,
+              admin: publicKey,
               purchaseOrder: purchaseOrderPda,
               adminTokenAccount,
               investorTokenAccount,
@@ -365,7 +365,7 @@ export function usePurchaseOrders() {
         const tx = await program.methods
           .rejectPurchaseOrder(reason)
           .accounts({
-            admin: wallet.publicKey,
+            admin: publicKey,
             purchaseOrder: purchaseOrderPda,
             adminVault,
             investor,
@@ -406,7 +406,7 @@ export function usePurchaseOrders() {
         const tx = await program.methods
           .cancelPurchaseOrder()
           .accounts({
-            investor: wallet.publicKey,
+            investor: publicKey,
             purchaseOrder: purchaseOrderPda,
             adminVault,
             systemProgram: SystemProgram.programId,

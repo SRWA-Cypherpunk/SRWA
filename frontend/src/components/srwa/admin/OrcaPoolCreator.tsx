@@ -109,13 +109,13 @@ export function OrcaPoolCreator() {
       setTransactionSignature(result.txId);
       setStep('created');
 
-      toast.success('Pool criada com sucesso!', {
+      toast.success('Pool created successfully!', {
         description: `Pool ID: ${result.poolAddress.slice(0, 8)}...`,
       });
     } catch (error: any) {
       console.error('[OrcaPoolCreator] Failed to create pool:', error);
-      toast.error('Erro ao criar pool', {
-        description: error.message || 'Erro desconhecido',
+      toast.error('Error creating pool', {
+        description: error.message || 'Unknown error',
       });
     } finally {
       setLoading(false);
@@ -148,7 +148,7 @@ export function OrcaPoolCreator() {
       setRegistered(true);
     } catch (error: any) {
       console.error('[OrcaPoolCreator] Failed to register pool:', error);
-      toast.error('Erro ao registrar pool: ' + (error.message || 'Erro desconhecido'));
+      toast.error('Error registering pool: ' + (error.message || 'Unknown error'));
     } finally {
       setLoading(false);
     }
@@ -189,7 +189,7 @@ export function OrcaPoolCreator() {
           <Alert className="bg-blue-500/10 border-blue-500/30">
             <Info className="h-4 w-4 text-blue-400" />
             <AlertDescription className="text-sm">
-              Após criar sua pool no Orca.so, copie o endereço da pool e cole abaixo para registrá-la no sistema.
+              After creating your pool on Orca.so, copy the pool address and paste it below to register it in the system.
             </AlertDescription>
           </Alert>
 
@@ -213,7 +213,7 @@ export function OrcaPoolCreator() {
               <TokenSelect
                 value={form.tokenMint}
                 onValueChange={(value) => updateForm({ tokenMint: value })}
-                placeholder="Selecione o token SRWA usado"
+                placeholder="Select the SRWA token used"
               />
             </div>
 
@@ -278,14 +278,14 @@ export function OrcaPoolCreator() {
             <div>
               <CardTitle className="flex items-center gap-2">
                 <CheckCircle className="h-5 w-5 text-green-400" />
-                Pool Criada com Sucesso!
+                Pool Created Successfully!
               </CardTitle>
               <CardDescription>
-                Sua pool Orca está ativa na blockchain
+                Your Orca pool is active on the blockchain
               </CardDescription>
             </div>
             <Button variant="outline" size="sm" onClick={handleReset}>
-              Criar Outra
+              Create Another
             </Button>
           </div>
         </CardHeader>
@@ -401,10 +401,10 @@ export function OrcaPoolCreator() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Droplet className="h-5 w-5 text-brand-400" />
-          Criar Pool Orca Whirlpools (Token-2022)
+          Create Orca Whirlpools Pool (Token-2022)
         </CardTitle>
         <CardDescription>
-          Crie uma pool de liquidez concentrada programaticamente via Orca SDK
+          Create a concentrated liquidity pool programmatically via Orca SDK
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -416,11 +416,11 @@ export function OrcaPoolCreator() {
               <TokenSelect
                 value={form.tokenMint}
                 onValueChange={(value) => updateForm({ tokenMint: value })}
-                placeholder="Selecione um token SRWA"
+                placeholder="Select an SRWA token"
                 disabled={loading}
               />
               <p className="text-xs text-muted-foreground">
-                Selecione qual token RWA você quer adicionar na pool
+                Select which RWA token you want to add to the pool
               </p>
             </div>
 

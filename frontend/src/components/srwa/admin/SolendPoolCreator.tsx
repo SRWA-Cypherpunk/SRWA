@@ -226,7 +226,7 @@ export function SolendPoolCreator() {
       };
 
       const result = await createPool(payload);
-      toast.success('Pool Solend criado com sucesso na devnet!');
+      toast.success('Solend Pool created successfully on devnet!');
       if (result) {
         updateReserve({ initialLiquidity: DEFAULT_FORM_STATE.reserve.initialLiquidity });
       }
@@ -307,7 +307,7 @@ export function SolendPoolCreator() {
                     onChange={(event) => updateMarket({ existingMarket: event.target.value })}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Informe um market Solend já criado (devnet) no qual você possui permissão de owner.
+                    Enter a Solend market already created (devnet) where you have owner permission.
                   </p>
                 </div>
               )}
@@ -338,7 +338,7 @@ export function SolendPoolCreator() {
                   onChange={(event) => updateReserve({ initialLiquidity: event.target.value })}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Quantidade de tokens SRWA que será depositada na reserva ao criar o pool.
+                  Amount of SRWA tokens that will be deposited into the reserve when creating the pool.
                 </p>
               </div>
               
@@ -528,14 +528,14 @@ export function SolendPoolCreator() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Criando Pool na Solend Devnet...
+                    Creating Pool on Solend Devnet...
                   </>
                 ) : (
-                  '🚀 Criar Pool Solend (wSOL - Modo Teste)'
+                  '🚀 Create Solend Pool (wSOL - Test Mode)'
                 )}
               </Button>
               <Button type="button" variant="outline" onClick={resetForm} disabled={loading}>
-                Limpar
+                Clear
               </Button>
               <Button
                 type="button"
@@ -558,10 +558,10 @@ export function SolendPoolCreator() {
             <div className="space-y-4 rounded-lg border border-border/40 bg-muted/10 p-4">
               <div>
                 <h4 className="text-sm font-semibold uppercase text-muted-foreground">
-                  Resultado da implantação
+                  Deployment Result
                 </h4>
                 <p className="text-xs text-muted-foreground">
-                  Endereços úteis para interagir com o pool recém-criado.
+                  Useful addresses to interact with the newly created pool.
                 </p>
               </div>
               <div className="grid gap-3 md:grid-cols-2">

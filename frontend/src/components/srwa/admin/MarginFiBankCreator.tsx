@@ -284,10 +284,10 @@ export function MarginFiBankCreator() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <DollarSign className="h-5 w-5 text-brand-400" />
-          Criar Bank MarginFi (Devnet)
+          Create MarginFi Bank (Devnet)
         </CardTitle>
         <CardDescription>
-          Crie um isolated lending bank permissionless no MarginFi para seu token Token-2022
+          Create a permissionless isolated lending bank on MarginFi for your Token-2022
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -298,7 +298,7 @@ export function MarginFiBankCreator() {
               <CheckCircle className="h-4 w-4 text-green-400" />
               <AlertDescription>
                 <div className="space-y-3">
-                  <p className="font-semibold text-green-200">✅ Bank criado com sucesso!</p>
+                  <p className="font-semibold text-green-200">✅ Bank created successfully!</p>
 
                   <div className="space-y-2 text-xs">
                     <div className="flex items-center justify-between p-2 bg-background/50 rounded">
@@ -800,7 +800,7 @@ export function MarginFiBankCreator() {
                 ) : (
                   <>
                     <CheckCircle className="mr-2 h-4 w-4" />
-                    Criar Bank MarginFi
+                    Create MarginFi Bank
                   </>
                 )}
               </Button>

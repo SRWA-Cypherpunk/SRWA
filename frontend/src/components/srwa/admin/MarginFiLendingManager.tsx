@@ -345,11 +345,11 @@ export function MarginFiLendingManager() {
       let errorMsg = 'Error repaying';
 
       if (error.message?.includes('Custom":6024')) {
-        errorMsg = 'Você não tem empréstimos ativos! Faça um borrow primeiro.';
+        errorMsg = 'You have no active loans! Make a borrow first.';
       } else if (error.message?.includes('User rejected')) {
-        errorMsg = 'Transação cancelada pelo usuário';
+        errorMsg = 'Transaction cancelled by user';
       } else if (error.message?.includes('insufficient')) {
-        errorMsg = 'Saldo insuficiente para pagar o empréstimo';
+        errorMsg = 'Insufficient balance to repay loan';
       } else if (error.message) {
         errorMsg = error.message;
       }
@@ -427,9 +427,9 @@ export function MarginFiLendingManager() {
       let errorMsg = 'Error withdrawing';
 
       if (error.message?.includes('Custom":2000')) {
-        errorMsg = 'Não é possível retirar! Você tem empréstimos ativos ou saldo insuficiente.';
+        errorMsg = 'Cannot withdraw! You have active loans or insufficient balance.';
       } else if (error.message?.includes('User rejected')) {
-        errorMsg = 'Transação cancelada pelo usuário';
+        errorMsg = 'Transaction cancelled by user';
       } else if (error.message) {
         errorMsg = error.message;
       }
@@ -693,7 +693,7 @@ export function MarginFiLendingManager() {
                   Creating Account...
                 </>
               ) : (
-                'Criar Conta MarginFi'
+                'Create MarginFi Account'
               )}
             </Button>
           </div>

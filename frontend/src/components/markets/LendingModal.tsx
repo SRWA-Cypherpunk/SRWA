@@ -152,7 +152,7 @@ export const LendingModal: React.FC<LendingModalProps> = ({
       : 'Borrow tokens against your collateral');
   const apy = isSupply ? pool.supplyAPY : pool.borrowAPY;
   const buttonClass = isSRWAToken && isSupply
-    ? 'bg-green-500 hover:bg-green-600 text-white'
+    ? 'bg-purple-600 hover:bg-purple-700 text-white'
     : (isSupply
       ? 'bg-brand-400 hover:bg-brand-500 text-white'
       : 'bg-orange-500 hover:bg-orange-600 text-white');
@@ -175,14 +175,14 @@ export const LendingModal: React.FC<LendingModalProps> = ({
                 <Alert className="border-gray-500/30 bg-gray-500/10">
                   <Info className="h-4 w-4 text-gray-400 animate-pulse" />
                   <AlertDescription className="text-sm text-fg-secondary">
-                    Verificando seu status de KYC...
+                    Checking your KYC status...
                   </AlertDescription>
                 </Alert>
               ) : kycStatus.hasKYC ? (
                 <Alert className="border-green-500/30 bg-green-500/10">
                   <CheckCircle className="h-4 w-4 text-green-400" />
                   <AlertDescription className="text-sm text-green-100">
-                    <strong>✅ KYC Verificado</strong> - Você está autorizado a receber SRWA tokens.
+                    <strong>✅ KYC Verified</strong> - You are authorized to receive SRWA tokens.
                     {kycStatus.topics.accredited && (
                       <div className="mt-1 text-xs">
                         <Badge variant="outline" className="text-green-400 border-green-500/30 bg-green-500/10 mr-1">
@@ -196,16 +196,16 @@ export const LendingModal: React.FC<LendingModalProps> = ({
                 <Alert className="border-red-500/30 bg-red-500/10">
                   <XCircle className="h-4 w-4 text-red-400" />
                   <AlertDescription className="text-sm text-red-100">
-                    <strong>⚠️ KYC Necessário</strong> - Você precisa completar o KYC antes de comprar SRWA tokens.
+                    <strong>⚠️ KYC Required</strong> - You need to complete KYC before purchasing SRWA tokens.
                     <div className="mt-2 text-xs">
-                      <strong>Requisitos:</strong>
+                      <strong>Requirements:</strong>
                       <ul className="list-disc list-inside mt-1 space-y-1">
-                        <li>User Registry ativo</li>
-                        <li>Verificação KYC aprovada</li>
-                        <li>Compliance validada on-chain</li>
+                        <li>Active User Registry</li>
+                        <li>Approved KYC verification</li>
+                        <li>On-chain validated compliance</li>
                       </ul>
                       <div className="mt-2">
-                        <strong>Entre em contato com o admin para completar o KYC.</strong>
+                        <strong>Contact the admin to complete KYC.</strong>
                       </div>
                     </div>
                   </AlertDescription>
