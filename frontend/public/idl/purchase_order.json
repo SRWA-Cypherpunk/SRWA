@@ -1,5 +1,5 @@
 {
-  "address": "EdyLMn3iUrF16Z4VPyTfv9hC9G7eqxsHQVxnsNcsAT3Z",
+  "address": "CVE8a7k8urtnNbnLrgu98FjnGX7151uWM5gqXjvkWPki",
   "metadata": {
     "name": "purchase_order",
     "version": "0.1.0",
@@ -74,6 +74,12 @@
           }
         },
         {
+          "name": "mint",
+          "docs": [
+            "Mint do token"
+          ]
+        },
+        {
           "name": "admin_token_account",
           "docs": [
             "Token account do admin (origem dos tokens)"
@@ -88,8 +94,7 @@
           "writable": true
         },
         {
-          "name": "token_program",
-          "address": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+          "name": "token_program"
         }
       ],
       "args": []

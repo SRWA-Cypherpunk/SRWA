@@ -59,7 +59,7 @@ export function MarginFiLendingManager() {
         await loadMarginfiAccount(client);
       } catch (error) {
         console.error('[MarginFi] Error initializing client:', error);
-        toast.error('Erro ao conectar com MarginFi');
+        toast.error('Error connecting to MarginFi');
       }
     };
 
@@ -127,13 +127,13 @@ export function MarginFiLendingManager() {
 
   const handleCreateAccount = async () => {
     if (!marginfiClient || !wallet.publicKey) {
-      toast.error('Conecte sua wallet primeiro');
+      toast.error('Connect your wallet first');
       return;
     }
 
     setLoading(true);
     try {
-      toast.info('Criando conta MarginFi...');
+      toast.info('Creating MarginFi account...');
 
       const account = await marginfiClient.createMarginfiAccount();
       setMarginfiAccount(account);
@@ -147,10 +147,10 @@ export function MarginFiLendingManager() {
 
       // Check if account already exists
       if (error.message?.includes('already been processed')) {
-        toast.info('Conta já existe! Tentando carregar...');
+        toast.info('Account already exists! Trying to load...');
         await loadMarginfiAccount(marginfiClient);
       } else {
-        toast.error('Erro ao criar conta: ' + (error.message || 'Erro desconhecido'));
+        toast.error('Error creating account: ' + (error.message || 'Unknown error'));
       }
     } finally {
       setLoading(false);
@@ -164,7 +164,7 @@ export function MarginFiLendingManager() {
     }
 
     if (!depositAmount || parseFloat(depositAmount) <= 0) {
-      toast.error('Informe um valor válido para depositar');
+      toast.error('Enter a valid amount to deposit');
       return;
     }
 
@@ -179,7 +179,7 @@ export function MarginFiLendingManager() {
       );
 
       if (!solBank) {
-        throw new Error('Banco wSOL não encontrado no MarginFi');
+        throw new Error('wSOL bank not found in MarginFi');
       }
 
       const amount = parseFloat(depositAmount);
@@ -195,7 +195,7 @@ export function MarginFiLendingManager() {
       console.error('[MarginFi] Deposit error:', error);
 
       // Parse error messages
-      let errorMsg = 'Erro ao depositar';
+      let errorMsg = 'Error depositing';
 
       if (error.message?.includes('User rejected')) {
         errorMsg = 'Transação cancelada pelo usuário';
@@ -218,13 +218,13 @@ export function MarginFiLendingManager() {
     }
 
     if (!borrowAmount || parseFloat(borrowAmount) <= 0) {
-      toast.error('Informe um valor válido para tomar emprestado');
+      toast.error('Enter a valid amount to borrow');
       return;
     }
 
     // Check if user has deposits
     if (!accountInfo || parseFloat(accountInfo.deposits) === 0) {
-      toast.error('Você precisa depositar SOL primeiro para usar como collateral!');
+      toast.error('You need to deposit SOL first to use as collateral!');
       return;
     }
 
@@ -232,13 +232,13 @@ export function MarginFiLendingManager() {
     const maxBorrow = parseFloat(accountInfo.availableToBorrow);
 
     if (amount > maxBorrow) {
-      toast.error(`Você só pode emprestar até ${maxBorrow.toFixed(4)} SOL (75% do seu depósito)`);
+      toast.error(`You can only borrow up to ${maxBorrow.toFixed(4)} SOL (75% of your deposit)`);
       return;
     }
 
     setLoading(true);
     try {
-      toast.info('Tomando empréstimo...');
+      toast.info('Borrowing...');
 
       // Get the bank for wSOL
       const banks = marginfiClient?.banks;
@@ -247,7 +247,7 @@ export function MarginFiLendingManager() {
       );
 
       if (!solBank) {
-        throw new Error('Banco wSOL não encontrado no MarginFi');
+        throw new Error('wSOL bank not found in MarginFi');
       }
 
       console.log(`[MarginFi] Borrowing ${amount} SOL (max: ${maxBorrow})`);
@@ -274,7 +274,7 @@ export function MarginFiLendingManager() {
       console.error('[MarginFi] Borrow error:', error);
 
       // Parse MarginFi error codes
-      let errorMsg = 'Erro ao tomar empréstimo';
+      let errorMsg = 'Error borrowing';
 
       if (error.message?.includes('Custom":2000')) {
         errorMsg = 'Collateral insuficiente! Deposite mais SOL primeiro.';
@@ -297,13 +297,13 @@ export function MarginFiLendingManager() {
     }
 
     if (!repayAmount || parseFloat(repayAmount) <= 0) {
-      toast.error('Informe um valor válido para pagar');
+      toast.error('Enter a valid amount to repay');
       return;
     }
 
     // Check if user has active borrows
     if (!accountInfo || parseFloat(accountInfo.borrows) === 0) {
-      toast.error('Você não tem empréstimos ativos para pagar!');
+      toast.error('You have no active loans to repay!');
       return;
     }
 
@@ -311,13 +311,13 @@ export function MarginFiLendingManager() {
     const totalBorrows = parseFloat(accountInfo.borrows);
 
     if (amount > totalBorrows) {
-      toast.error(`Você só deve ${totalBorrows.toFixed(4)} SOL. Não pode pagar mais que isso.`);
+      toast.error(`You only owe ${totalBorrows.toFixed(4)} SOL. Cannot repay more than that.`);
       return;
     }
 
     setLoading(true);
     try {
-      toast.info('Pagando empréstimo...');
+      toast.info('Repaying loan...');
 
       // Get the bank for wSOL
       const banks = marginfiClient?.banks;
@@ -326,7 +326,7 @@ export function MarginFiLendingManager() {
       );
 
       if (!solBank) {
-        throw new Error('Banco wSOL não encontrado no MarginFi');
+        throw new Error('wSOL bank not found in MarginFi');
       }
 
       const amount = parseFloat(repayAmount);
@@ -342,14 +342,14 @@ export function MarginFiLendingManager() {
       console.error('[MarginFi] Repay error:', error);
 
       // Parse error messages
-      let errorMsg = 'Erro ao pagar';
+      let errorMsg = 'Error repaying';
 
       if (error.message?.includes('Custom":6024')) {
-        errorMsg = 'Você não tem empréstimos ativos! Faça um borrow primeiro.';
+        errorMsg = 'You have no active loans! Make a borrow first.';
       } else if (error.message?.includes('User rejected')) {
-        errorMsg = 'Transação cancelada pelo usuário';
+        errorMsg = 'Transaction cancelled by user';
       } else if (error.message?.includes('insufficient')) {
-        errorMsg = 'Saldo insuficiente para pagar o empréstimo';
+        errorMsg = 'Insufficient balance to repay loan';
       } else if (error.message) {
         errorMsg = error.message;
       }
@@ -367,13 +367,13 @@ export function MarginFiLendingManager() {
     }
 
     if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
-      toast.error('Informe um valor válido para retirar');
+      toast.error('Enter a valid amount to withdraw');
       return;
     }
 
     // Check if user has deposits
     if (!accountInfo || parseFloat(accountInfo.deposits) === 0) {
-      toast.error('Você não tem depósitos para retirar!');
+      toast.error('You have no deposits to withdraw!');
       return;
     }
 
@@ -382,7 +382,7 @@ export function MarginFiLendingManager() {
     const totalBorrows = parseFloat(accountInfo.borrows);
 
     if (amount > totalDeposits) {
-      toast.error(`Você só tem ${totalDeposits.toFixed(4)} SOL depositado.`);
+      toast.error(`You only have ${totalDeposits.toFixed(4)} SOL deposited.`);
       return;
     }
 
@@ -392,7 +392,7 @@ export function MarginFiLendingManager() {
       const newHealthFactor = (remainingDeposits / totalBorrows) * 100;
 
       if (newHealthFactor < 120) { // Safe margin above 100%
-        toast.error(`Retirada bloqueada! Health factor ficaria em ${newHealthFactor.toFixed(0)}% (mínimo: 120%). Pague seus empréstimos primeiro.`);
+        toast.error(`Withdrawal blocked! Health factor would be ${newHealthFactor.toFixed(0)}% (minimum: 120%). Repay your loans first.`);
         return;
       }
     }
@@ -408,7 +408,7 @@ export function MarginFiLendingManager() {
       );
 
       if (!solBank) {
-        throw new Error('Banco wSOL não encontrado no MarginFi');
+        throw new Error('wSOL bank not found in MarginFi');
       }
 
       const amount = parseFloat(withdrawAmount);
@@ -424,12 +424,12 @@ export function MarginFiLendingManager() {
       console.error('[MarginFi] Withdraw error:', error);
 
       // Parse MarginFi error codes
-      let errorMsg = 'Erro ao retirar';
+      let errorMsg = 'Error withdrawing';
 
       if (error.message?.includes('Custom":2000')) {
-        errorMsg = 'Não é possível retirar! Você tem empréstimos ativos ou saldo insuficiente.';
+        errorMsg = 'Cannot withdraw! You have active loans or insufficient balance.';
       } else if (error.message?.includes('User rejected')) {
-        errorMsg = 'Transação cancelada pelo usuário';
+        errorMsg = 'Transaction cancelled by user';
       } else if (error.message) {
         errorMsg = error.message;
       }
@@ -690,10 +690,10 @@ export function MarginFiLendingManager() {
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Criando Conta...
+                  Creating Account...
                 </>
               ) : (
-                'Criar Conta MarginFi'
+                'Create MarginFi Account'
               )}
             </Button>
           </div>

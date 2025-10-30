@@ -107,13 +107,26 @@ export class SRWAClient {
   }
 
   private async fetchLocalIdl(idlFile: string): Promise<Idl> {
-    const response = await fetch(`${LOCAL_IDL_BASE_PATH}/${idlFile}.json`);
+    // Add cache buster to force fresh IDL load
+    const cacheBuster = Date.now();
+    const response = await fetch(`${LOCAL_IDL_BASE_PATH}/${idlFile}.json?v=${cacheBuster}`, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    });
 
     if (!response.ok) {
       throw new Error(`Falha ao buscar IDL local (${idlFile}.json): HTTP ${response.status}`);
     }
 
-    return (await response.json()) as Idl;
+    const idl = (await response.json()) as Idl;
+    console.log(`📄 Loaded IDL for ${idlFile}:`, {
+      instructions: idl.instructions?.length || 0,
+      instructionNames: idl.instructions?.map(i => i.name) || []
+    });
+    return idl;
   }
 
   public setProvider(provider: anchor.AnchorProvider) {
@@ -138,6 +151,16 @@ export class SRWAClient {
       });
       this.programs = null;
       this.cachedWalletPubkey = null;
+    }
+
+    // Check if srwaController has the required method, if not force reload
+    if (this.programs?.srwaController) {
+      const hasRequiredMethod = this.programs.srwaController.methods?.initializeExtraAccountMetaList;
+      if (!hasRequiredMethod) {
+        console.warn("⚠️ srwaController IDL está desatualizado, forçando reload");
+        this.programs = null;
+        this.cachedWalletPubkey = null;
+      }
     }
 
     if (this.programs) {

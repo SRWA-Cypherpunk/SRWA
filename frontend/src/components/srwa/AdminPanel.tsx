@@ -31,9 +31,7 @@ import {
 } from 'lucide-react';
 import { PoolManager } from '@/components/srwa/admin/PoolManager';
 import { PoolsOverview } from '@/components/srwa/admin/PoolsOverview';
-import { useTokenPurchaseRequests } from '@/hooks/solana/useTokenPurchaseRequests';
-import { useTokenDistribution } from '@/hooks/solana/useTokenDistribution';
-import { useMarginFiDeposit } from '@/hooks/solana/useMarginFiDeposit';
+import { PurchaseRequestsManager } from '@/components/srwa/admin/PurchaseRequestsManager';
 
 function mapStatus(status: any): RequestStatus {
   if (!status) return 'pending';
@@ -57,13 +55,9 @@ export function AdminPanel() {
   const { publicKey } = useWallet();
   const issuance = useIssuanceRequests();
   const purchaseOrders = usePurchaseOrders();
-  const { requests: tokenPurchaseRequests, approvePurchaseRequest, rejectPurchaseRequest } = useTokenPurchaseRequests();
-  const { distributeTokens } = useTokenDistribution();
-  const { depositToMarginFi } = useMarginFiDeposit();
   const [loading, setLoading] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
-  const [processingPurchaseId, setProcessingPurchaseId] = useState<string | null>(null);
 
   const grouped = useMemo(() => {
     const buckets: Record<RequestStatus, typeof issuance.requests> = {
@@ -87,13 +81,38 @@ export function AdminPanel() {
 
     try {
       setLoading(true);
-      console.log('[AdminPanel.handleApprove] Starting approval for:', request.publicKey.toBase58());
+
+      // Check current status
+      const currentStatus: RequestStatus = request.account.srwaConfig
+        ? 'deployed'
+        : request.account.isRejected
+        ? 'rejected'
+        : 'pending';
+
+      console.log('[AdminPanel.handleApprove] Starting approval for:', {
+        pubkey: request.publicKey.toBase58(),
+        status: currentStatus,
+        isApproved: request.account.isApproved,
+        isRejected: request.account.isRejected,
+      });
+
+      if (currentStatus !== 'pending') {
+        toast.error(`Cannot approve: request is ${currentStatus}`);
+        return;
+      }
+
       await issuance.approveSrwa(request);
       toast.success('Request approved and deployed!');
       console.log('[AdminPanel.handleApprove] Approval completed successfully');
     } catch (err: any) {
       console.error('[AdminPanel.handleApprove] Error:', err);
-      toast.error(err.message || 'Failed to approve request');
+
+      // Better error messages
+      if (err.message?.includes('RequestNotPending')) {
+        toast.error('This request has already been processed');
+      } else {
+        toast.error(err.message || 'Failed to approve request');
+      }
     } finally {
       setLoading(false);
     }
@@ -112,186 +131,6 @@ export function AdminPanel() {
       toast.error(err.message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleApprovePurchaseOrder = async (order: PurchaseOrderAccount) => {
-    if (!publicKey) return;
-
-    // Prevent double-click / double execution
-    if (loading) {
-      console.log('[AdminPanel] Already processing, skipping...');
-      return;
-    }
-
-    try {
-      setLoading(true);
-
-      // Get admin's token account (onde estão os tokens SRWA para enviar)
-      const { getAssociatedTokenAddress } = await import('@solana/spl-token');
-      const adminTokenAccount = await getAssociatedTokenAddress(
-        order.account.mint,
-        publicKey
-      );
-
-      // Aprovar a purchase order on-chain
-      const signature = await purchaseOrders.approveOrder({
-        purchaseOrderPda: order.publicKey,
-        mint: order.account.mint,
-        investor: order.account.investor,
-        adminTokenAccount,
-      });
-
-      toast.success('Purchase Order Aprovada!', {
-        description: `${order.account.quantity.toString()} tokens transferidos para ${order.account.investor.toBase58().slice(0, 8)}...`,
-      });
-
-      console.log('[AdminPanel] Purchase order aprovada:', signature);
-    } catch (err: any) {
-      toast.error(err.message ?? 'Falha ao aprovar purchase order');
-      console.error('[AdminPanel.handleApprovePurchaseOrder] Error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRejectPurchaseOrder = async (order: PurchaseOrderAccount, reason: string) => {
-    if (!publicKey) return;
-
-    try {
-      setLoading(true);
-
-      // Rejeitar a purchase order on-chain (reembolsa SOL automaticamente)
-      const signature = await purchaseOrders.rejectOrder({
-        purchaseOrderPda: order.publicKey,
-        investor: order.account.investor,
-        adminVault: publicKey, // Admin vault que recebeu o SOL
-        reason,
-      });
-
-      toast.success('Purchase Order Rejeitada', {
-        description: `SOL reembolsado para o investor. Motivo: ${reason}`,
-      });
-
-      console.log('[AdminPanel] Purchase order rejeitada:', signature);
-    } catch (err: any) {
-      toast.error(err.message ?? 'Falha ao rejeitar purchase order');
-      console.error('[AdminPanel.handleRejectPurchaseOrder] Error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Token Purchase Request handlers
-  const handleApproveTokenPurchase = async (request: any) => {
-    if (!publicKey) {
-      toast.error('Conecte sua carteira');
-      return;
-    }
-
-    // Prevenir double-click
-    if (processingPurchaseId === request.id) {
-      console.log('[AdminPanel] Already processing this request, ignoring...');
-      return;
-    }
-
-    try {
-      setProcessingPurchaseId(request.id);
-      toast.info('📝 Aprovando purchase request...');
-
-      // 1. [OPCIONAL] Deposit SOL to MarginFi (USD/SOL pool)
-      // TEMPORARIAMENTE DESABILITADO: Admin pode fazer manualmente depois
-      // Motivo: Wallet está rejeitando transações do MarginFi SDK
-      toast.info('💡 Depósito no MarginFi: faça manualmente via Admin Panel → Lending', {
-        description: 'Continuando com transferência de tokens...',
-        duration: 5000,
-      });
-
-      /* CÓDIGO ORIGINAL (comentado temporariamente):
-      toast.info('💰 Depositando SOL no pool MarginFi USD/SOL...');
-      const marginFiResult = await depositToMarginFi(request.solAmount);
-
-      if (!marginFiResult.success) {
-        if (marginFiResult.error?.includes('AlreadyProcessed') || marginFiResult.error?.includes('já foi processada')) {
-          toast.warning('⚠️ Depósito MarginFi já foi feito anteriormente', {
-            description: 'Continuando com a transferência de tokens...',
-          });
-        } else {
-          toast.error('❌ Erro ao depositar no MarginFi', {
-            description: marginFiResult.error,
-            duration: 8000,
-          });
-          return;
-        }
-      } else {
-        toast.success('✅ SOL depositado no MarginFi!', {
-          description: `${request.solAmount.toFixed(4)} SOL agora está gerando yield`,
-        });
-      }
-      */
-
-      // 2. Transfer tokens to investor FIRST (antes de aprovar!)
-      toast.info('📤 Transferindo tokens para o investidor...');
-      const investorPubkey = new PublicKey(request.investor);
-      const tokenMintPubkey = new PublicKey(request.tokenMint);
-
-      console.log('🪙 Token Mint:', request.tokenMint);
-      console.log('👤 Investor:', request.investor);
-      console.log('💰 Amount:', request.tokenAmount);
-
-      const distributionResult = await distributeTokens(
-        tokenMintPubkey,
-        investorPubkey,
-        request.tokenAmount
-      );
-
-      if (!distributionResult.success) {
-        toast.error('❌ Erro ao transferir tokens', {
-          description: distributionResult.error,
-          duration: 8000,
-        });
-        // NÃO aprovar o request - manter visível para retry
-        return;
-      }
-
-      // 3. Approve the request ONLY after successful transfer
-      const approvalResult = await approvePurchaseRequest(request.id);
-      if (!approvalResult.success) {
-        toast.warning('⚠️ Tokens transferidos mas erro ao marcar como aprovado', {
-          description: approvalResult.error,
-        });
-        // Não retornar - a transferência funcionou, só o update do DB falhou
-      }
-
-      toast.success('✅ Purchase aprovada com sucesso!', {
-        description: `${request.tokenAmount} tokens enviados + SOL depositado no MarginFi`,
-        duration: 10000,
-      });
-    } catch (error: any) {
-      console.error('Approve token purchase error:', error);
-      toast.error('Erro ao aprovar purchase', {
-        description: error.message,
-      });
-    } finally {
-      setProcessingPurchaseId(null);
-    }
-  };
-
-  const handleRejectTokenPurchase = async (request: any) => {
-    try {
-      setProcessingPurchaseId(request.id);
-      const result = await rejectPurchaseRequest(request.id);
-      if (!result.success) {
-        throw new Error(result.error);
-      }
-      toast.warning('Request rejeitada');
-    } catch (error: any) {
-      console.error('Reject token purchase error:', error);
-      toast.error('Erro ao rejeitar', {
-        description: error.message,
-      });
-    } finally {
-      setProcessingPurchaseId(null);
     }
   };
 
@@ -319,7 +158,7 @@ export function AdminPanel() {
     const config = request.account.config;
     const offering = request.account.offering;
     const effectiveMint: PublicKey = issuance.getEffectiveMintKey(request);
-    // Verificar se o mint foi criado (não é zero/default) - só para display, não bloqueia approve
+    // Check if mint was created (not zero/default) - only for display, doesn't block approve
     const mintCreated = !effectiveMint.equals(PublicKey.default);
 
     const isDeployed = status === 'deployed';
@@ -373,7 +212,7 @@ export function AdminPanel() {
               <div>
                 <p className="text-fg-muted text-micro">Mint</p>
                 <p className="font-mono text-xs text-fg-primary break-all">
-                  {mintCreated ? effectiveMint.toBase58() : 'Mint ainda não criado'}
+                  {mintCreated ? effectiveMint.toBase58() : 'Mint not yet created'}
                 </p>
               </div>
               <div>
@@ -394,7 +233,7 @@ export function AdminPanel() {
                 <div className="flex items-center justify-between mb-2">
                   <p className="text-xs font-semibold text-brand-300 flex items-center gap-1">
                     <Wallet className="h-3 w-3" />
-                    Token na Devnet
+                    Token on Devnet
                   </p>
                   <a
                     href={`https://explorer.solana.com/address/${effectiveMint.toBase58()}?cluster=devnet`}
@@ -402,7 +241,7 @@ export function AdminPanel() {
                     rel="noopener noreferrer"
                     className="text-xs text-brand-300 hover:text-brand-200 flex items-center gap-1 transition"
                   >
-                    Ver no Explorer
+                    View on Explorer
                     <ExternalLink className="h-3 w-3" />
                   </a>
                 </div>
@@ -411,13 +250,13 @@ export function AdminPanel() {
                 </p>
                 {status === 'deployed' && (
                   <p className="text-xs text-brand-300 mt-2">
-                    ✓ Tokens mintados para o issuer
+                    ✓ Tokens minted to issuer
                   </p>
                 )}
               </div>
             )}
 
-            {/* Info sobre criação do mint */}
+            {/* Info about mint creation */}
             {status === 'pending' && !mintCreated && (
               <Alert>
                 <AlertCircle className="h-4 w-4" />
@@ -451,19 +290,19 @@ export function AdminPanel() {
                       className="flex w-full items-center justify-start gap-2 text-sm font-medium text-brand-400 transition hover:text-brand-300"
                     >
                       <FileText className="h-4 w-4" />
-                      Ver Todos os Detalhes
+                      View All Details
                     </button>
                   ) : (
                     <Button variant="outline" className="w-full">
                       <FileText className="mr-2 h-4 w-4" />
-                      Ver Todos os Detalhes
+                      View All Details
                     </Button>
                   )}
                 </DialogTrigger>
                 <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle className="text-2xl">{request.account.name} ({request.account.symbol})</DialogTitle>
-                  <DialogDescription>Informações completas do token</DialogDescription>
+                  <DialogDescription>Complete token information</DialogDescription>
                 </DialogHeader>
 
                 <div className="space-y-6">
@@ -471,7 +310,7 @@ export function AdminPanel() {
                   <div>
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
                       <Users className="h-5 w-5 mr-2 text-brand-400" />
-                      Informações do Issuer
+                      Issuer Information
                     </h3>
                     <div className="grid grid-cols-2 gap-4 bg-muted/30 p-4 rounded-lg">
                       <div>
@@ -539,7 +378,7 @@ export function AdminPanel() {
                   {/* Offering Details */}
                   {offering && (
                     <div>
-                      <h3 className="text-lg font-semibold mb-3">Detalhes da Oferta</h3>
+                      <h3 className="text-lg font-semibold mb-3">Offering Details</h3>
                       <div className="grid grid-cols-2 gap-4 bg-muted/30 p-4 rounded-lg">
                         <div>
                           <p className="text-xs text-muted-foreground mb-1">Soft Cap</p>
@@ -596,12 +435,12 @@ export function AdminPanel() {
                   <div>
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
                       <TrendingUp className="h-5 w-5 mr-2 text-brand-400" />
-                      Estratégia de Yield
+                      Yield Strategy
                     </h3>
                     <div className="bg-muted/30 p-4 rounded-lg">
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <p className="text-xs text-muted-foreground mb-1">Protocolo</p>
+                          <p className="text-xs text-muted-foreground mb-1">Protocol</p>
                           <p className="text-sm font-semibold capitalize">{yieldProtocol}</p>
                         </div>
                         <div>
@@ -678,17 +517,7 @@ export function AdminPanel() {
             </div>
 
             {/* Token-2022 Warning */}
-            {status === 'pending' && (
-              <Alert className="bg-amber-500/10 border-amber-500/30">
-                <AlertCircle className="h-4 w-4 text-amber-500" />
-                <AlertDescription className="text-xs text-amber-200">
-                  <strong>Important:</strong> This token uses Token-2022. Raydium CPMM does NOT support Token-2022 on devnet.
-                  After approval, you will need to manually create a pool on <strong>Orca Whirlpools</strong> or another compatible AMM.
-                  Complete instructions will appear in the console after approval.
-                </AlertDescription>
-              </Alert>
-            )}
-
+            
             {/* Actions */}
             {status === 'pending' && (
               <div className="flex gap-2 pt-2">
@@ -735,9 +564,9 @@ export function AdminPanel() {
                     <p>Offering: {request.account.offeringState?.toBase58?.()?.slice(0, 24) ?? '—'}...</p>
                   </div>
                   <div className="pt-2 border-t border-brand-400/20">
-                    <p className="text-xs text-fg-muted mb-1">Supply do Admin:</p>
+                    <p className="text-xs text-fg-muted mb-1">Admin Supply:</p>
                     <p className="text-xs text-fg-secondary">
-                      Os tokens foram mintados para sua carteira de admin. Você gerencia o supply e vende aos investidores conforme recebe pagamentos em SOL.
+                      Tokens have been minted to your admin wallet. You manage the supply and sell to investors as you receive SOL payments.
                     </p>
                   </div>
                 </div>
@@ -952,209 +781,7 @@ export function AdminPanel() {
         </TabsContent>
 
         <TabsContent value="purchases" className="space-y-4">
-          {/* Token Purchase Requests (from /dashboard/markets) */}
-          {tokenPurchaseRequests.filter(r => r.status === 'pending').length > 0 && (
-            <div className="space-y-4">
-              <h3 className="text-h3 font-semibold text-fg-primary">Token Purchase Requests</h3>
-              {tokenPurchaseRequests.filter(r => r.status === 'pending').map((request) => (
-                <Card key={request.id} className="card-institutional hover-lift">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-h3">{request.tokenName}</CardTitle>
-                        <CardDescription className="font-mono text-xs mt-1">
-                          Investor: {request.investor.substring(0, 8)}...{request.investor.substring(request.investor.length - 4)}
-                        </CardDescription>
-                      </div>
-                      <Badge variant="outline" className="text-amber-400 border-amber-500/30 bg-amber-500/10">
-                        <Clock className="h-3 w-3 mr-1" />
-                        Pending
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-3 gap-4 text-body-2">
-                      <div>
-                        <p className="text-fg-muted text-micro">Tokens</p>
-                        <p className="text-fg-primary font-semibold">{request.tokenAmount} {request.tokenSymbol}</p>
-                      </div>
-                      <div>
-                        <p className="text-fg-muted text-micro">SOL Paid</p>
-                        <p className="text-fg-primary font-semibold">{request.solAmount.toFixed(4)} SOL</p>
-                      </div>
-                      <div>
-                        <p className="text-fg-muted text-micro">Date</p>
-                        <p className="text-fg-primary font-semibold">{new Date(request.createdAt).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        onClick={() => handleApproveTokenPurchase(request)}
-                        disabled={processingPurchaseId === request.id}
-                        className="flex-1 bg-green-500 hover:bg-green-600"
-                      >
-                        {processingPurchaseId === request.id ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                            Processing...
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Approve
-                          </>
-                        )}
-                      </Button>
-                      <Button
-                        onClick={() => handleRejectTokenPurchase(request)}
-                        disabled={processingPurchaseId === request.id}
-                        variant="outline"
-                        className="flex-1 border-red-500/30 hover:bg-red-500/10 text-red-400"
-                      >
-                        <XCircle className="h-4 w-4 mr-2" />
-                        Reject
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-
-          {/* On-chain Purchase Orders */}
-          {purchaseOrders.getPendingOrders().length === 0 && tokenPurchaseRequests.filter(r => r.status === 'pending').length === 0 ? (
-            <Card className="card-institutional">
-              <CardContent className="py-12 text-center">
-                <ShoppingCart className="h-12 w-12 text-fg-muted mx-auto mb-4 opacity-50" />
-                <p className="text-body-1 text-fg-muted">Nenhuma compra pendente</p>
-                <p className="text-body-2 text-fg-muted mt-2">
-                  Quando investidores comprarem tokens, eles aparecerão aqui
-                </p>
-              </CardContent>
-            </Card>
-          ) : purchaseOrders.getPendingOrders().length > 0 && (
-            <div className="grid gap-4">
-              {purchaseOrders.getPendingOrders().map((order: PurchaseOrderAccount) => (
-                <Card key={order.publicKey.toBase58()} className="card-institutional hover-lift">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-h3">
-                          Purchase Order #{order.publicKey.toBase58().slice(0, 8)}
-                        </CardTitle>
-                        <CardDescription className="font-mono text-xs mt-1">
-                          Investidor: {order.account.investor.toBase58().slice(0, 8)}...{order.account.investor.toBase58().slice(-6)}
-                        </CardDescription>
-                      </div>
-                      <Badge variant="outline" className="text-amber-400 border-amber-500/30 bg-amber-500/10">
-                        <Clock className="h-3 w-3 mr-1" />
-                        Pending
-                      </Badge>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="space-y-4">
-                    {/* Purchase Details */}
-                    <div className="grid grid-cols-3 gap-4 text-body-2">
-                      <div>
-                        <p className="text-fg-muted text-micro">Quantidade</p>
-                        <p className="text-fg-primary font-semibold">{order.account.quantity.toString()} tokens</p>
-                      </div>
-                      <div>
-                        <p className="text-fg-muted text-micro">Total Pago</p>
-                        <p className="text-fg-primary font-semibold">{(order.account.totalLamports.toNumber() / 1_000_000_000).toFixed(4)} SOL</p>
-                      </div>
-                      <div>
-                        <p className="text-fg-muted text-micro">Preço/Token</p>
-                        <p className="text-fg-primary font-semibold">{(order.account.pricePerTokenLamports.toNumber() / 1_000_000_000).toFixed(4)} SOL</p>
-                      </div>
-                    </div>
-
-                    {/* Mint Info */}
-                    <div className="p-3 bg-muted/30 rounded-lg">
-                      <p className="text-xs text-fg-muted mb-1">Token Mint:</p>
-                      <p className="text-xs text-fg-primary font-mono break-all">{order.account.mint.toBase58()}</p>
-                    </div>
-
-                    {/* PDA Info */}
-                    <div className="p-3 bg-muted/30 rounded-lg">
-                      <p className="text-xs text-fg-muted mb-1">Purchase Order PDA:</p>
-                      <p className="text-xs text-fg-primary font-mono break-all">{order.publicKey.toBase58()}</p>
-                    </div>
-
-                    {/* Timestamp */}
-                    <div className="text-xs text-fg-muted">
-                      Solicitado em: {new Date(order.account.createdAt.toNumber() * 1000).toLocaleString('pt-BR')}
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex gap-2 pt-2">
-                      <Button
-                        onClick={() => handleApprovePurchaseOrder(order)}
-                        disabled={loading}
-                        className="flex-1 btn-primary"
-                      >
-                        {loading ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <>
-                            <CheckCircle className="mr-2 h-4 w-4" />
-                            Approve and Send Tokens
-                          </>
-                        )}
-                      </Button>
-
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button
-                            variant="destructive"
-                            className="flex-1"
-                            disabled={loading}
-                          >
-                            <XCircle className="mr-2 h-4 w-4" />
-                            Reject
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Reject Purchase Order</DialogTitle>
-                            <DialogDescription>
-                              Enter the reason for rejection. SOL will be automatically refunded.
-                            </DialogDescription>
-                          </DialogHeader>
-                          <div className="space-y-4">
-                            <div>
-                              <Label htmlFor="reject-reason">Rejection Reason</Label>
-                              <Input
-                                id="reject-reason"
-                                placeholder="e.g., Pending KYC, incorrect amount..."
-                                value={rejectReason}
-                                onChange={(e) => setRejectReason(e.target.value)}
-                                maxLength={200}
-                              />
-                            </div>
-                            <Button
-                              onClick={() => {
-                                if (rejectReason.trim()) {
-                                  handleRejectPurchaseOrder(order, rejectReason);
-                                  setRejectReason('');
-                                }
-                              }}
-                              disabled={loading || !rejectReason.trim()}
-                              variant="destructive"
-                              className="w-full"
-                            >
-                              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Confirm Rejection'}
-                            </Button>
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+          <PurchaseRequestsManager />
         </TabsContent>
 
         <TabsContent value="pools-overview">

@@ -111,17 +111,17 @@ export function MarginFiBankCreator() {
     event.preventDefault();
 
     if (!wallet.publicKey || !wallet.signTransaction) {
-      toast.error('Conecte sua wallet primeiro');
+      toast.error('Please connect your wallet first');
       return;
     }
 
     if (!form.mint.trim()) {
-      toast.error('Selecione um token SRWA');
+      toast.error('Please select an SRWA token');
       return;
     }
 
     if (!form.createNewGroup && !form.existingGroup.trim()) {
-      toast.error('Informe o endereço do grupo existente');
+      toast.error('Please provide the existing group address');
       return;
     }
 
@@ -129,8 +129,6 @@ export function MarginFiBankCreator() {
 
     try {
       const mintPubkey = new PublicKey(form.mint.trim());
-
-      toast.info('Inicializando MarginFi client...');
 
       // Initialize MarginFi Client
       const config = getConfig('dev'); // Devnet
@@ -140,23 +138,20 @@ export function MarginFiBankCreator() {
 
       // Step 1: Use existing group (creating new groups requires special permissions)
       if (!form.existingGroup.trim()) {
-        throw new Error('Informe o endereço do grupo MarginFi');
+        throw new Error('Please provide MarginFi group address');
       }
 
       const groupAddress = new PublicKey(form.existingGroup.trim());
       console.log('[MarginFiBankCreator] Using group:', groupAddress.toBase58());
 
-      toast.info('Usando grupo MarginFi devnet...');
-
       // Step 2: Get mint decimals
-      toast.info('Verificando token mint...');
 
       const { getMint, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } = await import('@solana/spl-token');
 
       // Detect token program
       const mintAccountInfo = await connection.getAccountInfo(mintPubkey);
       if (!mintAccountInfo) {
-        throw new Error('Token mint não encontrado');
+        throw new Error('Token mint not found');
       }
 
       const tokenProgram = mintAccountInfo.owner;
@@ -165,10 +160,10 @@ export function MarginFiBankCreator() {
       // Check if Token-2022
       if (tokenProgram.equals(TOKEN_2022_PROGRAM_ID)) {
         toast.error('❌ Token-2022 detectado!', {
-          description: 'MarginFi ainda não suporta Token-2022 completamente. Use Orca ou Raydium.',
+          description: 'MarginFi does not fully support Token-2022 yet. Use Orca or Raydium.',
           duration: 15000,
         });
-        throw new Error('MarginFi não suporta Token-2022 (SPL Token Extensions) no momento. Use Orca Whirlpools ou Raydium CLMM para criar pools com Token-2022.');
+        throw new Error('MarginFi does not support Token-2022 (SPL Token Extensions) at this time. Use Orca Whirlpools or Raydium CLMM to create Token-2022 pools.');
       }
 
       const mintInfo = await getMint(connection, mintPubkey, 'confirmed', tokenProgram);
@@ -177,7 +172,7 @@ export function MarginFiBankCreator() {
       console.log('[MarginFiBankCreator] Token decimals:', decimals);
 
       // Step 3: Build bank config
-      toast.info('Configurando parâmetros do bank...');
+      
 
       const bankConfig: BankConfigOpt = {
         // Risk weights
@@ -221,7 +216,7 @@ export function MarginFiBankCreator() {
       console.log('[MarginFiBankCreator] Bank config:', bankConfig);
 
       // Step 4: Create bank usando createLendingPool (mais simples)
-      toast.info('Criando lending pool no MarginFi...');
+      
 
       console.log('[MarginFiBankCreator] Creating bank with params:', {
         mint: mintPubkey.toBase58(),
@@ -241,7 +236,7 @@ export function MarginFiBankCreator() {
       const signature = result.signature;
       const createdBankAddress = result.bankAddress.toBase58();
 
-      toast.success('Bank MarginFi criado!');
+      
       console.log('[MarginFiBankCreator] Bank created!', {
         signature,
         bankAddress: createdBankAddress,
@@ -256,17 +251,17 @@ export function MarginFiBankCreator() {
         signature,
       });
 
-      toast.success('🎉 Bank criado com sucesso!', {
-        description: 'Configure o oracle manualmente se necessário',
+      toast.success('Bank created successfully!', {
+        description: 'Configure oracle manually if needed',
         duration: 10000,
       });
 
     } catch (error: any) {
       console.error('[MarginFiBankCreator] Error:', error);
 
-      let errorMsg = 'Erro ao criar bank';
+      let errorMsg = 'Error creating bank';
       if (error.message?.includes('User rejected')) {
-        errorMsg = 'Transação cancelada';
+        errorMsg = 'Transaction cancelled';
       } else if (error.message) {
         errorMsg = error.message;
       }
@@ -281,7 +276,7 @@ export function MarginFiBankCreator() {
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
-    toast.success(`${label} copiado!`);
+    toast.success(`${label} copied!`);
   };
 
   return (
@@ -289,10 +284,10 @@ export function MarginFiBankCreator() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <DollarSign className="h-5 w-5 text-brand-400" />
-          Criar Bank MarginFi (Devnet)
+          Create MarginFi Bank (Devnet)
         </CardTitle>
         <CardDescription>
-          Crie um isolated lending bank permissionless no MarginFi para seu token Token-2022
+          Create a permissionless isolated lending bank on MarginFi for your Token-2022
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -303,7 +298,7 @@ export function MarginFiBankCreator() {
               <CheckCircle className="h-4 w-4 text-green-400" />
               <AlertDescription>
                 <div className="space-y-3">
-                  <p className="font-semibold text-green-200">✅ Bank criado com sucesso!</p>
+                  <p className="font-semibold text-green-200">✅ Bank created successfully!</p>
 
                   <div className="space-y-2 text-xs">
                     <div className="flex items-center justify-between p-2 bg-background/50 rounded">
@@ -371,40 +366,7 @@ export function MarginFiBankCreator() {
           )}
 
           {/* Info Alerts */}
-          <Alert className="bg-blue-500/10 border-blue-500/30 mb-4">
-            <Info className="h-4 w-4 text-blue-400" />
-            <AlertDescription className="text-sm">
-              <strong>MarginFi Arena:</strong> Permite criar banks isolados (isolated groups) para qualquer token.
-              Cada bank é independente e não afeta a main liquidity pool do MarginFi.
-            </AlertDescription>
-          </Alert>
-
-          <Alert className="bg-amber-500/10 border-amber-500/30">
-            <AlertCircle className="h-4 w-4 text-amber-400" />
-            <AlertDescription className="text-xs">
-              <strong>Oracle Obrigatório:</strong> MarginFi requer um oracle válido (Pyth ou Switchboard).
-              Por padrão, usamos o Pyth SOL/USD devnet. Para seu token RWA, você precisará criar um feed customizado
-              ou ajustar o oracle após a criação do bank.
-            </AlertDescription>
-          </Alert>
-
-          {/* Token-2022 Warning */}
-          <Alert className="bg-red-500/10 border-red-500/30">
-            <AlertCircle className="h-4 w-4 text-red-400" />
-            <AlertDescription className="text-xs">
-              <strong>⚠️ Token-2022 Limitado:</strong> MarginFi ainda não tem suporte completo para Token-2022 (SPL Token Extensions).
-              O processo pode falhar com erro "Reached maximum depth for account resolution".
-              <br/><br/>
-              <strong>Alternativas:</strong>
-              <ul className="list-disc ml-4 mt-2">
-                <li>Use Orca Whirlpools (suporte completo Token-2022)</li>
-                <li>Use Raydium CLMM (suporte Token-2022)</li>
-                <li>Aguarde suporte oficial do MarginFi</li>
-              </ul>
-            </AlertDescription>
-          </Alert>
-
-          <form onSubmit={handleSubmit} className="space-y-6">
+                   <form onSubmit={handleSubmit} className="space-y-6">
             {/* Token Selection */}
             <section className="space-y-4">
               <div className="space-y-2">
@@ -412,7 +374,7 @@ export function MarginFiBankCreator() {
                 <TokenSelect
                   value={form.mint}
                   onValueChange={(value) => updateForm({ mint: value })}
-                  placeholder="Selecione um token SRWA"
+                  placeholder="Select an SRWA token"
                   disabled={loading}
                 />
                 <p className="text-xs text-muted-foreground">
@@ -425,20 +387,12 @@ export function MarginFiBankCreator() {
 
             {/* Group Configuration */}
             <section className="space-y-4">
-              <Alert className="bg-blue-500/10 border-blue-500/30">
-                <Info className="h-4 w-4 text-blue-400" />
-                <AlertDescription className="text-xs">
-                  <strong>Grupo MarginFi:</strong> Por padrão, usamos o grupo principal do MarginFi na devnet.
-                  Criar novos grupos requer permissões especiais de admin. Se você tem seu próprio grupo,
-                  pode alterar o endereço abaixo.
-                </AlertDescription>
-              </Alert>
-
+              
               <div className="space-y-2">
                 <Label htmlFor="existingGroup">MarginFi Group Address</Label>
                 <Input
                   id="existingGroup"
-                  placeholder="Endereço do MarginFi group (PublicKey)"
+                  placeholder="MarginFi group address (PublicKey)"
                   value={form.existingGroup}
                   onChange={(e) => updateForm({ existingGroup: e.target.value })}
                   disabled={loading}
@@ -507,14 +461,7 @@ export function MarginFiBankCreator() {
                 </div>
               </div>
 
-              <Alert className="bg-amber-500/10 border-amber-500/30">
-                <AlertCircle className="h-4 w-4 text-amber-400" />
-                <AlertDescription className="text-xs">
-                  <strong>Atenção:</strong> Para tokens RWA customizados, você pode usar o oracle SOL/USD como placeholder.
-                  O preço será usado apenas para cálculos de collateral. Atualize o oracle para um feed customizado
-                  após criar o bank, se necessário.
-                </AlertDescription>
-              </Alert>
+            
             </section>
 
             <Separator />
@@ -542,9 +489,9 @@ export function MarginFiBankCreator() {
 
               <Tabs defaultValue="basic" className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="basic">Básico</TabsTrigger>
-                  <TabsTrigger value="limits">Limites</TabsTrigger>
-                  <TabsTrigger value="interest">Juros</TabsTrigger>
+                  <TabsTrigger value="basic">Basic</TabsTrigger>
+                  <TabsTrigger value="limits">Limits</TabsTrigger>
+                  <TabsTrigger value="interest">Interest</TabsTrigger>
                 </TabsList>
 
                 {/* Basic Tab */}
@@ -581,7 +528,7 @@ export function MarginFiBankCreator() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="operationalState">Estado Operacional</Label>
+                      <Label htmlFor="operationalState">Operational State</Label>
                       <Select
                         value={form.operationalState}
                         onValueChange={(value: any) => updateForm({ operationalState: value })}
@@ -591,9 +538,9 @@ export function MarginFiBankCreator() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Operational">Operational (Ativo)</SelectItem>
-                          <SelectItem value="ReduceOnly">ReduceOnly (Apenas repagamentos)</SelectItem>
-                          <SelectItem value="Paused">Paused (Pausado)</SelectItem>
+                          <SelectItem value="Operational">Operational (Active)</SelectItem>
+                          <SelectItem value="ReduceOnly">ReduceOnly (Repayments only)</SelectItem>
+                          <SelectItem value="Paused">Paused</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -617,7 +564,7 @@ export function MarginFiBankCreator() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="assetWeightMaint">Asset Weight Maint (LTV Manutenção)</Label>
+                      <Label htmlFor="assetWeightMaint">Asset Weight Maint (LTV Maintenance)</Label>
                       <Input
                         id="assetWeightMaint"
                         type="number"
@@ -848,12 +795,12 @@ export function MarginFiBankCreator() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Criando Bank...
+                    Creating Bank...
                   </>
                 ) : (
                   <>
                     <CheckCircle className="mr-2 h-4 w-4" />
-                    Criar Bank MarginFi
+                    Create MarginFi Bank
                   </>
                 )}
               </Button>

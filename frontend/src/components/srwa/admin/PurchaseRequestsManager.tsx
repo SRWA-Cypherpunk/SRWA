@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
+import { BN } from '@coral-xyz/anchor';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -15,91 +16,83 @@ import {
   Send,
   Info,
   ExternalLink,
+  ShoppingCart,
 } from 'lucide-react';
-import { useTokenPurchaseRequests, type TokenPurchaseRequest } from '@/hooks/solana/useTokenPurchaseRequests';
+import { usePurchaseOrders, type PurchaseOrderAccount } from '@/hooks/solana/usePurchaseOrders';
 import { useTokenDistribution } from '@/hooks/solana/useTokenDistribution';
+import { useDeployedTokens } from '@/hooks/solana/useDeployedTokens';
+import { TOKEN_2022_PROGRAM_ID, getAssociatedTokenAddress } from '@solana/spl-token';
 
 /**
  * Purchase Requests Manager
  *
- * Interface para o admin aprovar/rejeitar purchase requests dos investidores
+ * Interface for admin to approve/reject investor purchase requests
  *
- * FLUXO:
- * 1. Investor cria purchase request (SOL enviado para admin)
- * 2. Admin vê requests pendentes aqui
- * 3. Admin aprova:
- *    a) SOL vai para pool USD/SOL (Raydium/Orca) - TODO
- *    b) Admin transfere tokens RWA para investor (via useTokenDistribution)
- * 4. Request marcada como 'approved'
+ * FLOW:
+ * 1. Investor creates purchase request (SOL sent to admin)
+ * 2. Admin views pending requests here
+ * 3. Admin approves:
+ *    a) SOL goes to USD/SOL pool (Raydium/Orca) - TODO
+ *    b) Admin transfers RWA tokens to investor (via useTokenDistribution)
+ * 4. Request marked as 'approved'
  */
 export function PurchaseRequestsManager() {
   const { publicKey, connected } = useWallet();
-  const { requests, loading, approvePurchaseRequest, rejectPurchaseRequest } =
-    useTokenPurchaseRequests();
-  const { distributeTokens } = useTokenDistribution();
+  const {
+    orders,
+    loading,
+    approveOrder,
+    rejectOrder,
+    getStatus
+  } = usePurchaseOrders();
+  const { tokens: srwaTokens } = useDeployedTokens();
+  const { connection } = useConnection();
 
   const [processingId, setProcessingId] = useState<string | null>(null);
 
-  const pendingRequests = requests.filter((r) => r.status === 'pending');
-  const approvedRequests = requests.filter((r) => r.status === 'approved');
-  const rejectedRequests = requests.filter((r) => r.status === 'rejected');
+  const pendingRequests = orders.filter((o) => getStatus(o) === 'pending');
+  const approvedRequests = orders.filter((o) => getStatus(o) === 'approved');
+  const rejectedRequests = orders.filter((o) => getStatus(o) === 'rejected');
 
-  const handleApprove = async (request: TokenPurchaseRequest) => {
+  const handleApprove = async (order: PurchaseOrderAccount) => {
     if (!connected || !publicKey) {
-      toast.error('Conecte sua carteira');
+      toast.error('Please connect your wallet');
       return;
     }
 
     try {
-      setProcessingId(request.id);
+      setProcessingId(order.publicKey.toBase58());
 
-      toast.info('📝 Aprovando purchase request...');
-
-      // 1. Approve the request (marks as approved)
-      const approvalResult = await approvePurchaseRequest(request.id);
-      if (!approvalResult.success) {
-        throw new Error(approvalResult.error);
-      }
-
-      // 2. Transfer tokens to investor
-      toast.info('📤 Transferindo tokens para o investidor...');
-      const investorPubkey = new PublicKey(request.investor);
-      const tokenMintPubkey = new PublicKey(request.tokenMint);
-
-      const distributionResult = await distributeTokens(
-        tokenMintPubkey,
-        investorPubkey,
-        request.tokenAmount
+      // Get admin token account
+      const adminTokenAccount = await getAssociatedTokenAddress(
+        order.account.mint,
+        publicKey,
+        false,
+        TOKEN_2022_PROGRAM_ID
       );
 
-      if (!distributionResult.success) {
-        toast.error('❌ Erro ao transferir tokens', {
-          description: distributionResult.error,
-          duration: 8000,
-        });
-        return;
-      }
+      // Call approveOrder from usePurchaseOrders
+      const signature = await approveOrder({
+        purchaseOrderPda: order.publicKey,
+        mint: order.account.mint,
+        investor: order.account.investor,
+        adminTokenAccount,
+      });
 
-      // 3. TODO: Swap SOL para USD/SOL pool (Raydium/Orca)
-      // Placeholder for now
-      toast.info('💱 SOL será enviado para pool USD/SOL (implementar)');
-
-      toast.success('✅ Purchase request aprovada!', {
-        description: `${request.tokenAmount} ${request.tokenSymbol} transferidos para ${request.investor.substring(0, 8)}...`,
-        action: distributionResult.signature
-          ? {
-              label: 'Ver TX',
-              onClick: () =>
-                window.open(
-                  `https://explorer.solana.com/tx/${distributionResult.signature}?cluster=devnet`,
-                  '_blank'
-                ),
-            }
-          : undefined,
+      toast.success('Purchase request approved', {
+        description: `Tokens transferred to ${order.account.investor.toBase58().substring(0, 8)}...`,
+        action: {
+          label: 'View TX',
+          onClick: () =>
+            window.open(
+              `https://explorer.solana.com/tx/${signature}?cluster=devnet`,
+              '_blank'
+            ),
+        },
       });
     } catch (error: any) {
       console.error('Approve error:', error);
-      toast.error('Erro ao aprovar request', {
+      toast.error('Failed to approve request', {
         description: error.message,
       });
     } finally {
@@ -107,21 +100,36 @@ export function PurchaseRequestsManager() {
     }
   };
 
-  const handleReject = async (request: TokenPurchaseRequest) => {
+  const handleReject = async (order: PurchaseOrderAccount) => {
+    if (!connected || !publicKey) {
+      toast.error('Please connect your wallet');
+      return;
+    }
+
     try {
-      setProcessingId(request.id);
+      setProcessingId(order.publicKey.toBase58());
 
-      const result = await rejectPurchaseRequest(request.id);
-      if (!result.success) {
-        throw new Error(result.error);
-      }
+      const signature = await rejectOrder({
+        purchaseOrderPda: order.publicKey,
+        investor: order.account.investor,
+        adminVault: publicKey, // Admin wallet (must match admin signer)
+        reason: 'Rejected by admin',
+      });
 
-      toast.warning('Request rejeitada', {
-        description: 'Lembre-se de reembolsar o investidor manualmente',
+      toast.warning('Request rejected', {
+        description: 'SOL refunded to investor',
+        action: {
+          label: 'View TX',
+          onClick: () =>
+            window.open(
+              `https://explorer.solana.com/tx/${signature}?cluster=devnet`,
+              '_blank'
+            ),
+        },
       });
     } catch (error: any) {
       console.error('Reject error:', error);
-      toast.error('Erro ao rejeitar request', {
+      toast.error('Failed to reject request', {
         description: error.message,
       });
     } finally {
@@ -129,260 +137,215 @@ export function PurchaseRequestsManager() {
     }
   };
 
-  const formatDate = (timestamp: number) => {
-    return new Date(timestamp).toLocaleString('pt-BR');
+  // Helper to get token metadata
+  const getTokenMetadata = (mint: PublicKey) => {
+    const token = srwaTokens.find(t => t.mint.equals(mint));
+
+    // Debug log
+    if (!token) {
+      console.log('[PurchaseRequestsManager] Token not found:', mint.toBase58());
+      console.log('[PurchaseRequestsManager] Available tokens:', srwaTokens.map(t => ({
+        mint: t.mint.toBase58(),
+        name: t.name,
+        symbol: t.symbol
+      })));
+    }
+
+    return {
+      name: token?.name || `Token ${mint.toBase58().slice(0, 8)}...`,
+      symbol: token?.symbol || mint.toBase58().slice(0, 4).toUpperCase(),
+    };
   };
 
-  const formatAddress = (address: string) => {
+  // Convert BN timestamp to milliseconds
+  const formatDate = (timestamp: BN) => {
+    // Timestamp is in microseconds, convert to milliseconds
+    const ms = timestamp.toNumber() / 1000; // microseconds to milliseconds
+    return new Date(ms).toLocaleString('en-US', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
+  const formatAddress = (pubkey: PublicKey | string) => {
+    const address = typeof pubkey === 'string' ? pubkey : pubkey.toBase58();
     return `${address.substring(0, 6)}...${address.substring(address.length - 4)}`;
   };
 
+  // Calculate SOL amount from lamports
+  const formatSol = (lamports: BN) => {
+    return (lamports.toNumber() / 1e9).toFixed(4);
+  };
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-brand-50">Purchase Requests</h2>
-        <p className="text-sm text-brand-300 mt-1">
-          Gerencie solicitações de compra de tokens SRWA dos investidores
-        </p>
-      </div>
-
-      <Separator />
-
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-brand-800/50 border-brand-700">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-yellow-500/10">
-                <Clock className="h-5 w-5 text-yellow-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-brand-50">{pendingRequests.length}</p>
-                <p className="text-sm text-brand-300">Pendentes</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-brand-800/50 border-brand-700">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-green-500/10">
-                <CheckCircle2 className="h-5 w-5 text-green-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-brand-50">{approvedRequests.length}</p>
-                <p className="text-sm text-brand-300">Aprovadas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-brand-800/50 border-brand-700">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-red-500/10">
-                <XCircle className="h-5 w-5 text-red-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-brand-50">{rejectedRequests.length}</p>
-                <p className="text-sm text-brand-300">Rejeitadas</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Info Alert */}
-      <Alert className="border-blue-500/50 bg-blue-500/10">
-        <Info className="h-4 w-4 text-blue-400" />
-        <AlertDescription className="text-sm text-brand-100">
-          <strong>Upon approval:</strong> Tokens will be automatically transferred to the investor and the SOL received
-          should be sent to the USD/SOL pool for liquidity.
-        </AlertDescription>
-      </Alert>
+    <div className="space-y-4">
 
       {/* Pending Requests */}
-      <Card className="bg-brand-800/50 border-brand-700">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-brand-50">
-            <Clock className="h-5 w-5 text-yellow-400" />
-            Requests Pendentes
-          </CardTitle>
-          <CardDescription className="text-brand-300">
-            Revise e aprove/rejeite as solicitações de compra
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {pendingRequests.length === 0 ? (
-            <div className="text-center py-8">
-              <Clock className="h-12 w-12 text-brand-400 mx-auto mb-3" />
-              <p className="text-brand-300">Nenhuma request pendente</p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {pendingRequests.map((request) => (
-                <Card key={request.id} className="bg-brand-900/50 border-brand-600">
-                  <CardContent className="p-4">
-                    <div className="space-y-4">
-                      {/* Header */}
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-semibold text-brand-50">{request.tokenName}</h4>
-                            <Badge variant="outline" className="text-xs">
-                              {request.tokenSymbol}
-                            </Badge>
-                          </div>
-                          <p className="text-xs text-brand-400 mt-1">{formatDate(request.createdAt)}</p>
-                        </div>
-                        <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
-                          Pendente
-                        </Badge>
-                      </div>
+      {pendingRequests.length === 0 ? (
+        <Card className="card-institutional">
+          <CardContent className="py-12 text-center">
+            <ShoppingCart className="h-12 w-12 text-fg-muted mx-auto mb-4 opacity-50" />
+            <p className="text-body-1 text-fg-muted">No pending purchases</p>
+            <p className="text-body-2 text-fg-muted mt-2">
+              When investors purchase tokens, they will appear here
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4">
+          {pendingRequests.map((order) => {
+            const tokenMeta = getTokenMetadata(order.account.mint);
+            const orderId = order.publicKey.toBase58();
 
-                      <Separator className="bg-brand-700" />
-
-                      {/* Details */}
-                      <div className="grid grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-xs text-brand-400">Investidor</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <p className="text-sm font-mono text-brand-100">
-                              {formatAddress(request.investor)}
-                            </p>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-6 w-6 p-0"
-                              onClick={() =>
-                                window.open(
-                                  `https://explorer.solana.com/address/${request.investor}?cluster=devnet`,
-                                  '_blank'
-                                )
-                              }
-                            >
-                              <ExternalLink className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-
-                        <div>
-                          <p className="text-xs text-brand-400">Token Amount</p>
-                          <p className="text-sm font-semibold text-brand-50 mt-1">
-                            {request.tokenAmount} {request.tokenSymbol}
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-xs text-brand-400">SOL Enviado</p>
-                          <p className="text-sm font-semibold text-green-400 mt-1">
-                            {request.solAmount.toFixed(4)} SOL
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-xs text-brand-400">TX Signature</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <p className="text-xs font-mono text-brand-100">
-                              {request.txSignature
-                                ? formatAddress(request.txSignature)
-                                : 'N/A'}
-                            </p>
-                            {request.txSignature && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 w-6 p-0"
-                                onClick={() =>
-                                  window.open(
-                                    `https://explorer.solana.com/tx/${request.txSignature}?cluster=devnet`,
-                                    '_blank'
-                                  )
-                                }
-                              >
-                                <ExternalLink className="h-3 w-3" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Actions */}
-                      <div className="flex gap-2 pt-2">
-                        <Button
-                          onClick={() => handleApprove(request)}
-                          disabled={processingId === request.id}
-                          className="flex-1 bg-green-500 hover:bg-green-600 text-white"
-                        >
-                          {processingId === request.id ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                              Processando...
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle2 className="h-4 w-4 mr-2" />
-                              Approve
-                            </>
-                          )}
-                        </Button>
-
-                        <Button
-                          onClick={() => handleReject(request)}
-                          disabled={processingId === request.id}
-                          variant="outline"
-                          className="flex-1 border-red-500/30 hover:bg-red-500/10 text-red-400"
-                        >
-                          <XCircle className="h-4 w-4 mr-2" />
-                          Reject
-                        </Button>
-                      </div>
+            return (
+              <Card key={orderId} className="card-institutional">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <CardTitle className="text-h3">{tokenMeta.name}</CardTitle>
+                      <CardDescription className="font-mono text-xs mt-1">
+                        Order #{orderId.slice(0, 8)}... • {formatDate(order.account.createdAt)}
+                      </CardDescription>
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Recent Approved/Rejected */}
-      {(approvedRequests.length > 0 || rejectedRequests.length > 0) && (
-        <Card className="bg-brand-800/50 border-brand-700">
-          <CardHeader>
-            <CardTitle className="text-brand-50">Histórico Recente</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {[...approvedRequests, ...rejectedRequests]
-                .sort((a, b) => (b.approvedAt || 0) - (a.approvedAt || 0))
-                .slice(0, 5)
-                .map((request) => (
-                  <div
-                    key={request.id}
-                    className="flex items-center justify-between p-3 bg-brand-900/30 rounded-lg"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-brand-50">
-                        {request.tokenAmount} {request.tokenSymbol}
-                      </p>
-                      <p className="text-xs text-brand-400">
-                        {formatAddress(request.investor)} • {formatDate(request.approvedAt || request.createdAt)}
-                      </p>
-                    </div>
-                    <Badge
-                      className={
-                        request.status === 'approved'
-                          ? 'bg-green-500/20 text-green-400 border-green-500/30'
-                          : 'bg-red-500/20 text-red-400 border-red-500/30'
-                      }
-                    >
-                      {request.status === 'approved' ? 'Aprovada' : 'Rejeitada'}
+                    <Badge variant="outline" className="text-amber-400 border-amber-500/30 bg-amber-500/10">
+                      <Clock className="h-3 w-3 mr-1" />
+                      Pending
                     </Badge>
                   </div>
-                ))}
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+
+                  {/* Details Grid */}
+                  <div className="grid grid-cols-2 gap-4 bg-muted/30 p-4 rounded-lg text-body-2">
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Investor</p>
+                      <div className="flex items-center gap-1">
+                        <p className="text-sm font-mono">
+                          {formatAddress(order.account.investor)}
+                        </p>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-5 w-5 p-0"
+                          onClick={() =>
+                            window.open(
+                              `https://explorer.solana.com/address/${order.account.investor.toBase58()}?cluster=devnet`,
+                              '_blank'
+                            )
+                          }
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Token Symbol</p>
+                      <p className="text-sm font-semibold">{tokenMeta.symbol}</p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Quantity</p>
+                      <p className="text-sm font-semibold">{order.account.quantity.toString()} tokens</p>
+                    </div>
+
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Price Per Token</p>
+                      <p className="text-sm">{formatSol(order.account.pricePerTokenLamports)} SOL</p>
+                    </div>
+
+                    <div className="col-span-2">
+                      <p className="text-xs text-muted-foreground mb-1">Total Paid</p>
+                      <p className="text-sm font-semibold text-green-400">{formatSol(order.account.totalLamports)} SOL</p>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2 pt-2 relative z-10">
+                    <Button
+                      onClick={() => handleApprove(order)}
+                      disabled={processingId === orderId}
+                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white disabled:opacity-50"
+                    >
+                      {processingId === orderId ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                          Processing...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="mr-2 h-4 w-4" />
+                          Approve
+                        </>
+                      )}
+                    </Button>
+
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleReject(order);
+                      }}
+                      disabled={processingId === orderId}
+                      className="flex-1 bg-black hover:bg-gray-950 text-gray-400 hover:text-gray-300 border border-gray-700 disabled:opacity-50"
+                    >
+                      <XCircle className="mr-2 h-4 w-4" />
+                      Reject
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Recent History */}
+      {(approvedRequests.length > 0 || rejectedRequests.length > 0) && (
+        <Card className="card-institutional">
+          <CardHeader>
+            <CardTitle>Recent History</CardTitle>
+            <CardDescription>Recently processed purchase orders</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {[...approvedRequests, ...rejectedRequests]
+                .sort((a, b) => b.account.updatedAt.toNumber() - a.account.updatedAt.toNumber())
+                .slice(0, 5)
+                .map((order) => {
+                  const tokenMeta = getTokenMetadata(order.account.mint);
+                  const status = getStatus(order);
+
+                  return (
+                    <div
+                      key={order.publicKey.toBase58()}
+                      className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                    >
+                      <div>
+                        <p className="text-sm font-medium">
+                          {order.account.quantity.toString()} {tokenMeta.symbol}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatAddress(order.account.investor)} • {formatDate(order.account.updatedAt)}
+                        </p>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className={
+                          status === 'approved'
+                            ? 'text-green-400 border-green-500/30 bg-green-500/10'
+                            : 'text-red-400 border-red-500/30 bg-red-500/10'
+                        }
+                      >
+                        {status === 'approved' ? 'Approved' : 'Rejected'}
+                      </Badge>
+                    </div>
+                  );
+                })}
             </div>
           </CardContent>
         </Card>

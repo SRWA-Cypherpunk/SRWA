@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Token, TokenAccount, Transfer};
+use anchor_spl::token_interface::{self, TokenAccount, TokenInterface, TransferChecked};
 use crate::state::*;
 use crate::errors::*;
 
@@ -22,13 +22,16 @@ pub struct ApprovePurchaseOrder<'info> {
     )]
     pub purchase_order: Account<'info, PurchaseOrder>,
 
+    /// Mint do token
+    pub mint: InterfaceAccount<'info, anchor_spl::token_interface::Mint>,
+
     /// Token account do admin (origem dos tokens)
     #[account(
         mut,
         constraint = admin_token_account.mint == purchase_order.mint,
         constraint = admin_token_account.amount >= purchase_order.quantity @ PurchaseOrderError::InsufficientAdminTokens
     )]
-    pub admin_token_account: Account<'info, TokenAccount>,
+    pub admin_token_account: InterfaceAccount<'info, TokenAccount>,
 
     /// Token account do investor (destino dos tokens)
     #[account(
@@ -36,9 +39,9 @@ pub struct ApprovePurchaseOrder<'info> {
         constraint = investor_token_account.mint == purchase_order.mint,
         constraint = investor_token_account.owner == purchase_order.investor
     )]
-    pub investor_token_account: Account<'info, TokenAccount>,
+    pub investor_token_account: InterfaceAccount<'info, TokenAccount>,
 
-    pub token_program: Program<'info, Token>,
+    pub token_program: Interface<'info, TokenInterface>,
 }
 
 pub fn handler(ctx: Context<ApprovePurchaseOrder>) -> Result<()> {
@@ -46,16 +49,19 @@ pub fn handler(ctx: Context<ApprovePurchaseOrder>) -> Result<()> {
     let clock = Clock::get()?;
 
     // Transferir tokens do admin para o investor
+    let decimals = ctx.accounts.mint.decimals;
+
     let transfer_ctx = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
-        Transfer {
+        TransferChecked {
             from: ctx.accounts.admin_token_account.to_account_info(),
             to: ctx.accounts.investor_token_account.to_account_info(),
             authority: ctx.accounts.admin.to_account_info(),
+            mint: ctx.accounts.mint.to_account_info(),
         },
     );
 
-    token::transfer(transfer_ctx, purchase_order.quantity)?;
+    token_interface::transfer_checked(transfer_ctx, purchase_order.quantity, decimals)?;
 
     // Atualizar purchase order
     purchase_order.status = PurchaseOrderStatus::Approved;

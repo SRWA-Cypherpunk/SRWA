@@ -65,6 +65,7 @@ const ROLE_OPTIONS: RoleOption[] = [
 export function RegistrationWizard() {
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [isRegistering, setIsRegistering] = useState(false);
+  const [hasAttemptedRegistration, setHasAttemptedRegistration] = useState(false);
   const { registerUser } = useUserRegistry();
   const wallet = useWallet();
   const navigate = useNavigate();
@@ -81,7 +82,14 @@ export function RegistrationWizard() {
       return;
     }
 
+    // Prevent multiple clicks
+    if (isRegistering || hasAttemptedRegistration) {
+      console.log('[RegistrationWizard] Already registering or attempted, ignoring click');
+      return;
+    }
+
     setIsRegistering(true);
+    setHasAttemptedRegistration(true);
 
     try {
       const result = await registerUser(selectedRole);
@@ -105,27 +113,25 @@ export function RegistrationWizard() {
       console.error('Full error:', JSON.stringify(error, null, 2));
       console.error('Error stack:', error?.stack);
 
-      // If error indicates user is already registered, redirect
-      if (error?.message?.includes('already registered') || error?.message?.includes('já está registrado')) {
+      // Check if transaction already processed (user already registered)
+      const errorMessage = error?.message || error?.transactionMessage || '';
+      if (
+        errorMessage.includes('already registered') ||
+        errorMessage.includes('já está registrado') ||
+        errorMessage.includes('already been processed') ||
+        error?.transactionMessage?.includes('already been processed')
+      ) {
         toast.info('You are already registered!', {
-          description: error.message,
+          description: 'Refreshing your profile...',
         });
 
-        // Redirect after 1 second
-        setTimeout(() => {
-          if (selectedRole === UserRole.Issuer) {
-            navigate('/srwa-issuance');
-          } else if (selectedRole === UserRole.Investor) {
-            navigate('/investor');
-          } else {
-            navigate('/admin');
-          }
-        }, 1000);
+        // Force refetch user registry
+        window.location.reload();
         return;
       }
 
       toast.error('Registration error', {
-        description: error?.message || error?.toString() || 'Please try again',
+        description: error?.message || error?.transactionMessage || error?.toString() || 'Please try again',
       });
     } finally {
       setIsRegistering(false);
@@ -207,7 +213,7 @@ export function RegistrationWizard() {
               className="cursor-pointer relative group h-full"
             >
               <Card
-                className={`relative overflow-hidden h-full min-h-[420px] md:min-h-[450px] flex flex-col transition-all duration-300 backdrop-blur-xl bg-black/80 border shadow-[0_4px_20px_rgba(0,0,0,0.5)] ${
+                className={`relative overflow-hidden h-full min-h-[420px] md:min-h-[450px] flex flex-col transition-all duration-300 backdrop-blur-xl bg-black/60 border shadow-[0_4px_20px_rgba(0,0,0,0.5)] ${
                   isSelected
                     ? 'ring-2 ring-purple-500/60 border-purple-400/50 bg-gradient-to-br from-purple-600/20 via-purple-500/15 to-orange-500/10 group-hover:from-purple-600/50 group-hover:via-purple-500/40 group-hover:to-orange-500/30 group-hover:shadow-[0_0_40px_rgba(153,69,255,0.8),0_0_80px_rgba(153,69,255,0.5)]'
                     : option.role === UserRole.Issuer
@@ -356,7 +362,7 @@ export function RegistrationWizard() {
             transition={{ duration: 0.3 }}
             className="relative group"
           >
-            <Card className="relative overflow-hidden backdrop-blur-xl bg-black/80 border border-white/15 shadow-[0_4px_20px_rgba(0,0,0,0.5)] transition-all duration-300 group-hover:bg-gradient-to-br group-hover:from-purple-600/25 group-hover:via-orange-500/20 group-hover:to-purple-600/25 group-hover:border-purple-400/50 group-hover:shadow-[0_0_30px_rgba(153,69,255,0.6),0_0_50px_rgba(255,107,53,0.4)]">
+            <Card className="relative overflow-hidden backdrop-blur-xl bg-black/60 border border-white/15 shadow-[0_4px_20px_rgba(0,0,0,0.5)] transition-all duration-300 group-hover:bg-gradient-to-br group-hover:from-purple-600/25 group-hover:via-orange-500/20 group-hover:to-purple-600/25 group-hover:border-purple-400/50 group-hover:shadow-[0_0_30px_rgba(153,69,255,0.6),0_0_50px_rgba(255,107,53,0.4)]">
               {/* Internal animated gradient pulse */}
               <motion.div
                 className="absolute inset-0 rounded-xl pointer-events-none opacity-[0.06]"

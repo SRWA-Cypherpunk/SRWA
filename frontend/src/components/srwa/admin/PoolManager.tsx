@@ -2,32 +2,26 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Waves, TrendingUp, Droplet, DollarSign, Send } from 'lucide-react';
+import { Waves, TrendingUp, Droplet, DollarSign } from 'lucide-react';
 import { RaydiumPoolCreator } from './RaydiumPoolCreator';
 import { SolendPoolCreator } from './SolendPoolCreator';
 import { OrcaPoolCreator } from './OrcaPoolCreator';
 import { MarginFiBankCreator } from './MarginFiBankCreator';
-import { TokenDistributionManager } from './TokenDistributionManager';
 
 export function PoolManager() {
-  const [selectedProtocol, setSelectedProtocol] = useState<'distribution' | 'orca' | 'raydium' | 'marginfi' | 'solend'>('distribution');
+  const [selectedProtocol, setSelectedProtocol] = useState<'orca' | 'raydium' | 'marginfi' | 'solend'>('orca');
 
   return (
     <Card className="card-institutional">
       <CardHeader>
         <CardTitle>Pool Manager</CardTitle>
         <CardDescription>
-          Escolha o protocolo e gerencie suas pools de liquidez e lending
+          Choose protocol and manage your liquidity and lending pools
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs value={selectedProtocol} onValueChange={(value) => setSelectedProtocol(value as any)}>
-          <TabsList className="grid w-full grid-cols-5 mb-6">
-            <TabsTrigger value="distribution" className="flex items-center gap-2">
-              <Send className="h-4 w-4" />
-              <span>Distribuição</span>
-              <Badge variant="default" className="ml-1 text-xs bg-green-500">Recomendado</Badge>
-            </TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4 mb-6">
             <TabsTrigger value="orca" className="flex items-center gap-2">
               <Droplet className="h-4 w-4" />
               <span>Orca</span>
@@ -49,10 +43,6 @@ export function PoolManager() {
               <Badge variant="secondary" className="ml-1 text-xs">Lending</Badge>
             </TabsTrigger>
           </TabsList>
-
-          <TabsContent value="distribution">
-            <TokenDistributionManager />
-          </TabsContent>
 
           <TabsContent value="orca">
             <OrcaPoolCreator />

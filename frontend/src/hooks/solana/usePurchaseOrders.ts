@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { PublicKey, SystemProgram } from '@solana/web3.js';
-import { useConnection, useAnchorWallet } from '@solana/wallet-adapter-react';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { BN } from '@coral-xyz/anchor';
 import {
   TOKEN_2022_PROGRAM_ID,
@@ -38,7 +38,7 @@ export type PurchaseOrderStatus = 'pending' | 'approved' | 'rejected' | 'cancell
 
 export function usePurchaseOrders() {
   const { connection } = useConnection();
-  const wallet = useAnchorWallet();
+  const { publicKey, signTransaction, signAllTransactions } = useWallet();
   const { programs } = useProgramsSafe();
   const [orders, setOrders] = useState<PurchaseOrderAccount[]>([]);
   const [loading, setLoading] = useState(false);
@@ -84,7 +84,7 @@ export function usePurchaseOrders() {
       pricePerTokenLamports: number;
       adminVault: PublicKey;
     }) => {
-      if (!wallet || !program) {
+      if (!publicKey || !signTransaction || !program) {
         throw new Error('Wallet not connected or program not loaded');
       }
 
@@ -98,6 +98,14 @@ export function usePurchaseOrders() {
         isCreatingOrder.current = true;
 
         const { mint, quantity, pricePerTokenLamports, adminVault } = params;
+
+        console.log('[usePurchaseOrders] Checking program provider:', {
+          hasProgram: !!program,
+          hasProvider: !!program?.provider,
+          providerWallet: program?.provider?.wallet?.publicKey?.toBase58(),
+          currentWallet: publicKey?.toBase58(),
+          walletsMatch: program?.provider?.wallet?.publicKey?.equals(publicKey),
+        });
 
 
         const nowMs = Date.now(); // milliseconds since epoch
@@ -126,7 +134,7 @@ export function usePurchaseOrders() {
           [
             Buffer.from(PURCHASE_ORDER_SEED),
             mint.toBuffer(),
-            wallet.publicKey.toBuffer(),
+            publicKey.toBuffer(),
             Buffer.from(new BN(timestamp).toArray('le', 8)),
           ],
           program.programId
@@ -137,7 +145,7 @@ export function usePurchaseOrders() {
         const tx = await program.methods
           .createPurchaseOrder(new BN(quantity), new BN(pricePerTokenLamports), new BN(timestamp))
           .accounts({
-            investor: wallet.publicKey,
+            investor: publicKey,
             mint,
             purchaseOrder: purchaseOrderPda,
             adminVault,
@@ -162,7 +170,7 @@ export function usePurchaseOrders() {
         isCreatingOrder.current = false;
       }
     },
-    [wallet, program, fetchOrders]
+    [publicKey, signTransaction, program, fetchOrders]
   );
 
   // Admin approves purchase order
@@ -173,7 +181,7 @@ export function usePurchaseOrders() {
       investor: PublicKey;
       adminTokenAccount: PublicKey;
     }) => {
-      if (!wallet || !program) {
+      if (!publicKey || !signTransaction || !program) {
         throw new Error('Wallet not connected or program not loaded');
       }
 
@@ -224,7 +232,7 @@ export function usePurchaseOrders() {
           console.log('[usePurchaseOrders] Creating investor token account:', investorTokenAccount.toBase58());
 
           const createAtaIx = createAssociatedTokenAccountInstruction(
-            wallet.publicKey, // payer
+            publicKey, // payer
             investorTokenAccount, // ata
             investor, // owner
             mint, // mint
@@ -236,11 +244,11 @@ export function usePurchaseOrders() {
           tx = await program.methods
             .approvePurchaseOrder()
             .accounts({
-              admin: wallet.publicKey,
+              admin: publicKey,
               purchaseOrder: purchaseOrderPda,
               adminTokenAccount,
               investorTokenAccount,
-              tokenProgram: TOKEN_PROGRAM_ID,
+              tokenProgram: TOKEN_2022_PROGRAM_ID,
             })
             .preInstructions([createAtaIx])
             .rpc({
@@ -252,11 +260,11 @@ export function usePurchaseOrders() {
           tx = await program.methods
             .approvePurchaseOrder()
             .accounts({
-              admin: wallet.publicKey,
+              admin: publicKey,
               purchaseOrder: purchaseOrderPda,
               adminTokenAccount,
               investorTokenAccount,
-              tokenProgram: TOKEN_PROGRAM_ID,
+              tokenProgram: TOKEN_2022_PROGRAM_ID,
             })
             .rpc({
               skipPreflight: false,
@@ -278,10 +286,21 @@ export function usePurchaseOrders() {
 
           // Initialize MarginFi client
           const config = getConfig('dev');
-          const marginfiClient = await MarginfiClient.fetch(config, wallet as any, connection);
+
+          // Create wallet adapter for MarginFi
+          const walletAdapter = {
+            publicKey,
+            signTransaction,
+            signAllTransactions: signAllTransactions || (async (txs: any[]) => {
+              if (!signTransaction) throw new Error('Wallet cannot sign transactions');
+              return Promise.all(txs.map(tx => signTransaction(tx)));
+            }),
+          };
+
+          const marginfiClient = await MarginfiClient.fetch(config, walletAdapter as any, connection);
 
           // Get or create MarginFi account
-          const accounts = await marginfiClient.getMarginfiAccountsForAuthority(wallet.publicKey);
+          const accounts = await marginfiClient.getMarginfiAccountsForAuthority(publicKey);
           let marginfiAccount;
 
           if (accounts.length > 0) {
@@ -325,7 +344,7 @@ export function usePurchaseOrders() {
         isApprovingOrder.current = false;
       }
     },
-    [wallet, program, fetchOrders, connection]
+    [publicKey, signTransaction, program, fetchOrders, connection]
   );
 
   // Admin rejects purchase order
@@ -336,7 +355,7 @@ export function usePurchaseOrders() {
       adminVault: PublicKey;
       reason: string;
     }) => {
-      if (!wallet || !program) {
+      if (!publicKey || !signTransaction || !program) {
         throw new Error('Wallet not connected or program not loaded');
       }
 
@@ -346,7 +365,7 @@ export function usePurchaseOrders() {
         const tx = await program.methods
           .rejectPurchaseOrder(reason)
           .accounts({
-            admin: wallet.publicKey,
+            admin: publicKey,
             purchaseOrder: purchaseOrderPda,
             adminVault,
             investor,
@@ -368,7 +387,7 @@ export function usePurchaseOrders() {
         throw err;
       }
     },
-    [wallet, program, fetchOrders]
+    [publicKey, signTransaction, program, fetchOrders]
   );
 
   // Investor cancels purchase order
@@ -377,7 +396,7 @@ export function usePurchaseOrders() {
       purchaseOrderPda: PublicKey;
       adminVault: PublicKey;
     }) => {
-      if (!wallet || !program) {
+      if (!publicKey || !signTransaction || !program) {
         throw new Error('Wallet not connected or program not loaded');
       }
 
@@ -387,7 +406,7 @@ export function usePurchaseOrders() {
         const tx = await program.methods
           .cancelPurchaseOrder()
           .accounts({
-            investor: wallet.publicKey,
+            investor: publicKey,
             purchaseOrder: purchaseOrderPda,
             adminVault,
             systemProgram: SystemProgram.programId,
@@ -408,7 +427,7 @@ export function usePurchaseOrders() {
         throw err;
       }
     },
-    [wallet, program, fetchOrders]
+    [publicKey, signTransaction, program, fetchOrders]
   );
 
   // Helper to get status string
@@ -423,8 +442,18 @@ export function usePurchaseOrders() {
 
   // Filter orders by status
   const getPendingOrders = useCallback(() => {
-    return orders.filter(order => getStatus(order) === 'pending');
-  }, [orders]);
+    const pending = orders.filter(order => getStatus(order) === 'pending');
+    console.log('[usePurchaseOrders.getPendingOrders]', {
+      totalOrders: orders.length,
+      pendingCount: pending.length,
+      pending: pending.map(o => ({
+        investor: o.account.investor.toBase58(),
+        status: o.account.status,
+        quantity: o.account.quantity.toString(),
+      })),
+    });
+    return pending;
+  }, [orders, getStatus]);
 
   const getOrdersByInvestor = useCallback((investor: PublicKey) => {
     return orders.filter(order => order.account.investor.equals(investor));

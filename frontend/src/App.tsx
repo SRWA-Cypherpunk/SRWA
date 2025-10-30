@@ -5,6 +5,7 @@ import { CombinedProvider } from "@/contexts/CombinedProvider";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { UserRole } from "@/types/srwa-contracts";
 import { InstallPrompt } from "@/components/mobile/InstallPrompt";
+import { GlobalRegistrationModal } from "@/components/auth/GlobalRegistrationModal";
 import Index from "./pages/Index";
 import Markets from "./pages/markets/Markets";
 import Portfolio from "./pages/portfolio/Portfolio";
@@ -34,6 +35,7 @@ const App = () => (
     <Sonner />
     <InstallPrompt />
     <BrowserRouter>
+      <GlobalRegistrationModal />
       <Routes>
         {/* Public routes - always available */}
         <Route path="/" element={<Index />} />

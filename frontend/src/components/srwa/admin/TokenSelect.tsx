@@ -15,7 +15,7 @@ interface TokenSelectProps {
   disabled?: boolean;
 }
 
-export function TokenSelect({ value, onValueChange, placeholder = "Selecione um token", disabled }: TokenSelectProps) {
+export function TokenSelect({ value, onValueChange, placeholder = "Select a token", disabled }: TokenSelectProps) {
   const { tokens, loading } = useDeployedTokens();
 
   if (loading) {

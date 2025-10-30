@@ -155,14 +155,16 @@ export default function DashboardMarkets() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {/* SRWA Token Markets - Display as Pools */}
               {srwaMarkets.map((market, index) => {
+                // Generate varied mock data based on market address and index
+                const seed = market.address.charCodeAt(0) + market.address.charCodeAt(market.address.length - 1) + index;
                 const metrics = {
-                  apy: market.supplyAPY,
-                  tvl: market.tvl,
-                  minInvestment: 0.1,
-                  riskLevel: 'Medium' as 'Low' | 'Medium' | 'High',
-                  availableSOL: market.availableLiquidity * 0.01, // Mock conversion
-                  availableToken: market.availableLiquidity,
-                  price: 0.01, // Mock price: 1 SOL = 100 tokens
+                  apy: 8.5 + (seed % 25), // 8.5-33.5%
+                  tvl: 45000 + (seed % 80) * 1000, // $45K-125K
+                  minInvestment: 0.1 + (seed % 5) * 0.05, // 0.1-0.35 SOL
+                  riskLevel: (seed % 3 === 0 ? 'Low' : seed % 3 === 1 ? 'Medium' : 'High') as 'Low' | 'Medium' | 'High',
+                  availableSOL: 8 + (seed % 120), // 8-128 SOL
+                  availableToken: 80 + (seed % 1200), // 80-1280 tokens
+                  price: 0.008 + (seed % 15) / 1000, // 0.008-0.023 SOL per token
                 };
 
                 return (
