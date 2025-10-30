@@ -111,8 +111,8 @@ export function TokenDistributionManager() {
       <Alert className="border-blue-500/50 bg-blue-500/10">
         <UserCheck className="h-4 w-4 text-blue-400" />
         <AlertDescription className="text-sm text-brand-100">
-          <strong>Automatic KYC Validation:</strong> Your Transfer Hook automatically validates recipient's KYC.
-          If investor doesn't have valid KYC, transaction will be rejected on-chain.
+          <strong>Automatic KYC Validation:</strong> Your Transfer Hook automatically validates the recipient's KYC.
+          If the investor doesn't have valid KYC, the transaction will be rejected on-chain.
         </AlertDescription>
       </Alert>
 
@@ -144,7 +144,7 @@ export function TokenDistributionManager() {
               className="bg-brand-900/50 border-brand-600 text-brand-50"
             />
             <p className="text-xs text-brand-400">
-              RWA token address to be distributed
+              RWA token address that will be distributed
             </p>
           </div>
 
@@ -241,7 +241,7 @@ export function TokenDistributionManager() {
             <div>
               <p className="text-sm text-brand-100 font-medium">KYC Validation</p>
               <p className="text-xs text-brand-400">
-                Transfer Hook checks if recipient has valid KYC
+                Transfer Hook verifies if the recipient has valid KYC
               </p>
             </div>
           </div>
@@ -269,7 +269,7 @@ export function TokenDistributionManager() {
           <div className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4 text-green-400 flex-shrink-0" />
             <p className="text-sm text-brand-100">
-              <strong>Guaranteed Compliance:</strong> KYC validated on-chain for every transfer
+              <strong>Guaranteed Compliance:</strong> KYC validated on-chain in every transfer
             </p>
           </div>
           <div className="flex items-center gap-2">

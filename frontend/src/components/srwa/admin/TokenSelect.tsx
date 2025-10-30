@@ -22,7 +22,7 @@ export function TokenSelect({ value, onValueChange, placeholder = "Selecione um 
     return (
       <div className="flex items-center gap-2 p-2 border rounded-md">
         <Loader2 className="h-4 w-4 animate-spin" />
-        <span className="text-sm text-muted-foreground">Carregando tokens...</span>
+        <span className="text-sm text-muted-foreground">Loading tokens...</span>
       </div>
     );
   }
@@ -31,7 +31,7 @@ export function TokenSelect({ value, onValueChange, placeholder = "Selecione um 
     return (
       <div className="p-3 border rounded-md bg-muted/30">
         <p className="text-sm text-muted-foreground">
-          Nenhum token deployado encontrado. Crie um token SRWA primeiro no Token Wizard.
+          No deployed tokens found. Create an SRWA token first in the Token Wizard.
         </p>
       </div>
     );

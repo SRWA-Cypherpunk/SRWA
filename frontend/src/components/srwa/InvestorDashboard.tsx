@@ -216,8 +216,8 @@ export function InvestorDashboard() {
             <div className="flex items-center space-x-3">
               <Wallet className="h-6 w-6 text-brand-400" />
               <div>
-                <CardTitle>Seus Tokens SRWA</CardTitle>
-                <CardDescription>Tokens que você possui na carteira conectada</CardDescription>
+                <CardTitle>Your SRWA Tokens</CardTitle>
+                <CardDescription>Tokens you own in the connected wallet</CardDescription>
               </div>
             </div>
             <Button
@@ -235,22 +235,22 @@ export function InvestorDashboard() {
             <div className="text-center py-12">
               <Wallet className="h-12 w-12 text-fg-muted mx-auto mb-4 opacity-50" />
               <p className="text-sm text-fg-muted">
-                Conecte sua carteira para visualizar seus tokens SRWA.
+                Connect your wallet to view your SRWA tokens.
               </p>
             </div>
           ) : walletTokensLoading ? (
             <div className="text-center py-12">
               <Loader2 className="h-10 w-10 animate-spin mx-auto text-purple-400" />
-              <p className="text-sm text-fg-muted mt-4">Carregando tokens da carteira...</p>
+              <p className="text-sm text-fg-muted mt-4">Loading wallet tokens...</p>
             </div>
           ) : walletTokenHoldings.length === 0 ? (
             <div className="text-center py-12">
               <Wallet className="h-12 w-12 text-fg-muted mx-auto mb-4 opacity-50" />
               <p className="text-base font-medium text-fg-primary mb-2">
-                Nenhum Token Encontrado
+                No Tokens Found
               </p>
               <p className="text-sm text-fg-muted mb-6">
-                Você ainda não possui tokens SRWA na carteira conectada.
+                You don't have any SRWA tokens in the connected wallet yet.
               </p>
               <Button
                 variant="outline"
