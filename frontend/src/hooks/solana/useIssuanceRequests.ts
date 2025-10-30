@@ -13,7 +13,7 @@ import {
 } from '@solana/web3.js';
 import { WalletSendTransactionError } from '@solana/wallet-adapter-base';
 import {
-  ASSOCIATED_ s,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
   Account,
   MINT_SIZE,
   TOKEN_2022_PROGRAM_ID,
@@ -26,6 +26,13 @@ import {
   getMint,
   TokenAccountNotFoundError,
   TokenInvalidAccountOwnerError,
+  ExtensionType,
+  createInitializeTransferHookInstruction,
+  getMintLen,
+  getTransferHook,
+  getExtraAccountMetaAddress,
+  getExtraAccountMetas,
+  resolveExtraAccountMeta,
 } from '@solana/spl-token';
 import { useProgramsSafe } from '@/contexts/ProgramContext';
 import { useAnchorWallet, useConnection, useWallet } from '@solana/wallet-adapter-react';
@@ -531,6 +538,111 @@ export function useIssuanceRequests() {
     }
   }, [wallet?.publicKey, programs?.srwaFactory, refresh, sendWithWallet]);
 
+  /**
+   * Inicializa ExtraAccountMetaList para Transfer Hook
+   */
+  const initializeTransferHook = useCallback(async (mint: PublicKey) => {
+    if (!wallet?.publicKey) {
+      throw new Error('Wallet not connected');
+    }
+    if (!programs?.srwaController) {
+      throw new Error('SRWA Controller program not loaded');
+    }
+
+    const TRANSFER_HOOK_PROGRAM_ID = programs.srwaController.programId;
+
+    const [extraAccountMetaListPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from('extra-account-metas'), mint.toBuffer()],
+      TRANSFER_HOOK_PROGRAM_ID
+    );
+
+    console.log('[useIssuanceRequests.initializeTransferHook] Initializing ExtraAccountMetaList', {
+      mint: mint.toBase58(),
+      pda: extraAccountMetaListPDA.toBase58(),
+    });
+
+    // Check if already initialized
+    const accountInfo = await connection.getAccountInfo(extraAccountMetaListPDA);
+    if (accountInfo) {
+      console.log('[useIssuanceRequests.initializeTransferHook] Already initialized');
+      return extraAccountMetaListPDA;
+    }
+
+    const ix = await programs.srwaController.methods
+      .initializeExtraAccountMetaList()
+      .accounts({
+        payer: wallet.publicKey,
+        mint,
+        extraAccountMetaList: extraAccountMetaListPDA,
+        systemProgram: SystemProgram.programId,
+      })
+      .instruction();
+
+    const tx = new Transaction().add(ix);
+    const signature = await sendWithWallet(tx, { preflightCommitment: 'confirmed' });
+
+    console.log('[useIssuanceRequests.initializeTransferHook] ExtraAccountMetaList initialized!', {
+      signature,
+      pda: extraAccountMetaListPDA.toBase58(),
+    });
+
+    return extraAccountMetaListPDA;
+  }, [wallet?.publicKey, programs?.srwaController, connection, sendWithWallet]);
+
+  /**
+   * Registra KYC para um usuário
+   */
+  const registerKYC = useCallback(async (user: PublicKey, kycCompleted: boolean = true, isActive: boolean = true) => {
+    if (!wallet?.publicKey) {
+      throw new Error('Wallet not connected');
+    }
+    if (!programs?.srwaController) {
+      throw new Error('SRWA Controller program not loaded');
+    }
+
+    const TRANSFER_HOOK_PROGRAM_ID = programs.srwaController.programId;
+
+    const [kycRegistryPDA] = PublicKey.findProgramAddressSync(
+      [Buffer.from('kyc'), user.toBuffer()],
+      TRANSFER_HOOK_PROGRAM_ID
+    );
+
+    console.log('[useIssuanceRequests.registerKYC] Registering KYC', {
+      user: user.toBase58(),
+      pda: kycRegistryPDA.toBase58(),
+      kycCompleted,
+      isActive,
+    });
+
+    // Check if already registered
+    const accountInfo = await connection.getAccountInfo(kycRegistryPDA);
+    if (accountInfo) {
+      console.log('[useIssuanceRequests.registerKYC] KYC already registered');
+      return kycRegistryPDA;
+    }
+
+    const ix = await programs.srwaController.methods
+      .initializeKycRegistry(kycCompleted, isActive)
+      .accounts({
+        authority: wallet.publicKey,
+        user,
+        kycRegistry: kycRegistryPDA,
+        systemProgram: SystemProgram.programId,
+      })
+      .instruction();
+
+    const tx = new Transaction().add(ix);
+    const signature = await sendWithWallet(tx, { preflightCommitment: 'confirmed' });
+
+    console.log('[useIssuanceRequests.registerKYC] KYC registered!', {
+      signature,
+      user: user.toBase58(),
+      pda: kycRegistryPDA.toBase58(),
+    });
+
+    return kycRegistryPDA;
+  }, [wallet?.publicKey, programs?.srwaController, connection, sendWithWallet]);
+
   const approveSrwa = useCallback(async (request: SrwaRequestAccount) => {
     if (!wallet?.publicKey) {
       throw new Error('Wallet not connected');
@@ -657,7 +769,29 @@ export function useIssuanceRequests() {
       }
     }
 
-    console.log('[useIssuanceRequests.approveSrwa] SRWA approved successfully. Now minting initial supply to admin wallet.');
+    console.log('[useIssuanceRequests.approveSrwa] SRWA approved successfully.');
+
+    // Initialize Transfer Hook (ExtraAccountMetaList)
+    try {
+      console.log('[useIssuanceRequests.approveSrwa] Initializing Transfer Hook...');
+      await initializeTransferHook(mint);
+      console.log('[useIssuanceRequests.approveSrwa] Transfer Hook initialized successfully');
+    } catch (hookError: any) {
+      console.error('[useIssuanceRequests.approveSrwa] Failed to initialize Transfer Hook', hookError);
+      throw new Error(`Failed to initialize Transfer Hook: ${hookError.message}`);
+    }
+
+    // Register KYC for admin (issuer will be registered when they receive tokens)
+    try {
+      console.log('[useIssuanceRequests.approveSrwa] Registering KYC for admin...');
+      await registerKYC(wallet.publicKey, true, true);
+      console.log('[useIssuanceRequests.approveSrwa] Admin KYC registered successfully');
+    } catch (kycError: any) {
+      console.error('[useIssuanceRequests.approveSrwa] Failed to register admin KYC', kycError);
+      throw new Error(`Failed to register admin KYC: ${kycError.message}`);
+    }
+
+    console.log('[useIssuanceRequests.approveSrwa] Now minting initial supply to admin wallet.');
 
     // Mint initial supply to the ADMIN wallet (not issuer)
     try {
@@ -759,34 +893,6 @@ export function useIssuanceRequests() {
           signature,
         });
 
-        // Show instructions for creating liquidity pool
-        console.log('[useIssuanceRequests.approveSrwa] ========================================');
-        console.log('[useIssuanceRequests.approveSrwa] ✅ SRWA TOKEN APPROVED SUCCESSFULLY!');
-        console.log('[useIssuanceRequests.approveSrwa] ========================================');
-        console.log('[useIssuanceRequests.approveSrwa] Token Mint:', mint.toBase58());
-        console.log('[useIssuanceRequests.approveSrwa] Symbol:', request.account.symbol);
-        console.log('[useIssuanceRequests.approveSrwa] Supply:', mintAmount.toString());
-        console.log('[useIssuanceRequests.approveSrwa] ');
-        console.log('[useIssuanceRequests.approveSrwa] 📌 NEXT STEPS - Create Liquidity Pool:');
-        console.log('[useIssuanceRequests.approveSrwa] ');
-        console.log('[useIssuanceRequests.approveSrwa] ⚠️  IMPORTANT: Raydium CPMM does NOT support Token-2022 on devnet.');
-        console.log('[useIssuanceRequests.approveSrwa] ');
-        console.log('[useIssuanceRequests.approveSrwa] Option 1 - Orca Whirlpools (Supports Token-2022):');
-        console.log('[useIssuanceRequests.approveSrwa]   1. Visit: https://www.orca.so/');
-        console.log('[useIssuanceRequests.approveSrwa]   2. Connect your wallet (devnet mode)');
-        console.log('[useIssuanceRequests.approveSrwa]   3. Create a Whirlpool with:');
-        console.log('[useIssuanceRequests.approveSrwa]      - Token A:', mint.toBase58());
-        console.log('[useIssuanceRequests.approveSrwa]      - Token B: So11111111111111111111111111111111111111112 (wSOL)');
-        console.log('[useIssuanceRequests.approveSrwa]      - Initial Price: ~0.001 SOL');
-        console.log('[useIssuanceRequests.approveSrwa]   4. Add initial liquidity');
-        console.log('[useIssuanceRequests.approveSrwa]   5. Copy the Pool Address');
-        console.log('[useIssuanceRequests.approveSrwa]   6. Register the pool in Admin Panel > Pool Management');
-        console.log('[useIssuanceRequests.approveSrwa] ');
-        console.log('[useIssuanceRequests.approveSrwa] Option 2 - Use the RaydiumPoolCreator component:');
-        console.log('[useIssuanceRequests.approveSrwa]   - Available in Admin Panel');
-        console.log('[useIssuanceRequests.approveSrwa]   - Note: May fail if token uses Token-2022 extensions');
-        console.log('[useIssuanceRequests.approveSrwa] ');
-        console.log('[useIssuanceRequests.approveSrwa] ========================================');
       }
     } catch (mintError) {
       console.error('[useIssuanceRequests.approveSrwa] Failed to mint initial supply to admin wallet', mintError);
@@ -796,7 +902,7 @@ export function useIssuanceRequests() {
     }
 
     await refresh();
-  }, [wallet?.publicKey, programs?.srwaFactory, refresh, walletAdapter, getEffectiveMintKey, connection, sendWithWallet, createRaydiumPool]);
+  }, [wallet?.publicKey, programs?.srwaFactory, refresh, walletAdapter, getEffectiveMintKey, connection, sendWithWallet, createRaydiumPool, initializeTransferHook, registerKYC]);
 
   const rejectSrwa = useCallback(async (request: SrwaRequestAccount, reason: string) => {
     if (!wallet?.publicKey) {
@@ -856,6 +962,17 @@ export function useIssuanceRequests() {
 
     const decimals = request.account.decimals ?? 0;
     const issuer = request.account.issuer;
+
+    // Register KYC for issuer before sending tokens
+    try {
+      console.log('[useIssuanceRequests.sendTokensToIssuer] Registering KYC for issuer...');
+      await registerKYC(issuer, true, true);
+      console.log('[useIssuanceRequests.sendTokensToIssuer] Issuer KYC registered successfully');
+    } catch (kycError: any) {
+      console.error('[useIssuanceRequests.sendTokensToIssuer] Failed to register issuer KYC', kycError);
+      // Don't throw - KYC might already be registered
+      console.log('[useIssuanceRequests.sendTokensToIssuer] Continuing with transfer...');
+    }
 
     const adminAta = await getAssociatedTokenAddress(mint, wallet.publicKey, false, TOKEN_2022_PROGRAM_ID);
     let adminAccount: Account;
@@ -935,7 +1052,7 @@ export function useIssuanceRequests() {
       signature,
       amount: transferAmount.toString(),
     });
-  }, [wallet?.publicKey, connection, walletAdapter, wallet, getEffectiveMintKey, sendWithWallet]);
+  }, [wallet?.publicKey, connection, walletAdapter, wallet, getEffectiveMintKey, sendWithWallet, registerKYC]);
 
   /**
    * Transfere tokens do ADMIN para o investidor
@@ -958,6 +1075,17 @@ export function useIssuanceRequests() {
       decimals,
       admin: wallet.publicKey.toBase58(),
     });
+
+    // Register KYC for investor before sending tokens
+    try {
+      console.log('[useIssuanceRequests.transferFromAdminToInvestor] Registering KYC for investor...');
+      await registerKYC(investor, true, true);
+      console.log('[useIssuanceRequests.transferFromAdminToInvestor] Investor KYC registered successfully');
+    } catch (kycError: any) {
+      console.error('[useIssuanceRequests.transferFromAdminToInvestor] Failed to register investor KYC', kycError);
+      // Don't throw - KYC might already be registered
+      console.log('[useIssuanceRequests.transferFromAdminToInvestor] Continuing with transfer...');
+    }
 
     const adminAta = await getAssociatedTokenAddress(mint, wallet.publicKey, false, TOKEN_2022_PROGRAM_ID);
     const investorAta = await getAssociatedTokenAddress(mint, investor, false, TOKEN_2022_PROGRAM_ID);
@@ -1030,7 +1158,7 @@ export function useIssuanceRequests() {
     });
 
     return signature;
-  }, [wallet?.publicKey, connection, sendWithWallet]);
+  }, [wallet?.publicKey, connection, sendWithWallet, registerKYC]);
 
   return {
     requests,
