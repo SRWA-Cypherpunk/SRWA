@@ -144,6 +144,10 @@ const Index = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleLaunchApp = () => {
+    navigate('/dashboard/markets');
+  };
+
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
       {/* MASTER BACKGROUND - Ultra-smooth gradient with anti-banding */}
@@ -415,7 +419,7 @@ const Index = () => {
               <HeroButton
                 className="w-full sm:w-auto"
                 icon={<ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" />}
-                onClick={scrollToTop}
+                onClick={handleLaunchApp}
               >
                 Launch App
               </HeroButton>
@@ -1135,7 +1139,7 @@ const Index = () => {
         >
           <HeroButton
             icon={<ArrowRight className="h-5 w-5" />}
-            onClick={scrollToTop}
+            onClick={handleLaunchApp}
             className="w-full sm:w-auto mx-auto"
           >
             Launch App
