@@ -7,7 +7,7 @@ use spl_tlv_account_resolution::{
 };
 use spl_transfer_hook_interface::instruction::ExecuteInstruction;
 
-declare_id!("345oZiSawNcHLVLnQLjiE7bkycC3bS1DJcmhvYDDaMFH");
+declare_id!("A6JtsR3Zw1GB1gTJuqdpFiBijarm9pQRTgqVkZaEdBs3");
 
 #[program]
 pub mod srwa_controller {

@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Building2, TrendingUp, Shield, CheckCircle } from 'lucide-react';
+import { Loader2, Building2, TrendingUp, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import Logo from '@/assets/logo.png';
@@ -46,19 +46,6 @@ const ROLE_OPTIONS: RoleOption[] = [
       'Track returns',
     ],
     color: 'from-[hsl(var(--accent-green-500))] to-[hsl(var(--accent-green-400))]',
-  },
-  {
-    role: UserRole.Admin,
-    title: 'Admin',
-    description: 'Manage and approve all operations',
-    icon: <Shield className="w-12 h-12" />,
-    features: [
-      'Approve token creation',
-      'Manage users',
-      'Full system access',
-      'Monitor compliance',
-    ],
-    color: 'from-purple-600 via-orange-500 to-purple-700',
   },
 ];
 
@@ -197,7 +184,7 @@ export function RegistrationWizard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 items-stretch">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 items-stretch max-w-4xl mx-auto">
         {ROLE_OPTIONS.map((option, idx) => {
           const isSelected = selectedRole === option.role;
 
@@ -400,15 +387,6 @@ export function RegistrationWizard() {
                 <p>
                   • Registration is done on the blockchain and cannot be easily changed
                 </p>
-                {selectedRole === UserRole.Admin && (
-                  <motion.p
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className="text-amber-600 dark:text-amber-400 font-semibold"
-                  >
-                    ⚠️ Admin account requires special approval and elevated privileges
-                  </motion.p>
-                )}
               </CardContent>
             </Card>
           </motion.div>

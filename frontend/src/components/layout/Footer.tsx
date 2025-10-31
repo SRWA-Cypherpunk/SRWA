@@ -129,7 +129,7 @@ export function Footer({
                   {connected ? (
                     <HeroButton
                       onClick={handleCtaAction}
-                      variant="primary"
+                      variant="brand"
                       className="w-full sm:w-auto !px-6 !py-3 !text-sm"
                       icon={<ArrowRight className="h-4 w-4" />}
                     >

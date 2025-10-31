@@ -10,7 +10,9 @@ import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Shield, UserPlus, UserMinus, Loader2, Crown, Users } from 'lucide-react';
+import { Shield, UserPlus, UserMinus, Loader2, Crown, Users, CheckCircle, AlertCircle } from 'lucide-react';
+import { useKYCStatus } from '@/hooks/solana/useKYCStatus';
+import { useUserRegistry } from '@/hooks/solana/useUserRegistry';
 
 export function AdminAllowlistPanel() {
   const wallet = useAnchorWallet();
@@ -19,6 +21,11 @@ export function AdminAllowlistPanel() {
   const [adminRegistry, setAdminRegistry] = useState<any>(null);
   const [newAdminAddress, setNewAdminAddress] = useState('');
   const [loading, setLoading] = useState(false);
+  const [kycLoading, setKycLoading] = useState(false);
+
+  // KYC hooks
+  const { kycStatus, checkKYCStatus } = useKYCStatus();
+  const { completeKYC } = useUserRegistry();
 
   useEffect(() => {
     if (wallet && hasPrograms && programs.srwaFactory) {
@@ -86,6 +93,19 @@ export function AdminAllowlistPanel() {
     }
   };
 
+  const handleCompleteKYC = async () => {
+    setKycLoading(true);
+    try {
+      await completeKYC();
+      toast.success('KYC completed successfully!');
+      await checkKYCStatus();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to complete KYC');
+    } finally {
+      setKycLoading(false);
+    }
+  };
+
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       <div>
@@ -97,6 +117,57 @@ export function AdminAllowlistPanel() {
           Manage authorized platform administrators
         </p>
       </div>
+
+      {/* KYC Status Card */}
+      {wallet && !kycStatus.loading && (
+        <Card className={kycStatus.hasKYC ? 'border-green-500/30 bg-green-500/5' : 'border-amber-500/30 bg-amber-500/10'}>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {kycStatus.hasKYC ? (
+                  <>
+                    <CheckCircle className="h-5 w-5 text-green-400" />
+                    <div>
+                      <p className="font-semibold text-green-400">KYC Verified</p>
+                      <p className="text-sm text-fg-secondary">
+                        All required KYC registries are active
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <AlertCircle className="h-5 w-5 text-amber-400" />
+                    <div>
+                      <p className="font-semibold text-amber-400">KYC Required</p>
+                      <p className="text-sm text-fg-secondary">
+                        {!kycStatus.hasFactoryKYC && !kycStatus.hasControllerKYC && 'Complete KYC to enable token transfers'}
+                        {kycStatus.hasFactoryKYC && !kycStatus.hasControllerKYC && 'Controller KYC Registry missing - click to sync'}
+                        {!kycStatus.hasFactoryKYC && kycStatus.hasControllerKYC && 'Factory User Registry missing - click to sync'}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </div>
+              {!kycStatus.hasKYC && (
+                <Button
+                  onClick={handleCompleteKYC}
+                  disabled={kycLoading}
+                  className="btn-primary"
+                >
+                  {kycLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    'Complete KYC'
+                  )}
+                </Button>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {!adminRegistry ? (
         <Alert className="border-amber-500/30 bg-amber-500/10">

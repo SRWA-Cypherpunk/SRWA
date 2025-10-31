@@ -1,12 +1,14 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { PublicKey, SystemProgram } from '@solana/web3.js';
+import { PublicKey, SystemProgram, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
-import { BN } from '@coral-xyz/anchor';
+import { BN, AnchorProvider } from '@coral-xyz/anchor';
 import {
   TOKEN_2022_PROGRAM_ID,
   getAssociatedTokenAddress,
   createAssociatedTokenAccountInstruction,
-  ASSOCIATED_TOKEN_PROGRAM_ID
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  addExtraAccountMetasForExecute,
+  resolveExtraAccountMeta,
 } from '@solana/spl-token';
 import { useProgramsSafe } from '@/contexts';
 import { toast } from 'sonner';
@@ -207,6 +209,12 @@ export function usePurchaseOrders() {
         // Get purchase order to check quantity needed
         const orderAccount = await program.account.purchaseOrder.fetch(purchaseOrderPda);
 
+        // Check if order is still pending
+        const currentStatus = orderAccount.status;
+        if (!('pending' in currentStatus)) {
+          throw new Error('Esta purchase order já foi processada e não pode ser aprovada novamente.');
+        }
+
         // Decode admin token account to check balance
         const adminTokenAccountData = await connection.getTokenAccountBalance(adminTokenAccount);
         const adminBalance = BigInt(adminTokenAccountData.value.amount);
@@ -225,7 +233,34 @@ export function usePurchaseOrders() {
         // Check if investor's token account exists
         const accountInfo = await connection.getAccountInfo(investorTokenAccount);
 
-        let tx: string;
+        // Build the approve instruction
+        const approveIx = await program.methods
+          .approvePurchaseOrder()
+          .accounts({
+            admin: publicKey,
+            purchaseOrder: purchaseOrderPda,
+            mint,
+            adminTokenAccount,
+            investorTokenAccount,
+            tokenProgram: TOKEN_2022_PROGRAM_ID,
+          })
+          .instruction();
+
+        // Add Transfer Hook extra account metas to the instruction
+        // This will read the ExtraAccountMetaList and add the required accounts
+        await addExtraAccountMetasForExecute(
+          connection,
+          approveIx,
+          TOKEN_2022_PROGRAM_ID,
+          adminTokenAccount,
+          mint,
+          investorTokenAccount,
+          publicKey, // transfer authority
+          0 // amount (doesn't matter for fetching accounts)
+        );
+
+        // Build transaction
+        const transaction = new Transaction();
 
         if (!accountInfo) {
           // Need to create the investor's token account first
@@ -240,39 +275,35 @@ export function usePurchaseOrders() {
             ASSOCIATED_TOKEN_PROGRAM_ID
           );
 
-          // Send transaction with both create ATA and approve instructions
-          tx = await program.methods
-            .approvePurchaseOrder()
-            .accounts({
-              admin: publicKey,
-              purchaseOrder: purchaseOrderPda,
-              adminTokenAccount,
-              investorTokenAccount,
-              tokenProgram: TOKEN_2022_PROGRAM_ID,
-            })
-            .preInstructions([createAtaIx])
-            .rpc({
-              skipPreflight: false,
-              commitment: 'confirmed',
-            });
-        } else {
-          // Token account already exists, just approve
-          tx = await program.methods
-            .approvePurchaseOrder()
-            .accounts({
-              admin: publicKey,
-              purchaseOrder: purchaseOrderPda,
-              adminTokenAccount,
-              investorTokenAccount,
-              tokenProgram: TOKEN_2022_PROGRAM_ID,
-            })
-            .rpc({
-              skipPreflight: false,
-              commitment: 'confirmed',
-            });
+          transaction.add(createAtaIx);
         }
 
-        console.log('[usePurchaseOrders] Order approved:', tx);
+        transaction.add(approveIx);
+
+        // Get recent blockhash
+        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('confirmed');
+        transaction.recentBlockhash = blockhash;
+        transaction.feePayer = publicKey;
+
+        // Sign and send using wallet adapter
+        if (!signTransaction) {
+          throw new Error('Wallet does not support signing transactions');
+        }
+
+        const signedTx = await signTransaction(transaction);
+        const signature = await connection.sendRawTransaction(signedTx.serialize(), {
+          skipPreflight: true,
+        });
+
+        // Wait for confirmation
+        await connection.confirmTransaction({
+          signature,
+          blockhash,
+          lastValidBlockHeight,
+        }, 'confirmed');
+
+        console.log('[usePurchaseOrders] Order approved:', signature);
+        const tx = signature;
 
         // After approval, deposit SOL received into MarginFi
         try {
@@ -332,8 +363,10 @@ export function usePurchaseOrders() {
           // Don't throw - the purchase was already approved successfully
         }
 
-        // Refresh orders asynchronously (don't block on this)
-        fetchOrders().catch(err => console.error('[usePurchaseOrders] Error refreshing orders:', err));
+        // Wait a bit for blockchain to update, then refresh
+        setTimeout(() => {
+          fetchOrders().catch(err => console.error('[usePurchaseOrders] Error refreshing orders:', err));
+        }, 2000);
 
         return tx;
       } catch (err: any) {

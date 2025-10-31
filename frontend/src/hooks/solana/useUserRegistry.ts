@@ -159,21 +159,82 @@ export function useUserRegistry() {
   const completeKYC = async () => {
     if (!wallet?.publicKey) throw new Error('Wallet not connected');
     if (!programs.srwaFactory) throw new Error('SRWA Factory program not loaded');
+    if (!programs.srwaController) throw new Error('SRWA Controller program not loaded');
 
     const { pda: userRegistryPda } = getUserRegistryPDA(wallet.publicKey);
 
-    const tx = await programs.srwaFactory.methods
-      .completeKyc()
-      .accounts({
-        user: wallet.publicKey,
-        userRegistry: userRegistryPda,
-      })
-      .rpc();
+    let tx1: string | null = null;
+
+    // 1. Completar KYC no Factory (User Registry) - se ainda não foi feito
+    try {
+      const factoryAccount = await programs.srwaFactory.provider.connection.getAccountInfo(userRegistryPda);
+      if (factoryAccount) {
+        // Parse the data to check if KYC is already completed
+        const data = factoryAccount.data;
+        if (data.length >= 52) {
+          const kycCompleted = data[49] === 1;
+          if (!kycCompleted) {
+            tx1 = await programs.srwaFactory.methods
+              .completeKyc()
+              .accounts({
+                user: wallet.publicKey,
+                userRegistry: userRegistryPda,
+              })
+              .rpc();
+            console.log('[useUserRegistry] Factory KYC completed:', tx1);
+          } else {
+            console.log('[useUserRegistry] Factory KYC already completed');
+          }
+        }
+      }
+    } catch (error: any) {
+      if (error?.message?.includes('already been processed')) {
+        console.log('[useUserRegistry] Factory KYC already completed');
+      } else {
+        console.error('[useUserRegistry] Error completing Factory KYC:', error);
+        throw error;
+      }
+    }
+
+    // 2. Criar KYC Registry no Controller (para Transfer Hook)
+    const [kycRegistryPda] = PublicKey.findProgramAddressSync(
+      [Buffer.from('kyc'), wallet.publicKey.toBuffer()],
+      programs.srwaController.programId
+    );
+
+    try {
+      // Check if Controller KYC Registry already exists
+      const controllerAccount = await programs.srwaController.provider.connection.getAccountInfo(kycRegistryPda);
+
+      if (!controllerAccount) {
+        const tx2 = await programs.srwaController.methods
+          .initializeKycRegistry(true, true) // kyc_completed, is_active
+          .accounts({
+            authority: wallet.publicKey,
+            user: wallet.publicKey,
+            kycRegistry: kycRegistryPda,
+            systemProgram: SystemProgram.programId,
+          })
+          .rpc();
+
+        console.log('[useUserRegistry] Controller KYC Registry created:', tx2);
+      } else {
+        console.log('[useUserRegistry] Controller KYC Registry already exists');
+      }
+    } catch (error: any) {
+      // Se a conta já existe, não é erro fatal
+      if (error?.message?.includes('already in use') || error?.message?.includes('already been processed')) {
+        console.log('[useUserRegistry] Controller KYC Registry already exists');
+      } else {
+        console.error('[useUserRegistry] Error creating Controller KYC Registry:', error);
+        // Não falhar se o Controller KYC falhar, o Factory KYC já foi feito
+      }
+    }
 
     // Atualizar o cache
     await refetch();
 
-    return { signature: tx };
+    return { signature: tx1 || 'no-transaction-needed' };
   };
 
   return {

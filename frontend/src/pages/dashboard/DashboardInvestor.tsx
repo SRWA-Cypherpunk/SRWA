@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { useWallet } from '@/contexts/wallet/WalletContext';
 import { useUserRegistry, useDeployedTokens, useWalletTokenBalances } from '@/hooks/solana';
+import { useKYCStatus } from '@/hooks/solana/useKYCStatus';
 
 const formatCurrency = (value: number) => {
   if (value >= 1_000_000) {
@@ -48,7 +49,7 @@ const getProtocolBadgeColor = (protocol: string) => {
 
 export default function DashboardInvestor() {
   const { publicKey } = useWallet();
-  const { userRegistry } = useUserRegistry();
+  const { userRegistry, completeKYC } = useUserRegistry();
   const { tokens: deployedTokens } = useDeployedTokens();
   const {
     tokens: walletTokens,
@@ -57,10 +58,11 @@ export default function DashboardInvestor() {
     refresh: refreshWalletTokens,
   } = useWalletTokenBalances();
 
-  const [showKYCForm, setShowKYCForm] = useState(false);
+  // KYC Status hook
+  const { kycStatus, checkKYCStatus } = useKYCStatus();
 
-  // Check if user has completed KYC
-  const hasCompletedKYC = userRegistry?.kyc_completed || false;
+  const [showKYCForm, setShowKYCForm] = useState(false);
+  const [kycLoading, setKycLoading] = useState(false);
 
   // Combine wallet tokens with deployed token metadata
   const walletTokenHoldings = useMemo(
@@ -79,13 +81,27 @@ export default function DashboardInvestor() {
     return sum + (token.uiAmount * 0.01); // 0.01 SOL per token
   }, 0);
 
-  const handleKYCComplete = () => {
+  const handleKYCComplete = async () => {
     setShowKYCForm(false);
+    await checkKYCStatus();
     toast.success('KYC completado com sucesso!');
   };
 
-  // Show KYC form if not completed
-  if (showKYCForm || !hasCompletedKYC) {
+  const handleCompleteKYC = async () => {
+    setKycLoading(true);
+    try {
+      await completeKYC();
+      toast.success('KYC completed successfully!');
+      await checkKYCStatus();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to complete KYC');
+    } finally {
+      setKycLoading(false);
+    }
+  };
+
+  // Show KYC form only if explicitly requested OR if user has NO Factory KYC at all
+  if (!kycStatus.loading && (showKYCForm || !kycStatus.hasFactoryKYC)) {
     return <KYCRegistrationForm onComplete={handleKYCComplete} />;
   }
 
@@ -131,22 +147,69 @@ export default function DashboardInvestor() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between p-4 bg-green-500/10 rounded-lg border border-green-500/20">
-              <div className="flex items-center space-x-3">
-                <CheckCircle className="h-6 w-6 text-green-400" />
-                <div>
-                  <p className="text-body-1 text-green-400 font-semibold">Verified</p>
-                  <p className="text-body-2 text-fg-muted">You can participate in offerings</p>
+            {kycStatus.loading ? (
+              <div className="flex items-center justify-center p-4">
+                <Loader2 className="h-6 w-6 animate-spin text-purple-400" />
+              </div>
+            ) : kycStatus.hasKYC ? (
+              <div className="flex items-center justify-between p-4 bg-green-500/10 rounded-lg border border-green-500/20">
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className="h-6 w-6 text-green-400" />
+                  <div>
+                    <p className="text-body-1 text-green-400 font-semibold">Verified</p>
+                    <p className="text-body-2 text-fg-muted">You can participate in offerings</p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowKYCForm(true)}
+                >
+                  Update KYC
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-between p-4 bg-amber-500/10 rounded-lg border border-amber-500/20">
+                <div className="flex items-center space-x-3">
+                  <AlertCircle className="h-6 w-6 text-amber-400" />
+                  <div>
+                    <p className="text-body-1 text-amber-400 font-semibold">KYC Required</p>
+                    <p className="text-body-2 text-fg-muted">
+                      {!kycStatus.hasFactoryKYC && !kycStatus.hasControllerKYC && 'Complete KYC to enable token transfers'}
+                      {kycStatus.hasFactoryKYC && !kycStatus.hasControllerKYC && 'Controller KYC Registry missing - click to sync'}
+                      {!kycStatus.hasFactoryKYC && kycStatus.hasControllerKYC && 'Factory User Registry missing - complete registration'}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {!kycStatus.hasFactoryKYC ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowKYCForm(true)}
+                    >
+                      Start KYC
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={handleCompleteKYC}
+                      disabled={kycLoading}
+                      size="sm"
+                      className="btn-primary"
+                    >
+                      {kycLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processing...
+                        </>
+                      ) : (
+                        'Complete KYC'
+                      )}
+                    </Button>
+                  )}
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowKYCForm(true)}
-              >
-                Update KYC
-              </Button>
-            </div>
+            )}
           </CardContent>
         </Card>
 
