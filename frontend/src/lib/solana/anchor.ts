@@ -12,7 +12,7 @@ export const PROGRAM_IDS = {
   yieldAdapter: "4RrVh2CZKUiU3g7uD2qVtVMYbXSvMQ1oSz2S8RnuHpEv",
   valuationOracle: "C4sJ1phqCh2MxFJJqVHZuddXbp6hWfvz29N4CkscPpaW",
   cashflowEngine: "4ySjU9NzSwg457oxWCVgaH3fqqrhh7iDQco7Db1Zq4Di",
-  purchaseOrder: "BaExU2Svqwieyia551irUjfE34hoRnitrdcjKkvdpJdL",
+  purchaseOrder: "43iQGS4Xyg6aGcpL52n7KurMm5eVNvQKEtgdPSxZwKPU",
 };
 
 export const RPC_ENDPOINT = import.meta.env.VITE_SOLANA_RPC_URL || 'http://127.0.0.1:8899';

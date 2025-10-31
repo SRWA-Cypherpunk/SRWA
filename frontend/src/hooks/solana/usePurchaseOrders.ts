@@ -16,7 +16,6 @@ import { toast } from 'sonner';
 import { getConfig, MarginfiClient } from '@mrgnlabs/marginfi-client-v2';
 
 const PURCHASE_ORDER_SEED = 'purchase_order';
-const PROGRAM_ID = new PublicKey('EdyLMn3iUrF16Z4VPyTfv9hC9G7eqxsHQVxnsNcsAT3Z');
 const WSOL_MINT_DEVNET = new PublicKey('So11111111111111111111111111111111111111112');
 
 export interface PurchaseOrderAccount {

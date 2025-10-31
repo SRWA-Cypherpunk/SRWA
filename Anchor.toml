@@ -14,7 +14,7 @@ offering_pool = "4D54H4NBA9Q7WtsAy2yaFs9BjEdT8DcdmXekKsf7n6KP"
 yield_adapter = "4RrVh2CZKUiU3g7uD2qVtVMYbXSvMQ1oSz2S8RnuHpEv"
 valuation_oracle = "C4sJ1phqCh2MxFJJqVHZuddXbp6hWfvz29N4CkscPpaW"
 cashflow_engine = "4ySjU9NzSwg457oxWCVgaH3fqqrhh7iDQco7Db1Zq4Di"
-purchase_order = "BaExU2Svqwieyia551irUjfE34hoRnitrdcjKkvdpJdL"
+purchase_order = "43iQGS4Xyg6aGcpL52n7KurMm5eVNvQKEtgdPSxZwKPU"
 
 [programs.devnet]
 srwa_factory = "5suWp35g2vbxzRCTW2fRACD32DaL9Q3wy72Cxz4AesLg"
@@ -25,7 +25,7 @@ offering_pool = "4D54H4NBA9Q7WtsAy2yaFs9BjEdT8DcdmXekKsf7n6KP"
 yield_adapter = "4RrVh2CZKUiU3g7uD2qVtVMYbXSvMQ1oSz2S8RnuHpEv"
 valuation_oracle = "C4sJ1phqCh2MxFJJqVHZuddXbp6hWfvz29N4CkscPpaW"
 cashflow_engine = "4ySjU9NzSwg457oxWCVgaH3fqqrhh7iDQco7Db1Zq4Di"
-purchase_order = "BaExU2Svqwieyia551irUjfE34hoRnitrdcjKkvdpJdL"
+purchase_order = "43iQGS4Xyg6aGcpL52n7KurMm5eVNvQKEtgdPSxZwKPU"
 
 [registry]
 url = "https://api.apr.dev"
