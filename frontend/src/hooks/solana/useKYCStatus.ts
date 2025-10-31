@@ -12,6 +12,9 @@ export interface KYCStatus {
     accredited: boolean;
     residency: boolean;
   };
+  // Novos campos para diferenciar os 2 sistemas
+  hasFactoryKYC: boolean;
+  hasControllerKYC: boolean;
 }
 
 /**
@@ -33,10 +36,13 @@ export function useKYCStatus() {
       accredited: false,
       residency: false,
     },
+    hasFactoryKYC: false,
+    hasControllerKYC: false,
   });
 
   /**
    * Verifica o KYC status do usuário conectado
+   * Agora verifica AMBOS: Factory (User Registry) e Controller (KYC Registry)
    */
   const checkKYCStatus = useCallback(async () => {
     if (!wallet.publicKey) {
@@ -50,6 +56,8 @@ export function useKYCStatus() {
           accredited: false,
           residency: false,
         },
+        hasFactoryKYC: false,
+        hasControllerKYC: false,
       });
       return;
     }
@@ -57,87 +65,69 @@ export function useKYCStatus() {
     setKycStatus((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
-      // SRWA Factory Program ID (User Registry é parte do SRWA Factory, não Compliance)
-      const SRWA_FACTORY_PROGRAM_ID = new PublicKey('DgNZ6dzLSXzunGiaFnpUhS63B6Wu9WNZ79KF6fW3ETgY');
+      const SRWA_FACTORY_PROGRAM_ID = new PublicKey('CfNjE6Lp6ddtrnTZQci2pPVkDsqB83hsBELwF9KR7n8b');
+      const SRWA_CONTROLLER_PROGRAM_ID = new PublicKey('A6JtsR3Zw1GB1gTJuqdpFiBijarm9pQRTgqVkZaEdBs3');
 
-      // Derive User Registry PDA
+      // 1. Verificar Factory User Registry
       const [userRegistryPDA] = PublicKey.findProgramAddressSync(
         [Buffer.from('user_registry'), wallet.publicKey.toBuffer()],
         SRWA_FACTORY_PROGRAM_ID
       );
 
-      console.log('[useKYCStatus] Checking User Registry:', userRegistryPDA.toBase58());
+      const factoryAccountInfo = await connection.getAccountInfo(userRegistryPDA);
+      let hasFactoryKYC = false;
 
-      // Buscar account info
-      const accountInfo = await connection.getAccountInfo(userRegistryPDA);
-
-      if (!accountInfo) {
-        console.log('[useKYCStatus] User Registry não encontrado - usuário não tem KYC');
-        setKycStatus({
-          hasKYC: false,
-          loading: false,
-          error: null,
-          topics: {
-            kyc: false,
-            aml: false,
-            accredited: false,
-            residency: false,
-          },
-        });
-        return;
+      if (factoryAccountInfo && factoryAccountInfo.data.length >= 52) {
+        const data = factoryAccountInfo.data;
+        const kycCompleted = data[49] === 1;
+        const isActive = data[50] === 1;
+        hasFactoryKYC = isActive && kycCompleted;
+        console.log('[useKYCStatus] Factory KYC:', hasFactoryKYC);
       }
 
-      console.log('[useKYCStatus] User Registry encontrado, raw data length:', accountInfo.data.length);
+      // 2. Verificar Controller KYC Registry
+      const [kycRegistryPDA] = PublicKey.findProgramAddressSync(
+        [Buffer.from('kyc'), wallet.publicKey.toBuffer()],
+        SRWA_CONTROLLER_PROGRAM_ID
+      );
 
-      // Usar Anchor para decodificar (mesma lógica do useUserRegistry)
-      // Precisamos criar um programa Anchor temporário para usar o IDL
-      // Por simplicidade, vamos fazer parse manual compatível com a estrutura do Anchor
+      const controllerAccountInfo = await connection.getAccountInfo(kycRegistryPDA);
+      let hasControllerKYC = false;
 
-      // Estrutura do User Registry (via Anchor IDL):
-      // - 8 bytes: discriminator
-      // - 32 bytes: user pubkey
-      // - 1 byte: role (enum)
-      // - 8 bytes: registered_at (i64)
-      // - 1 byte: kyc_completed (bool)
-      // - 1 byte: is_active (bool)
-      // - 1 byte: bump
-      const data = accountInfo.data;
-
-      if (data.length < 52) {
-        throw new Error(`Account data inválido: tamanho ${data.length} bytes (esperado >= 52)`);
+      if (controllerAccountInfo && controllerAccountInfo.data.length >= 8 + 43) {
+        const data = controllerAccountInfo.data;
+        // Estrutura KYC Registry: discriminator (8) + user (32) + kyc_completed (1) + is_active (1) + ...
+        const kycCompleted = data[8 + 32] === 1;
+        const isActive = data[8 + 32 + 1] === 1;
+        hasControllerKYC = isActive && kycCompleted;
+        console.log('[useKYCStatus] Controller KYC:', hasControllerKYC);
       }
 
-      // Offset após discriminator (8) + user pubkey (32) + role (1) + registered_at (8) = 49
-      const kycCompleted = data[49] === 1;
-      const isActive = data[50] === 1;
+      // Para ter KYC completo, precisa ter AMBOS
+      const hasKYC = hasFactoryKYC && hasControllerKYC;
 
-      console.log('[useKYCStatus] Parsed User Registry:', {
-        kycCompleted,
-        isActive,
-        dataLength: data.length,
-      });
-
-      // No SRWA Factory, o KYC é um boolean simples (kyc_completed)
-      // Não há bitmap de topics como no Compliance program
-      const hasKYC = isActive && kycCompleted;
+      console.log('[useKYCStatus] ===== KYC Status Check =====');
+      console.log('[useKYCStatus] Factory KYC:', hasFactoryKYC);
+      console.log('[useKYCStatus] Controller KYC:', hasControllerKYC);
+      console.log('[useKYCStatus] Has Complete KYC:', hasKYC);
+      console.log('[useKYCStatus] Factory PDA:', userRegistryPDA.toBase58());
+      console.log('[useKYCStatus] Controller PDA:', kycRegistryPDA.toBase58());
 
       setKycStatus({
-        hasKYC: hasKYC,
+        hasKYC,
         loading: false,
         error: null,
         topics: {
-          kyc: kycCompleted,
-          aml: false, // User Registry não tem topics detalhados
+          kyc: hasFactoryKYC,
+          aml: false,
           accredited: false,
           residency: false,
         },
+        hasFactoryKYC,
+        hasControllerKYC,
       });
 
-      console.log('[useKYCStatus] KYC Status:', {
-        hasKYC,
-        kycCompleted,
-        isActive,
-      });
+      console.log('[useKYCStatus] Updated state with hasKYC:', hasKYC);
     } catch (error: any) {
       console.error('[useKYCStatus] Error checking KYC:', error);
       setKycStatus({
@@ -150,6 +140,8 @@ export function useKYCStatus() {
           accredited: false,
           residency: false,
         },
+        hasFactoryKYC: false,
+        hasControllerKYC: false,
       });
     }
   }, [wallet.publicKey, connection]);
@@ -161,50 +153,60 @@ export function useKYCStatus() {
 
   /**
    * Verifica KYC de outro endereço (usado pelo admin)
+   * Agora verifica AMBOS os sistemas
    */
   const checkKYCForAddress = useCallback(
     async (address: PublicKey): Promise<KYCStatus> => {
       try {
-        const SRWA_FACTORY_PROGRAM_ID = new PublicKey('DgNZ6dzLSXzunGiaFnpUhS63B6Wu9WNZ79KF6fW3ETgY');
+        const SRWA_FACTORY_PROGRAM_ID = new PublicKey('CfNjE6Lp6ddtrnTZQci2pPVkDsqB83hsBELwF9KR7n8b');
+        const SRWA_CONTROLLER_PROGRAM_ID = new PublicKey('A6JtsR3Zw1GB1gTJuqdpFiBijarm9pQRTgqVkZaEdBs3');
 
+        // 1. Factory User Registry
         const [userRegistryPDA] = PublicKey.findProgramAddressSync(
           [Buffer.from('user_registry'), address.toBuffer()],
           SRWA_FACTORY_PROGRAM_ID
         );
 
-        const accountInfo = await connection.getAccountInfo(userRegistryPDA);
+        const factoryAccountInfo = await connection.getAccountInfo(userRegistryPDA);
+        let hasFactoryKYC = false;
 
-        if (!accountInfo) {
-          return {
-            hasKYC: false,
-            loading: false,
-            error: null,
-            topics: {
-              kyc: false,
-              aml: false,
-              accredited: false,
-              residency: false,
-            },
-          };
+        if (factoryAccountInfo && factoryAccountInfo.data.length >= 52) {
+          const data = factoryAccountInfo.data;
+          const kycCompleted = data[49] === 1;
+          const isActive = data[50] === 1;
+          hasFactoryKYC = isActive && kycCompleted;
         }
 
-        const data = accountInfo.data;
+        // 2. Controller KYC Registry
+        const [kycRegistryPDA] = PublicKey.findProgramAddressSync(
+          [Buffer.from('kyc'), address.toBuffer()],
+          SRWA_CONTROLLER_PROGRAM_ID
+        );
 
-        // Parse User Registry structure
-        const kycCompleted = data[49] === 1;
-        const isActive = data[50] === 1;
-        const hasKYC = isActive && kycCompleted;
+        const controllerAccountInfo = await connection.getAccountInfo(kycRegistryPDA);
+        let hasControllerKYC = false;
+
+        if (controllerAccountInfo && controllerAccountInfo.data.length >= 8 + 43) {
+          const data = controllerAccountInfo.data;
+          const kycCompleted = data[8 + 32] === 1;
+          const isActive = data[8 + 32 + 1] === 1;
+          hasControllerKYC = isActive && kycCompleted;
+        }
+
+        const hasKYC = hasFactoryKYC && hasControllerKYC;
 
         return {
           hasKYC,
           loading: false,
           error: null,
           topics: {
-            kyc: kycCompleted,
+            kyc: hasFactoryKYC,
             aml: false,
             accredited: false,
             residency: false,
           },
+          hasFactoryKYC,
+          hasControllerKYC,
         };
       } catch (error: any) {
         return {
@@ -217,6 +219,8 @@ export function useKYCStatus() {
             accredited: false,
             residency: false,
           },
+          hasFactoryKYC: false,
+          hasControllerKYC: false,
         };
       }
     },

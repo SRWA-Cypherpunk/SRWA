@@ -8,8 +8,6 @@ members = [
     "programs/yield_adapter",
     "programs/valuation_oracle",
     "programs/cashflow_engine",
-]
-exclude = [
     "programs/purchase_order",
 ]
 resolver = "2"

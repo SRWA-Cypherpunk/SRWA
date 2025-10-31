@@ -4,15 +4,15 @@ import { PublicKey, Connection, LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 // Program IDs (deployed on devnet) - Must match Anchor.toml [programs.devnet]
 export const PROGRAM_IDS = {
-  srwaFactory: "DgNZ6dzLSXzunGiaFnpUhS63B6Wu9WNZ79KF6fW3ETgY",
-  srwaController: "345oZiSawNcHLVLnQLjiE7bkycC3bS1DJcmhvYDDaMFH",
+  srwaFactory: "CfNjE6Lp6ddtrnTZQci2pPVkDsqB83hsBELwF9KR7n8b",
+  srwaController: "A6JtsR3Zw1GB1gTJuqdpFiBijarm9pQRTgqVkZaEdBs3",
   identityClaims: "AuUzmKAAVyvR6NvDdd56SDjXHSE8dUePEnC5moECw9mE",
   complianceModules: "GD3ArP1GPKN9sWYPxiPia2i3iAKKsnbXxpcoB1gQK5D",
   offeringPool: "4D54H4NBA9Q7WtsAy2yaFs9BjEdT8DcdmXekKsf7n6KP",
   yieldAdapter: "4RrVh2CZKUiU3g7uD2qVtVMYbXSvMQ1oSz2S8RnuHpEv",
   valuationOracle: "C4sJ1phqCh2MxFJJqVHZuddXbp6hWfvz29N4CkscPpaW",
   cashflowEngine: "4ySjU9NzSwg457oxWCVgaH3fqqrhh7iDQco7Db1Zq4Di",
-  purchaseOrder: "EdyLMn3iUrF16Z4VPyTfv9hC9G7eqxsHQVxnsNcsAT3Z",
+  purchaseOrder: "BaExU2Svqwieyia551irUjfE34hoRnitrdcjKkvdpJdL",
 };
 
 export const RPC_ENDPOINT = import.meta.env.VITE_SOLANA_RPC_URL || 'http://127.0.0.1:8899';
