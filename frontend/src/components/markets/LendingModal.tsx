@@ -8,13 +8,14 @@ import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowUpRight, TrendingDown, DollarSign, ShoppingCart, Info, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
-import { useWallet } from '@solana/wallet-adapter-react';
+import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import type { EnhancedPoolData } from '@/types/markets';
 import type { SRWAMarketData } from '@/hooks/markets/useSRWAMarkets';
 import { usePurchaseOrders } from '@/hooks/solana/usePurchaseOrders';
 import { useKYCStatus } from '@/hooks/solana/useKYCStatus';
 import { PublicKey } from '@solana/web3.js';
 import { BN } from '@coral-xyz/anchor';
+import { getMint, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
 
 interface LendingModalProps {
   isOpen: boolean;
@@ -34,6 +35,7 @@ export const LendingModal: React.FC<LendingModalProps> = ({
   const [amount, setAmount] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const wallet = useWallet();
+  const { connection } = useConnection();
   const { createOrder } = usePurchaseOrders();
   const { kycStatus } = useKYCStatus();
 
@@ -58,13 +60,10 @@ export const LendingModal: React.FC<LendingModalProps> = ({
       // SRWA Token: Create purchase order on-chain
       if (isSRWAToken && srwaPool && mode === 'supply') {
         // For SRWA tokens, "supply" means "buy"
-        // Calculate price (1 SOL = 100 tokens for now)
+        // Target price: 1 token = 0.00001 SOL (100,000 tokens = 1 SOL)
+        // Note: Actual price will be adjusted based on token decimals and minimum lamport constraints
         const tokenQuantity = parseFloat(amount);
-        const pricePerToken = 0.01; // 0.01 SOL per token (1 SOL = 100 tokens)
-        const totalSol = tokenQuantity * pricePerToken;
-
-        // Convert to lamports
-        const pricePerTokenLamports = Math.floor(pricePerToken * 1e9);
+        const pricePerToken = 0.00001; // Target: 0.00001 SOL per token
 
         // Get admin wallet (issuer) - should come from SRWA token data
         // For now, use hardcoded devnet admin
@@ -73,23 +72,58 @@ export const LendingModal: React.FC<LendingModalProps> = ({
         // Get token mint
         const tokenMint = new PublicKey(srwaPool.tokenContract);
 
+        // Fetch mint info to get decimals
+        const mintInfo = await getMint(connection, tokenMint, 'confirmed', TOKEN_2022_PROGRAM_ID);
+        const decimals = mintInfo.decimals;
+
+        // Convert token quantity to atomic units (multiply by 10^decimals)
+        const quantityInAtomicUnits = Math.floor(tokenQuantity * Math.pow(10, decimals));
+
+        // IMPORTANT: The contract multiplies quantity (atomic units) × pricePerTokenLamports
+        // So pricePerTokenLamports must be the price PER ATOMIC UNIT, not per whole token
+        //
+        // Formula: pricePerAtomicUnit = (pricePerToken_in_lamports) / (10^decimals)
+        // But we need at least 1 lamport per atomic unit for Solana to work
+        //
+        // With 6 decimals and target price 0.00001 SOL:
+        //   - Target: 0.00001 SOL = 10,000 lamports for 1 token
+        //   - Per atomic unit: 10,000 / 1,000,000 = 0.01 lamports ❌ (too small)
+        //
+        // Solution: Use 1 lamport per atomic unit minimum
+        //   - 1 lamport × 1,000,000 = 1,000,000 lamports = 0.001 SOL per token
+        //
+        // Or use 10 lamports per atomic unit:
+        //   - 10 lamports × 1,000,000 = 10,000,000 lamports = 0.01 SOL per token
+        const pricePerTokenLamports = Math.floor(pricePerToken * 1e9);
+        const pricePerAtomicUnitLamports = Math.ceil(pricePerTokenLamports / Math.pow(10, decimals));
+
+        // Calculate actual price per token based on rounded atomic price
+        const actualPricePerTokenLamports = pricePerAtomicUnitLamports * Math.pow(10, decimals);
+        const actualPricePerToken = actualPricePerTokenLamports / 1e9;
+        const actualTotalSol = tokenQuantity * actualPricePerToken;
+
         console.log('[LendingModal] Creating purchase order:', {
           mint: tokenMint.toBase58(),
-          quantity: tokenQuantity,
-          pricePerTokenLamports,
-          totalSol,
+          tokenQuantity: tokenQuantity,
+          decimals: decimals,
+          quantityInAtomicUnits: quantityInAtomicUnits,
+          targetPricePerToken: pricePerToken,
+          pricePerAtomicUnitLamports: pricePerAtomicUnitLamports,
+          actualPricePerToken: actualPricePerToken,
+          actualTotalSol: actualTotalSol,
+          totalLamports: quantityInAtomicUnits * pricePerAtomicUnitLamports,
           adminVault: adminVault.toBase58(),
         });
 
         const result = await createOrder({
           mint: tokenMint,
-          quantity: tokenQuantity,
-          pricePerTokenLamports,
+          quantity: quantityInAtomicUnits,
+          pricePerTokenLamports: pricePerAtomicUnitLamports,
           adminVault,
         });
 
         toast.success('✅ Purchase order created!', {
-          description: `Order sent on-chain! You will receive ${tokenQuantity} tokens after admin approval.`,
+          description: `Order sent on-chain! You will receive ${tokenQuantity} tokens for ${actualTotalSol.toFixed(6)} SOL after admin approval.`,
           duration: 8000,
           action: {
             label: 'View TX',

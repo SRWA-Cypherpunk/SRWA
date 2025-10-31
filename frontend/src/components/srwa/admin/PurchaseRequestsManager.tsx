@@ -160,7 +160,15 @@ export function PurchaseRequestsManager() {
     return {
       name: token?.name || `Token ${mint.toBase58().slice(0, 8)}...`,
       symbol: token?.symbol || mint.toBase58().slice(0, 4).toUpperCase(),
+      decimals: token?.decimals || 5, // Default to 5 decimals if not found
     };
+  };
+
+  // Format token quantity from atomic units to human-readable
+  const formatTokenQuantity = (quantityBN: BN, decimals: number) => {
+    const quantity = quantityBN.toNumber();
+    const divisor = Math.pow(10, decimals);
+    return (quantity / divisor).toFixed(Math.min(decimals, 4)); // Show up to 4 decimal places
   };
 
   // Convert BN timestamp to milliseconds
@@ -257,7 +265,7 @@ export function PurchaseRequestsManager() {
 
                     <div>
                       <p className="text-xs text-muted-foreground mb-1">Quantity</p>
-                      <p className="text-sm font-semibold">{order.account.quantity.toString()} tokens</p>
+                      <p className="text-sm font-semibold">{formatTokenQuantity(order.account.quantity, tokenMeta.decimals)} {tokenMeta.symbol}</p>
                     </div>
 
                     <div>
@@ -333,7 +341,7 @@ export function PurchaseRequestsManager() {
                     >
                       <div>
                         <p className="text-sm font-medium">
-                          {order.account.quantity.toString()} {tokenMeta.symbol}
+                          {formatTokenQuantity(order.account.quantity, tokenMeta.decimals)} {tokenMeta.symbol}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {formatAddress(order.account.investor)} • {formatDate(order.account.updatedAt)}

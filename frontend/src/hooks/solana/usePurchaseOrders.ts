@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { PublicKey, SystemProgram, Transaction, sendAndConfirmTransaction } from '@solana/web3.js';
+import { PublicKey, SystemProgram, Transaction, sendAndConfirmTransaction, TransactionInstruction } from '@solana/web3.js';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { BN, AnchorProvider } from '@coral-xyz/anchor';
 import {
@@ -7,8 +7,6 @@ import {
   getAssociatedTokenAddress,
   createAssociatedTokenAccountInstruction,
   ASSOCIATED_TOKEN_PROGRAM_ID,
-  addExtraAccountMetasForExecute,
-  resolveExtraAccountMeta,
 } from '@solana/spl-token';
 import { useProgramsSafe } from '@/contexts';
 import { PROGRAM_IDS } from '@/lib/solana/anchor';
@@ -268,40 +266,65 @@ export function usePurchaseOrders() {
         console.log('[usePurchaseOrders] Admin token account:', adminTokenAccount.toBase58());
         console.log('[usePurchaseOrders] Investor token account:', investorTokenAccount.toBase58());
 
-        // Build the approve instruction
-        const approveIx = await program.methods
-          .approvePurchaseOrder()
-          .accounts({
-            admin: publicKey,
-            purchaseOrder: purchaseOrderPda,
-            mint,
-            adminTokenAccount,
-            investorTokenAccount,
-            tokenProgram: TOKEN_2022_PROGRAM_ID,
-          })
-          .instruction();
+        // Derive Transfer Hook accounts
+        const transferHookProgramId = new PublicKey(PROGRAM_IDS.srwaController);
 
-        console.log('[usePurchaseOrders] Approve instruction created, keys:', approveIx.keys.length);
+        // Derive ExtraAccountMetaList PDA
+        const [extraAccountMetaListPDA] = PublicKey.findProgramAddressSync(
+          [Buffer.from('extra-account-metas'), mint.toBuffer()],
+          transferHookProgramId
+        );
 
-        // Use SPL Token's built-in function to add Transfer Hook accounts
-        // This automatically resolves the ExtraAccountMetaList and adds all required accounts
-        try {
-          await addExtraAccountMetasForExecute(
-            connection,
-            approveIx,
-            TOKEN_2022_PROGRAM_ID,
-            adminTokenAccount, // source
-            mint,
-            investorTokenAccount, // destination
-            publicKey, // owner/authority
-            BigInt(orderAccount.quantity.toString())
-          );
+        // Derive sender KYC Registry PDA
+        const [senderKycRegistry] = PublicKey.findProgramAddressSync(
+          [Buffer.from('kyc'), publicKey.toBuffer()],
+          transferHookProgramId
+        );
 
-          console.log('[usePurchaseOrders] After addExtraAccountMetasForExecute, keys:', approveIx.keys.length);
-        } catch (error: any) {
-          console.error('[usePurchaseOrders] Error adding extra accounts:', error);
-          throw new Error(`Failed to add Transfer Hook accounts: ${error.message}`);
-        }
+        // Derive recipient KYC Registry PDA
+        const [recipientKycRegistry] = PublicKey.findProgramAddressSync(
+          [Buffer.from('kyc'), investor.toBuffer()],
+          transferHookProgramId
+        );
+
+        console.log('[usePurchaseOrders] Transfer Hook accounts:');
+        console.log('  - Transfer Hook Program:', transferHookProgramId.toBase58());
+        console.log('  - ExtraAccountMetaList:', extraAccountMetaListPDA.toBase58());
+        console.log('  - Sender KYC Registry:', senderKycRegistry.toBase58());
+        console.log('  - Recipient KYC Registry:', recipientKycRegistry.toBase58());
+
+        // Build the approve instruction manually to avoid Anchor's account resolution
+        // Get the instruction discriminator from the IDL
+        const discriminator = Buffer.from([169, 230, 32, 46, 180, 165, 71, 7]);
+
+        const approveIx = new TransactionInstruction({
+          programId: new PublicKey(PROGRAM_IDS.purchaseOrder),
+          keys: [
+            // Base accounts (match Rust struct)
+            { pubkey: publicKey, isSigner: true, isWritable: true },                    // 0: admin
+            { pubkey: purchaseOrderPda, isSigner: false, isWritable: true },           // 1: purchase_order
+            { pubkey: mint, isSigner: false, isWritable: false },                      // 2: mint
+            { pubkey: adminTokenAccount, isSigner: false, isWritable: true },          // 3: admin_token_account
+            { pubkey: investorTokenAccount, isSigner: false, isWritable: true },       // 4: investor_token_account
+            { pubkey: TOKEN_2022_PROGRAM_ID, isSigner: false, isWritable: false },     // 5: token_program
+            { pubkey: transferHookProgramId, isSigner: false, isWritable: false },     // 6: transfer_hook_program
+            { pubkey: extraAccountMetaListPDA, isSigner: false, isWritable: false },   // 7: extra_account_metas
+            { pubkey: senderKycRegistry, isSigner: false, isWritable: false },         // 8: sender_kyc_registry
+            { pubkey: recipientKycRegistry, isSigner: false, isWritable: false },      // 9: recipient_kyc_registry
+            // Remaining accounts for Token-2022 Transfer Hook CPI (duplicates required)
+            { pubkey: adminTokenAccount, isSigner: false, isWritable: true },          // 10: source (duplicate)
+            { pubkey: mint, isSigner: false, isWritable: false },                      // 11: mint (duplicate)
+            { pubkey: investorTokenAccount, isSigner: false, isWritable: true },       // 12: destination (duplicate)
+            { pubkey: publicKey, isSigner: false, isWritable: false },                 // 13: authority (duplicate)
+            { pubkey: extraAccountMetaListPDA, isSigner: false, isWritable: false },   // 14: extra_account_meta_list (duplicate)
+            { pubkey: transferHookProgramId, isSigner: false, isWritable: false },     // 15: transfer_hook_program (duplicate)
+            { pubkey: senderKycRegistry, isSigner: false, isWritable: false },         // 16: sender KYC (duplicate)
+            { pubkey: recipientKycRegistry, isSigner: false, isWritable: false },      // 17: recipient KYC (duplicate)
+          ],
+          data: discriminator,
+        });
+
+        console.log('[usePurchaseOrders] Approve instruction created with', approveIx.keys.length, 'accounts');
 
         // Build transaction
         const transaction = new Transaction();
@@ -350,17 +373,25 @@ export function usePurchaseOrders() {
         const tx = signature;
 
         // After approval, deposit SOL received into MarginFi
-        try {
-          toast.info('Depositando SOL recebido no MarginFi...');
+        // Skip MarginFi deposit on localnet
+        const isLocalnet = connection.rpcEndpoint.includes('127.0.0.1') ||
+                           connection.rpcEndpoint.includes('localhost');
 
-          // Calculate SOL amount received (in lamports)
-          const solAmountLamports = orderAccount.totalLamports.toNumber();
-          const solAmount = solAmountLamports / 1e9; // Convert lamports to SOL
+        if (isLocalnet) {
+          console.log('[usePurchaseOrders] Skipping MarginFi deposit on localnet');
+          toast.success('Ordem de compra aprovada com sucesso!');
+        } else {
+          try {
+            toast.info('Depositando SOL recebido no MarginFi...');
 
-          console.log(`[usePurchaseOrders] Depositing ${solAmount} SOL to MarginFi`);
+            // Calculate SOL amount received (in lamports)
+            const solAmountLamports = orderAccount.totalLamports.toNumber();
+            const solAmount = solAmountLamports / 1e9; // Convert lamports to SOL
 
-          // Initialize MarginFi client
-          const config = getConfig('dev');
+            console.log(`[usePurchaseOrders] Depositing ${solAmount} SOL to MarginFi`);
+
+            // Initialize MarginFi client
+            const config = getConfig('dev');
 
           // Create wallet adapter for MarginFi
           const walletAdapter = {
@@ -399,12 +430,13 @@ export function usePurchaseOrders() {
           // Deposit SOL to MarginFi
           await marginfiAccount.deposit(solAmount, solBank.address);
 
-          console.log('[usePurchaseOrders] SOL deposited to MarginFi successfully');
-          toast.success(`${solAmount.toFixed(4)} SOL depositado no MarginFi!`);
-        } catch (marginfiError: any) {
-          console.error('[usePurchaseOrders] Error depositing to MarginFi:', marginfiError);
-          toast.error(`Compra aprovada, mas falha ao depositar no MarginFi: ${marginfiError.message}`);
-          // Don't throw - the purchase was already approved successfully
+            console.log('[usePurchaseOrders] SOL deposited to MarginFi successfully');
+            toast.success(`${solAmount.toFixed(4)} SOL depositado no MarginFi!`);
+          } catch (marginfiError: any) {
+            console.error('[usePurchaseOrders] Error depositing to MarginFi:', marginfiError);
+            toast.error(`Compra aprovada, mas falha ao depositar no MarginFi: ${marginfiError.message}`);
+            // Don't throw - the purchase was already approved successfully
+          }
         }
 
         // Refresh immediately and again after 2 seconds for good measure
