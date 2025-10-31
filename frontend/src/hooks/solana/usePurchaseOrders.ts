@@ -284,32 +284,25 @@ export function usePurchaseOrders() {
 
         console.log('[usePurchaseOrders] Approve instruction created, keys:', approveIx.keys.length);
 
-        // Manually add Transfer Hook extra accounts (KYC registries)
-        // The Transfer Hook expects 2 extra accounts: sender_kyc and recipient_kyc
-        const CONTROLLER_PROGRAM_ID = new PublicKey(PROGRAM_IDS.srwaController);
+        // Use SPL Token's built-in function to add Transfer Hook accounts
+        // This automatically resolves the ExtraAccountMetaList and adds all required accounts
+        try {
+          await addExtraAccountMetasForExecute(
+            connection,
+            approveIx,
+            TOKEN_2022_PROGRAM_ID,
+            adminTokenAccount, // source
+            mint,
+            investorTokenAccount, // destination
+            publicKey, // owner/authority
+            BigInt(orderAccount.quantity.toString())
+          );
 
-        // Derive admin KYC PDA
-        const [adminKycPda] = PublicKey.findProgramAddressSync(
-          [Buffer.from('kyc'), publicKey.toBuffer()],
-          CONTROLLER_PROGRAM_ID
-        );
-
-        // Derive investor KYC PDA
-        const [investorKycPda] = PublicKey.findProgramAddressSync(
-          [Buffer.from('kyc'), investor.toBuffer()],
-          CONTROLLER_PROGRAM_ID
-        );
-
-        console.log('[usePurchaseOrders] Admin KYC PDA:', adminKycPda.toBase58());
-        console.log('[usePurchaseOrders] Investor KYC PDA:', investorKycPda.toBase58());
-
-        // Add the KYC accounts as remaining accounts for the Transfer Hook
-        approveIx.keys.push(
-          { pubkey: adminKycPda, isSigner: false, isWritable: false },
-          { pubkey: investorKycPda, isSigner: false, isWritable: false }
-        );
-
-        console.log('[usePurchaseOrders] After adding KYC accounts, keys:', approveIx.keys.length);
+          console.log('[usePurchaseOrders] After addExtraAccountMetasForExecute, keys:', approveIx.keys.length);
+        } catch (error: any) {
+          console.error('[usePurchaseOrders] Error adding extra accounts:', error);
+          throw new Error(`Failed to add Transfer Hook accounts: ${error.message}`);
+        }
 
         // Build transaction
         const transaction = new Transaction();
