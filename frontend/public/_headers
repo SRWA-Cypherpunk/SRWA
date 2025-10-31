@@ -12,7 +12,7 @@
   Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()
 
   # Content Security Policy
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.solana.com https://*.helius-rpc.com https://*.rpcpool.com https://api.mainnet-beta.solana.com https://api.devnet.solana.com https://api.testnet.solana.com; frame-ancestors 'none';
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https:; font-src 'self' data: https://fonts.gstatic.com; connect-src 'self' https://*.solana.com wss://*.solana.com https://*.helius-rpc.com wss://*.helius-rpc.com https://*.rpcpool.com wss://*.rpcpool.com https://api.mainnet-beta.solana.com wss://api.mainnet-beta.solana.com https://api.devnet.solana.com wss://api.devnet.solana.com https://api.testnet.solana.com wss://api.testnet.solana.com; frame-ancestors 'none';
 
 # Cache Control for Assets
 /assets/*
