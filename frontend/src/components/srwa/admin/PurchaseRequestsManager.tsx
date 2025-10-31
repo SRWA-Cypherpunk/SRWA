@@ -43,7 +43,8 @@ export function PurchaseRequestsManager() {
     loading,
     approveOrder,
     rejectOrder,
-    getStatus
+    getStatus,
+    fetchOrders
   } = usePurchaseOrders();
   const { tokens: srwaTokens } = useDeployedTokens();
   const { connection } = useConnection();
@@ -90,6 +91,11 @@ export function PurchaseRequestsManager() {
             ),
         },
       });
+
+      // Force refresh after 1 second to update the UI
+      setTimeout(() => {
+        fetchOrders();
+      }, 1000);
     } catch (error: any) {
       console.error('Approve error:', error);
       toast.error('Failed to approve request', {

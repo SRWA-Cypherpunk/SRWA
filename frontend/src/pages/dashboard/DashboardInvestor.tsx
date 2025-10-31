@@ -157,16 +157,39 @@ export default function DashboardInvestor() {
                   <CheckCircle className="h-6 w-6 text-green-400" />
                   <div>
                     <p className="text-body-1 text-green-400 font-semibold">Verified</p>
-                    <p className="text-body-2 text-fg-muted">You can participate in offerings</p>
+                    <p className="text-body-2 text-fg-muted">
+                      {kycStatus.hasFactoryKYC && kycStatus.hasControllerKYC
+                        ? 'You can participate in offerings and receive tokens'
+                        : 'Complete Controller KYC to receive tokens'}
+                    </p>
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowKYCForm(true)}
-                >
-                  Update KYC
-                </Button>
+                <div className="flex gap-2">
+                  {!kycStatus.hasControllerKYC && (
+                    <Button
+                      onClick={handleCompleteKYC}
+                      disabled={kycLoading}
+                      size="sm"
+                      className="btn-primary"
+                    >
+                      {kycLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Completing...
+                        </>
+                      ) : (
+                        'Complete Controller KYC'
+                      )}
+                    </Button>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowKYCForm(true)}
+                  >
+                    Update KYC
+                  </Button>
+                </div>
               </div>
             ) : (
               <div className="flex items-center justify-between p-4 bg-amber-500/10 rounded-lg border border-amber-500/20">

@@ -6,7 +6,7 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-srwa_factory = "CfNjE6Lp6ddtrnTZQci2pPVkDsqB83hsBELwF9KR7n8b"
+srwa_factory = "5suWp35g2vbxzRCTW2fRACD32DaL9Q3wy72Cxz4AesLg"
 srwa_controller = "A6JtsR3Zw1GB1gTJuqdpFiBijarm9pQRTgqVkZaEdBs3"
 identity_claims = "AuUzmKAAVyvR6NvDdd56SDjXHSE8dUePEnC5moECw9mE"
 compliance_modules = "GD3ArP1GPKN9sWYPxiPia2i3iAKKsnbXxpcoB1gQK5D"
@@ -17,7 +17,7 @@ cashflow_engine = "4ySjU9NzSwg457oxWCVgaH3fqqrhh7iDQco7Db1Zq4Di"
 purchase_order = "BaExU2Svqwieyia551irUjfE34hoRnitrdcjKkvdpJdL"
 
 [programs.devnet]
-srwa_factory = "CfNjE6Lp6ddtrnTZQci2pPVkDsqB83hsBELwF9KR7n8b"
+srwa_factory = "5suWp35g2vbxzRCTW2fRACD32DaL9Q3wy72Cxz4AesLg"
 srwa_controller = "A6JtsR3Zw1GB1gTJuqdpFiBijarm9pQRTgqVkZaEdBs3"
 identity_claims = "AuUzmKAAVyvR6NvDdd56SDjXHSE8dUePEnC5moECw9mE"
 compliance_modules = "GD3ArP1GPKN9sWYPxiPia2i3iAKKsnbXxpcoB1gQK5D"

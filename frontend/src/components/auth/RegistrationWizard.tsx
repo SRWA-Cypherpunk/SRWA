@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Building2, TrendingUp, CheckCircle } from 'lucide-react';
+import { Loader2, Building2, TrendingUp, CheckCircle, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
 import Logo from '@/assets/logo.png';
@@ -46,6 +46,19 @@ const ROLE_OPTIONS: RoleOption[] = [
       'Track returns',
     ],
     color: 'from-[hsl(var(--accent-green-500))] to-[hsl(var(--accent-green-400))]',
+  },
+  {
+    role: UserRole.Admin,
+    title: 'Admin',
+    description: 'Manage platform and approve token requests',
+    icon: <Shield className="w-12 h-12" />,
+    features: [
+      'Approve token requests',
+      'Manage admin allowlist',
+      'View market analytics',
+      'Platform administration',
+    ],
+    color: 'from-orange-500 to-red-600',
   },
 ];
 
@@ -184,7 +197,7 @@ export function RegistrationWizard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 items-stretch max-w-4xl mx-auto">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 items-stretch max-w-6xl mx-auto">
         {ROLE_OPTIONS.map((option, idx) => {
           const isSelected = selectedRole === option.role;
 

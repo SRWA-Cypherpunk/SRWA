@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("CfNjE6Lp6ddtrnTZQci2pPVkDsqB83hsBELwF9KR7n8b");
+declare_id!("5suWp35g2vbxzRCTW2fRACD32DaL9Q3wy72Cxz4AesLg");
 
 pub mod state;
 pub mod instructions;
@@ -128,6 +128,13 @@ pub mod srwa_factory {
         admin_to_remove: Pubkey,
     ) -> Result<()> {
         instructions::remove_platform_admin::handler(ctx, admin_to_remove)
+    }
+
+    /// Close the admin registry (super_admin only)
+    pub fn close_admin_registry(
+        ctx: Context<CloseAdminRegistry>,
+    ) -> Result<()> {
+        instructions::close_admin_registry::handler(ctx)
     }
 
     /// Initialize the KYC provider registry
