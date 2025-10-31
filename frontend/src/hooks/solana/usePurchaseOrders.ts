@@ -11,6 +11,7 @@ import {
   resolveExtraAccountMeta,
 } from '@solana/spl-token';
 import { useProgramsSafe } from '@/contexts';
+import { PROGRAM_IDS } from '@/lib/solana/anchor';
 import { toast } from 'sonner';
 import { getConfig, MarginfiClient } from '@mrgnlabs/marginfi-client-v2';
 
@@ -144,26 +145,57 @@ export function usePurchaseOrders() {
 
         console.log('[usePurchaseOrders] PDA:', purchaseOrderPda.toBase58());
 
-        const tx = await program.methods
-          .createPurchaseOrder(new BN(quantity), new BN(pricePerTokenLamports), new BN(timestamp))
-          .accounts({
-            investor: publicKey,
-            mint,
-            purchaseOrder: purchaseOrderPda,
-            adminVault,
-            systemProgram: SystemProgram.programId,
-          })
-          .rpc({
-            skipPreflight: false,
-            commitment: 'confirmed',
-          });
+        let signature: string;
 
-        console.log('[usePurchaseOrders] Order created:', tx);
+        try {
+          signature = await program.methods
+            .createPurchaseOrder(new BN(quantity), new BN(pricePerTokenLamports), new BN(timestamp))
+            .accounts({
+              investor: publicKey,
+              mint,
+              purchaseOrder: purchaseOrderPda,
+              adminVault,
+              systemProgram: SystemProgram.programId,
+            })
+            .rpc({
+              skipPreflight: false,
+              commitment: 'confirmed',
+            });
+
+          console.log('[usePurchaseOrders] Order created:', signature);
+        } catch (rpcError: any) {
+          // If error is "already processed", the transaction succeeded but RPC returned error
+          const errorMsg = rpcError?.message || rpcError?.toString() || '';
+
+          if (errorMsg.includes('already been processed') || errorMsg.includes('already processed')) {
+            console.warn('[usePurchaseOrders] Transaction already processed, checking if account was created...');
+
+            // Wait a bit for account to be indexed
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            // Check if the purchase order account was actually created
+            const accountInfo = await connection.getAccountInfo(purchaseOrderPda);
+            if (accountInfo) {
+              console.log('[usePurchaseOrders] Purchase order account exists! Transaction succeeded despite error.');
+
+              // Try to find the signature from recent transactions
+              const recentSigs = await connection.getSignaturesForAddress(publicKey, { limit: 10 });
+              signature = recentSigs[0]?.signature || 'PROCESSED_NO_SIG';
+
+              console.log('[usePurchaseOrders] Using signature:', signature);
+            } else {
+              console.error('[usePurchaseOrders] Account was not created. Real error.');
+              throw rpcError;
+            }
+          } else {
+            throw rpcError;
+          }
+        }
 
         // Refresh orders asynchronously (don't block on this)
         fetchOrders().catch(err => console.error('[usePurchaseOrders] Error refreshing orders:', err));
 
-        return { signature: tx, purchaseOrderPda };
+        return { signature, purchaseOrderPda };
       } catch (err: any) {
         console.error('[usePurchaseOrders] Error creating order:', err);
         throw err;
@@ -233,6 +265,10 @@ export function usePurchaseOrders() {
         // Check if investor's token account exists
         const accountInfo = await connection.getAccountInfo(investorTokenAccount);
 
+        console.log('[usePurchaseOrders] Mint:', mint.toBase58());
+        console.log('[usePurchaseOrders] Admin token account:', adminTokenAccount.toBase58());
+        console.log('[usePurchaseOrders] Investor token account:', investorTokenAccount.toBase58());
+
         // Build the approve instruction
         const approveIx = await program.methods
           .approvePurchaseOrder()
@@ -246,18 +282,34 @@ export function usePurchaseOrders() {
           })
           .instruction();
 
-        // Add Transfer Hook extra account metas to the instruction
-        // This will read the ExtraAccountMetaList and add the required accounts
-        await addExtraAccountMetasForExecute(
-          connection,
-          approveIx,
-          TOKEN_2022_PROGRAM_ID,
-          adminTokenAccount,
-          mint,
-          investorTokenAccount,
-          publicKey, // transfer authority
-          0 // amount (doesn't matter for fetching accounts)
+        console.log('[usePurchaseOrders] Approve instruction created, keys:', approveIx.keys.length);
+
+        // Manually add Transfer Hook extra accounts (KYC registries)
+        // The Transfer Hook expects 2 extra accounts: sender_kyc and recipient_kyc
+        const CONTROLLER_PROGRAM_ID = new PublicKey(PROGRAM_IDS.srwaController);
+
+        // Derive admin KYC PDA
+        const [adminKycPda] = PublicKey.findProgramAddressSync(
+          [Buffer.from('kyc'), publicKey.toBuffer()],
+          CONTROLLER_PROGRAM_ID
         );
+
+        // Derive investor KYC PDA
+        const [investorKycPda] = PublicKey.findProgramAddressSync(
+          [Buffer.from('kyc'), investor.toBuffer()],
+          CONTROLLER_PROGRAM_ID
+        );
+
+        console.log('[usePurchaseOrders] Admin KYC PDA:', adminKycPda.toBase58());
+        console.log('[usePurchaseOrders] Investor KYC PDA:', investorKycPda.toBase58());
+
+        // Add the KYC accounts as remaining accounts for the Transfer Hook
+        approveIx.keys.push(
+          { pubkey: adminKycPda, isSigner: false, isWritable: false },
+          { pubkey: investorKycPda, isSigner: false, isWritable: false }
+        );
+
+        console.log('[usePurchaseOrders] After adding KYC accounts, keys:', approveIx.keys.length);
 
         // Build transaction
         const transaction = new Transaction();
@@ -363,9 +415,11 @@ export function usePurchaseOrders() {
           // Don't throw - the purchase was already approved successfully
         }
 
-        // Wait a bit for blockchain to update, then refresh
+        // Refresh immediately and again after 2 seconds for good measure
+        fetchOrders().catch(err => console.error('[usePurchaseOrders] Error refreshing orders (immediate):', err));
+
         setTimeout(() => {
-          fetchOrders().catch(err => console.error('[usePurchaseOrders] Error refreshing orders:', err));
+          fetchOrders().catch(err => console.error('[usePurchaseOrders] Error refreshing orders (delayed):', err));
         }, 2000);
 
         return tx;

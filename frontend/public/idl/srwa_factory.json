@@ -1,5 +1,5 @@
 {
-  "address": "CfNjE6Lp6ddtrnTZQci2pPVkDsqB83hsBELwF9KR7n8b",
+  "address": "5suWp35g2vbxzRCTW2fRACD32DaL9Q3wy72Cxz4AesLg",
   "metadata": {
     "name": "srwa_factory",
     "version": "0.1.0",
@@ -297,6 +297,57 @@
         },
         {
           "name": "token_program"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "close_admin_registry",
+      "docs": [
+        "Close the admin registry (super_admin only)"
+      ],
+      "discriminator": [
+        184,
+        43,
+        156,
+        100,
+        110,
+        82,
+        127,
+        250
+      ],
+      "accounts": [
+        {
+          "name": "super_admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "admin_registry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  97,
+                  100,
+                  109,
+                  105,
+                  110,
+                  95,
+                  114,
+                  101,
+                  103,
+                  105,
+                  115,
+                  116,
+                  114,
+                  121
+                ]
+              }
+            ]
+          }
         }
       ],
       "args": []
@@ -1723,7 +1774,192 @@
     {
       "code": 6000,
       "name": "Unauthorized",
-      "msg": "Unauthorized: You can only update your own KYC status"
+      "msg": "Unauthorized access"
+    },
+    {
+      "code": 6001,
+      "name": "InvalidPhase",
+      "msg": "Invalid phase for this operation"
+    },
+    {
+      "code": 6002,
+      "name": "SoftCapNotReached",
+      "msg": "Soft cap not reached"
+    },
+    {
+      "code": 6003,
+      "name": "OverSubscription",
+      "msg": "Over subscription limit"
+    },
+    {
+      "code": 6004,
+      "name": "KycMissing",
+      "msg": "KYC verification missing"
+    },
+    {
+      "code": 6005,
+      "name": "AccreditationRequired",
+      "msg": "Accreditation required"
+    },
+    {
+      "code": 6006,
+      "name": "JurisdictionDenied",
+      "msg": "Jurisdiction denied"
+    },
+    {
+      "code": 6007,
+      "name": "Sanctioned",
+      "msg": "Address is sanctioned"
+    },
+    {
+      "code": 6008,
+      "name": "LockupActive",
+      "msg": "Lockup period active"
+    },
+    {
+      "code": 6009,
+      "name": "CapExceeded",
+      "msg": "Cap exceeded"
+    },
+    {
+      "code": 6010,
+      "name": "WindowClosed",
+      "msg": "Transfer window closed"
+    },
+    {
+      "code": 6011,
+      "name": "NotAllowlisted",
+      "msg": "Program or account not allowlisted"
+    },
+    {
+      "code": 6012,
+      "name": "OracleStale",
+      "msg": "Oracle price is stale"
+    },
+    {
+      "code": 6013,
+      "name": "ConfidenceTooHigh",
+      "msg": "Oracle confidence too high"
+    },
+    {
+      "code": 6014,
+      "name": "InvalidModule",
+      "msg": "Invalid module ID"
+    },
+    {
+      "code": 6015,
+      "name": "ModuleAlreadyEnabled",
+      "msg": "Module already enabled"
+    },
+    {
+      "code": 6016,
+      "name": "ModuleNotEnabled",
+      "msg": "Module not enabled"
+    },
+    {
+      "code": 6017,
+      "name": "InvalidTimestamp",
+      "msg": "Invalid timestamp"
+    },
+    {
+      "code": 6018,
+      "name": "InvalidAmount",
+      "msg": "Invalid amount"
+    },
+    {
+      "code": 6019,
+      "name": "MaxCapacityReached",
+      "msg": "Maximum capacity reached"
+    },
+    {
+      "code": 6020,
+      "name": "MinTicketNotMet",
+      "msg": "Minimum ticket not met"
+    },
+    {
+      "code": 6021,
+      "name": "PerInvestorCapExceeded",
+      "msg": "Per investor cap exceeded"
+    },
+    {
+      "code": 6022,
+      "name": "RequestNotPending",
+      "msg": "Request is not in pending state"
+    },
+    {
+      "code": 6023,
+      "name": "MintMismatch",
+      "msg": "Mint provided does not match the stored request mint"
+    },
+    {
+      "code": 6024,
+      "name": "MintInvalidOwner",
+      "msg": "Mint account has invalid owner"
+    },
+    {
+      "code": 6025,
+      "name": "RejectReasonTooLong",
+      "msg": "Reject reason exceeds maximum length"
+    },
+    {
+      "code": 6026,
+      "name": "AccountBumpMissing",
+      "msg": "Expected PDA bump is missing"
+    },
+    {
+      "code": 6027,
+      "name": "TokenNameTooLong",
+      "msg": "Token name is too long"
+    },
+    {
+      "code": 6028,
+      "name": "TokenSymbolTooLong",
+      "msg": "Token symbol is too long"
+    },
+    {
+      "code": 6029,
+      "name": "AdminAlreadyExists",
+      "msg": "Admin already exists in the allowlist"
+    },
+    {
+      "code": 6030,
+      "name": "CannotRemoveSuperAdmin",
+      "msg": "Cannot remove the super admin"
+    },
+    {
+      "code": 6031,
+      "name": "AdminNotInAllowlist",
+      "msg": "Admin is not in the allowlist"
+    },
+    {
+      "code": 6032,
+      "name": "KYCProviderNotFound",
+      "msg": "KYC provider not found"
+    },
+    {
+      "code": 6033,
+      "name": "KYCProviderAlreadyExists",
+      "msg": "KYC provider already exists"
+    },
+    {
+      "code": 6034,
+      "name": "InvalidKYCProvider",
+      "msg": "Invalid KYC provider"
+    },
+    {
+      "code": 6035,
+      "name": "MissingKYCClaims",
+      "msg": "Investor does not have required KYC claims"
+    },
+    {
+      "code": 6036,
+      "name": "KYCProviderNotApproved",
+      "msg": "KYC provider is not approved for this token"
+    },
+    {
+      "code": 6037,
+      "name": "MintInitializationFailed",
+      "msg": "Failed to initialize token-2022 mint"
     }
   ],
   "types": [

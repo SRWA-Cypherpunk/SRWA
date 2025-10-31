@@ -1,6 +1,7 @@
 import { useCallback, useState, useEffect } from 'react';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
+import { PROGRAM_IDS } from '@/lib/solana/anchor';
 
 export interface KYCStatus {
   hasKYC: boolean;
@@ -65,8 +66,8 @@ export function useKYCStatus() {
     setKycStatus((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
-      const SRWA_FACTORY_PROGRAM_ID = new PublicKey('CfNjE6Lp6ddtrnTZQci2pPVkDsqB83hsBELwF9KR7n8b');
-      const SRWA_CONTROLLER_PROGRAM_ID = new PublicKey('A6JtsR3Zw1GB1gTJuqdpFiBijarm9pQRTgqVkZaEdBs3');
+      const SRWA_FACTORY_PROGRAM_ID = new PublicKey(PROGRAM_IDS.srwaFactory);
+      const SRWA_CONTROLLER_PROGRAM_ID = new PublicKey(PROGRAM_IDS.srwaController);
 
       // 1. Verificar Factory User Registry
       const [userRegistryPDA] = PublicKey.findProgramAddressSync(
@@ -158,8 +159,8 @@ export function useKYCStatus() {
   const checkKYCForAddress = useCallback(
     async (address: PublicKey): Promise<KYCStatus> => {
       try {
-        const SRWA_FACTORY_PROGRAM_ID = new PublicKey('CfNjE6Lp6ddtrnTZQci2pPVkDsqB83hsBELwF9KR7n8b');
-        const SRWA_CONTROLLER_PROGRAM_ID = new PublicKey('A6JtsR3Zw1GB1gTJuqdpFiBijarm9pQRTgqVkZaEdBs3');
+        const SRWA_FACTORY_PROGRAM_ID = new PublicKey(PROGRAM_IDS.srwaFactory);
+        const SRWA_CONTROLLER_PROGRAM_ID = new PublicKey(PROGRAM_IDS.srwaController);
 
         // 1. Factory User Registry
         const [userRegistryPDA] = PublicKey.findProgramAddressSync(

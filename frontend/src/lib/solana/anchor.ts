@@ -4,7 +4,7 @@ import { PublicKey, Connection, LAMPORTS_PER_SOL } from "@solana/web3.js";
 
 // Program IDs (deployed on devnet) - Must match Anchor.toml [programs.devnet]
 export const PROGRAM_IDS = {
-  srwaFactory: "CfNjE6Lp6ddtrnTZQci2pPVkDsqB83hsBELwF9KR7n8b",
+  srwaFactory: "5suWp35g2vbxzRCTW2fRACD32DaL9Q3wy72Cxz4AesLg",
   srwaController: "A6JtsR3Zw1GB1gTJuqdpFiBijarm9pQRTgqVkZaEdBs3",
   identityClaims: "AuUzmKAAVyvR6NvDdd56SDjXHSE8dUePEnC5moECw9mE",
   complianceModules: "GD3ArP1GPKN9sWYPxiPia2i3iAKKsnbXxpcoB1gQK5D",
