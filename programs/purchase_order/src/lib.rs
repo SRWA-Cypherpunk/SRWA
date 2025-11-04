@@ -41,4 +41,15 @@ pub mod purchase_order {
     pub fn cancel_purchase_order(ctx: Context<CancelPurchaseOrder>) -> Result<()> {
         instructions::cancel_purchase_order::handler(ctx)
     }
+
+    /// Executa compra de forma automática e atômica
+    /// SOL → pool vault, tokens → investor (tudo em 1 transação)
+    pub fn execute_purchase(
+        ctx: Context<ExecutePurchase>,
+        quantity: u64,
+        price_per_token_lamports: u64,
+        timestamp: i64,
+    ) -> Result<()> {
+        instructions::execute_purchase::handler(ctx, quantity, price_per_token_lamports, timestamp)
+    }
 }

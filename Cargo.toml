@@ -9,6 +9,7 @@ members = [
     "programs/valuation_oracle",
     "programs/cashflow_engine",
     "programs/purchase_order",
+    "programs/pool_distribution",
 ]
 resolver = "2"
 

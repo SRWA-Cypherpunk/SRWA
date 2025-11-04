@@ -1,0 +1,23 @@
+[package]
+name = "pool-distribution"
+version = "0.1.0"
+description = "SRWA Pool Distribution - Automatic SOL distribution to Issuer based on threshold"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "pool_distribution"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+idl-build = ["anchor-lang/idl-build"]
+
+[dependencies]
+anchor-lang = { version = "0.31.1", features = ["init-if-needed", "idl-build"] }
+
+[dependencies.indexmap]
+version = "=2.6.0"
