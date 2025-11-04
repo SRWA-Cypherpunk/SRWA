@@ -6,6 +6,7 @@ import {
   TOKEN_2022_PROGRAM_ID,
   getAssociatedTokenAddress,
   createAssociatedTokenAccountInstruction,
+  getAccount,
   ASSOCIATED_TOKEN_PROGRAM_ID,
 } from '@solana/spl-token';
 import { useProgramsSafe } from '@/contexts';
@@ -624,6 +625,16 @@ export function usePurchaseOrders() {
         TOKEN_2022_PROGRAM_ID
       );
 
+      // Check if investor token account exists, create if not
+      let investorAccountExists = false;
+      try {
+        await getAccount(connection, investorTokenAccount, 'confirmed', TOKEN_2022_PROGRAM_ID);
+        investorAccountExists = true;
+        console.log('[usePurchaseOrders.executePurchase] Investor token account already exists');
+      } catch (error) {
+        console.log('[usePurchaseOrders.executePurchase] Investor token account does not exist, will create');
+      }
+
       // Derive transfer hook accounts
       if (!programs?.srwaController) {
         throw new Error('SRWA Controller program not loaded');
@@ -637,12 +648,12 @@ export function usePurchaseOrders() {
       );
 
       const [senderKycRegistry] = PublicKey.findProgramAddressSync(
-        [Buffer.from('kyc_registry'), escrowAuthority.toBuffer()],
+        [Buffer.from('kyc'), escrowAuthority.toBuffer()],
         programs.srwaController.programId
       );
 
       const [recipientKycRegistry] = PublicKey.findProgramAddressSync(
-        [Buffer.from('kyc_registry'), publicKey.toBuffer()],
+        [Buffer.from('kyc'), publicKey.toBuffer()],
         programs.srwaController.programId
       );
 
@@ -661,8 +672,8 @@ export function usePurchaseOrders() {
         recipientKycRegistry: recipientKycRegistry.toBase58(),
       });
 
-      // Execute purchase (automatic, no admin signature needed)
-      const signature = await program.methods
+      // Build the transaction
+      const tx = program.methods
         .executePurchase(new BN(quantity), new BN(pricePerTokenLamports), new BN(timestamp))
         .accounts({
           investor: publicKey,
@@ -696,11 +707,26 @@ export function usePurchaseOrders() {
             isSigner: false,
             isWritable: false,
           },
-        ])
-        .rpc({
-          skipPreflight: false,
-          commitment: 'confirmed',
-        });
+        ]);
+
+      // Create investor token account if it doesn't exist
+      if (!investorAccountExists) {
+        console.log('[usePurchaseOrders.executePurchase] Adding create ATA instruction');
+        const createIx = createAssociatedTokenAccountInstruction(
+          publicKey, // payer
+          investorTokenAccount, // ata
+          publicKey, // owner
+          mint, // mint
+          TOKEN_2022_PROGRAM_ID
+        );
+        tx.preInstructions([createIx]);
+      }
+
+      // Execute purchase (automatic, no admin signature needed)
+      const signature = await tx.rpc({
+        skipPreflight: false,
+        commitment: 'confirmed',
+      });
 
       console.log('[usePurchaseOrders.executePurchase] Success:', signature);
 

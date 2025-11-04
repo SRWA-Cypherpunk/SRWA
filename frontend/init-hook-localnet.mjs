@@ -1,0 +1,148 @@
+/**
+ * Initialize ExtraAccountMetaList for SRWA Token Transfer Hook (Localnet)
+ */
+
+import { Connection, PublicKey, Keypair, Transaction, SystemProgram, TransactionInstruction } from '@solana/web3.js';
+import { TOKEN_2022_PROGRAM_ID, getMint } from '@solana/spl-token';
+import { readFileSync } from 'fs';
+import { createHash } from 'crypto';
+import { homedir } from 'os';
+import { join } from 'path';
+
+// Program IDs
+const TRANSFER_HOOK_PROGRAM_ID = new PublicKey('GVs5Qi56CR9a6V2fUtXZ6Z99XK57yYa5DM5dECBW2AWZ');
+
+// Connection
+const connection = new Connection('http://127.0.0.1:8899', 'confirmed');
+
+// Load payer keypair
+const keypairPath = join(homedir(), '.config/solana/id.json');
+const keypairData = JSON.parse(readFileSync(keypairPath, 'utf-8'));
+const payer = Keypair.fromSecretKey(new Uint8Array(keypairData));
+
+console.log('🔑 Payer:', payer.publicKey.toBase58());
+console.log('🌐 Network: Localnet\n');
+
+/**
+ * Initialize ExtraAccountMetaList for a token mint
+ */
+async function initializeExtraAccountMetaList(mintAddress) {
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('🪙 Mint:', mintAddress.toBase58());
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+
+  // Derive ExtraAccountMetaList PDA
+  const [extraAccountMetaListPDA] = PublicKey.findProgramAddressSync(
+    [Buffer.from('extra-account-metas'), mintAddress.toBuffer()],
+    TRANSFER_HOOK_PROGRAM_ID
+  );
+
+  console.log('📋 ExtraAccountMetaList PDA:', extraAccountMetaListPDA.toBase58());
+
+  // Check if already initialized
+  const accountInfo = await connection.getAccountInfo(extraAccountMetaListPDA);
+  if (accountInfo) {
+    console.log('✅ Already initialized (size:', accountInfo.data.length, 'bytes)\n');
+    return true;
+  }
+
+  console.log('❌ Not initialized - creating now...\n');
+
+  // Create instruction discriminator
+  const discriminator = createHash('sha256')
+    .update('global:initialize_extra_account_meta_list')
+    .digest()
+    .slice(0, 8);
+
+  console.log('   Discriminator:', discriminator.toString('hex'));
+
+  // Build instruction
+  const instruction = new TransactionInstruction({
+    programId: TRANSFER_HOOK_PROGRAM_ID,
+    keys: [
+      { pubkey: payer.publicKey, isSigner: true, isWritable: true },
+      { pubkey: mintAddress, isSigner: false, isWritable: false },
+      { pubkey: extraAccountMetaListPDA, isSigner: false, isWritable: true },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    ],
+    data: Buffer.from(discriminator),
+  });
+
+  const transaction = new Transaction().add(instruction);
+  transaction.feePayer = payer.publicKey;
+
+  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+  transaction.recentBlockhash = blockhash;
+
+  console.log('📤 Sending transaction...');
+
+  try {
+    const signature = await connection.sendTransaction(transaction, [payer], {
+      skipPreflight: false,
+    });
+
+    console.log('   Signature:', signature);
+    console.log('⏳ Confirming...');
+
+    const confirmation = await connection.confirmTransaction(
+      {
+        signature,
+        blockhash,
+        lastValidBlockHeight,
+      },
+      'confirmed'
+    );
+
+    if (confirmation.value.err) {
+      console.error('❌ Transaction failed:', JSON.stringify(confirmation.value.err));
+      return false;
+    }
+
+    console.log('✅ SUCCESS!');
+    console.log('   Mint:', mintAddress.toBase58());
+    console.log('   ExtraAccountMetaList:', extraAccountMetaListPDA.toBase58());
+    return true;
+  } catch (error) {
+    console.error('❌ Error:', error.message);
+    if (error.logs) {
+      console.error('\nLogs:');
+      error.logs.forEach((log) => console.error('  ', log));
+    }
+    return false;
+  }
+}
+
+// Main
+const mintAddress = process.argv[2];
+
+if (!mintAddress) {
+  console.error('Usage: node init-hook-localnet.mjs <MINT_ADDRESS>\n');
+  console.error('Example:');
+  console.error('  node init-hook-localnet.mjs 9xQeWvG816bUx9EPjHmaT23yvVM2ZWbrrpZb9PusVFin\n');
+  console.error('💡 You can find your mint address in the frontend token dropdown or by checking Token-2022 mints on localnet.');
+  process.exit(1);
+}
+
+try {
+  const mint = new PublicKey(mintAddress);
+
+  // Verify it's a Token-2022 mint
+  console.log('🔍 Verifying Token-2022 mint...');
+  const mintInfo = await getMint(connection, mint, 'confirmed', TOKEN_2022_PROGRAM_ID);
+  console.log('   Decimals:', mintInfo.decimals);
+  console.log('   Supply:', mintInfo.supply.toString());
+  console.log('   ✅ Valid Token-2022\n');
+
+  await initializeExtraAccountMetaList(mint);
+
+  console.log('\n🎉 Transfer Hook is now active!');
+  console.log('   Transfers will validate KYC on-chain.\n');
+  console.log('⚠️  Remember to also initialize KYC registries for users:');
+  console.log('   - Admin KYC registry');
+  console.log('   - Escrow PDA KYC registry');
+  console.log('   - Investor KYC registries\n');
+} catch (error) {
+  console.error('\n💥 Error:', error.message);
+  console.error('Stack:', error.stack);
+  process.exit(1);
+}

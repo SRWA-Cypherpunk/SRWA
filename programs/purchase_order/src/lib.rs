@@ -44,8 +44,8 @@ pub mod purchase_order {
 
     /// Executa compra de forma automática e atômica
     /// SOL → pool vault, tokens → investor (tudo em 1 transação)
-    pub fn execute_purchase(
-        ctx: Context<ExecutePurchase>,
+    pub fn execute_purchase<'info>(
+        ctx: Context<'_, '_, '_, 'info, ExecutePurchase<'info>>,
         quantity: u64,
         price_per_token_lamports: u64,
         timestamp: i64,
@@ -55,8 +55,8 @@ pub mod purchase_order {
 
     /// Admin deposita tokens para a escrow account (PDA)
     /// Necessário antes que investidores possam comprar automaticamente
-    pub fn deposit_tokens(
-        ctx: Context<DepositTokens>,
+    pub fn deposit_tokens<'info>(
+        ctx: Context<'_, '_, '_, 'info, DepositTokens<'info>>,
         amount: u64,
     ) -> Result<()> {
         instructions::deposit_tokens::handler(ctx, amount)

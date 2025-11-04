@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
-use anchor_lang::system_program;
-use anchor_spl::token_interface::{self, TokenAccount, TokenInterface, TransferChecked};
+use anchor_lang::{system_program, solana_program};
+use anchor_spl::token_interface::{TokenAccount, TokenInterface};
+use anchor_spl::token_2022::spl_token_2022;
 use crate::state::*;
 use crate::errors::*;
 
@@ -69,8 +70,8 @@ pub struct ExecutePurchase<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handler(
-    ctx: Context<ExecutePurchase>,
+pub fn handler<'info>(
+    ctx: Context<'_, '_, '_, 'info, ExecutePurchase<'info>>,
     quantity: u64,
     price_per_token_lamports: u64,
     timestamp: i64,
@@ -108,6 +109,7 @@ pub fn handler(
 
     // PASSO 2: Transferir tokens do escrow PDA para o investor
     msg!("Step 2: Transferring {} tokens to investor", quantity);
+    msg!("Number of remaining accounts: {}", ctx.remaining_accounts.len());
     let decimals = ctx.accounts.mint.decimals;
 
     // Seeds para assinar com o PDA
@@ -119,18 +121,52 @@ pub fn handler(
     ];
     let signer_seeds = &[&seeds[..]];
 
-    let transfer_ctx = CpiContext::new_with_signer(
-        ctx.accounts.token_program.to_account_info(),
-        TransferChecked {
-            from: ctx.accounts.escrow_token_account.to_account_info(),
-            to: ctx.accounts.investor_token_account.to_account_info(),
-            authority: ctx.accounts.escrow_authority.to_account_info(),
-            mint: ctx.accounts.mint.to_account_info(),
-        },
-        signer_seeds,
-    );
+    // Build complete account list for transfer with hooks
+    let mut account_infos = vec![
+        ctx.accounts.escrow_token_account.to_account_info(), // source
+        ctx.accounts.mint.to_account_info(),                  // mint
+        ctx.accounts.investor_token_account.to_account_info(), // destination
+        ctx.accounts.escrow_authority.to_account_info(),      // authority
+        ctx.accounts.token_program.to_account_info(),         // token program
+    ];
 
-    token_interface::transfer_checked(transfer_ctx, quantity, decimals)?;
+    // Add transfer hook accounts from remaining_accounts
+    for acc in ctx.remaining_accounts.iter() {
+        account_infos.push(acc.clone());
+    }
+
+    msg!("Total accounts for transfer: {}", account_infos.len());
+
+    // Build the transfer instruction with all accounts
+    let mut transfer_ix = spl_token_2022::instruction::transfer_checked(
+        ctx.accounts.token_program.key,
+        &ctx.accounts.escrow_token_account.key(),
+        &ctx.accounts.mint.key(),
+        &ctx.accounts.investor_token_account.key(),
+        &ctx.accounts.escrow_authority.key(),
+        &[],
+        quantity,
+        decimals,
+    )?;
+
+    // Manually add the transfer hook accounts to the instruction
+    // These need to be in the instruction's account keys for Token-2022 to find them
+    for acc in ctx.remaining_accounts.iter() {
+        transfer_ix.accounts.push(solana_program::instruction::AccountMeta {
+            pubkey: acc.key(),
+            is_signer: acc.is_signer,
+            is_writable: acc.is_writable,
+        });
+    }
+
+    msg!("Invoking transfer with {} account keys", transfer_ix.accounts.len());
+
+    // Invoke the transfer with PDA signing
+    solana_program::program::invoke_signed(
+        &transfer_ix,
+        &account_infos,
+        signer_seeds,
+    )?;
 
     // PASSO 3: Registrar a purchase order como "Approved"
     msg!("Step 3: Recording purchase order");

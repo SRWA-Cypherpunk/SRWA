@@ -101,13 +101,13 @@ export function TokenEscrowManager() {
 
       // 3. Sender KYC registry (admin)
       const [senderKycRegistry] = PublicKey.findProgramAddressSync(
-        [Buffer.from('kyc_registry'), publicKey.toBuffer()],
+        [Buffer.from('kyc'), publicKey.toBuffer()],
         programs.srwaController.programId
       );
 
       // 4. Recipient KYC registry (escrow authority)
       const [recipientKycRegistry] = PublicKey.findProgramAddressSync(
-        [Buffer.from('kyc_registry'), escrowAuthority.toBuffer()],
+        [Buffer.from('kyc'), escrowAuthority.toBuffer()],
         programs.srwaController.programId
       );
 
