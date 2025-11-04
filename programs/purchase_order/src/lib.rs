@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 
-declare_id!("43iQGS4Xyg6aGcpL52n7KurMm5eVNvQKEtgdPSxZwKPU");
+declare_id!("6KCm2iNZHz79PhiG66ZkCq6GSFoy2WUjkFeEqmrygyUv");
 
 pub mod state;
 pub mod instructions;
@@ -51,5 +51,14 @@ pub mod purchase_order {
         timestamp: i64,
     ) -> Result<()> {
         instructions::execute_purchase::handler(ctx, quantity, price_per_token_lamports, timestamp)
+    }
+
+    /// Admin deposita tokens para a escrow account (PDA)
+    /// Necessário antes que investidores possam comprar automaticamente
+    pub fn deposit_tokens(
+        ctx: Context<DepositTokens>,
+        amount: u64,
+    ) -> Result<()> {
+        instructions::deposit_tokens::handler(ctx, amount)
     }
 }

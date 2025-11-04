@@ -2,8 +2,10 @@ import * as anchor from "@coral-xyz/anchor";
 import type { Idl } from "@coral-xyz/anchor";
 import { PublicKey, Connection, LAMPORTS_PER_SOL } from "@solana/web3.js";
 
-// Program IDs (deployed on devnet) - Must match Anchor.toml [programs.devnet]
-export const PROGRAM_IDS = {
+export const RPC_ENDPOINT = import.meta.env.VITE_SOLANA_RPC_URL || 'http://127.0.0.1:8899';
+
+// Program IDs - Devnet
+const PROGRAM_IDS_DEVNET = {
   srwaFactory: "5suWp35g2vbxzRCTW2fRACD32DaL9Q3wy72Cxz4AesLg",
   srwaController: "A6JtsR3Zw1GB1gTJuqdpFiBijarm9pQRTgqVkZaEdBs3",
   identityClaims: "AuUzmKAAVyvR6NvDdd56SDjXHSE8dUePEnC5moECw9mE",
@@ -13,9 +15,47 @@ export const PROGRAM_IDS = {
   valuationOracle: "C4sJ1phqCh2MxFJJqVHZuddXbp6hWfvz29N4CkscPpaW",
   cashflowEngine: "4ySjU9NzSwg457oxWCVgaH3fqqrhh7iDQco7Db1Zq4Di",
   purchaseOrder: "43iQGS4Xyg6aGcpL52n7KurMm5eVNvQKEtgdPSxZwKPU",
+  poolDistribution: "GBhbrpXQWfGTK6MSpbUUCMYh5X6hT5WWC66PDuiGx6Fm",
 };
 
-export const RPC_ENDPOINT = import.meta.env.VITE_SOLANA_RPC_URL || 'http://127.0.0.1:8899';
+// Program IDs - Localnet (from deployed keypairs)
+const PROGRAM_IDS_LOCALNET = {
+  srwaFactory: "9PheRCqa1vVvp5Ucp3BtGSyL7gvLPypffstFGrRBiprs",
+  srwaController: "GVs5Qi56CR9a6V2fUtXZ6Z99XK57yYa5DM5dECBW2AWZ",
+  identityClaims: "HUHiq1T1u3kKuUevcAx4tM5JEWXfX4tL2zTMg95NgCaz",
+  complianceModules: "EA4zMhKThxuXLYsaPztrwg1CtCpDngTwJwarDYN6zAdA",
+  offeringPool: "GSXBz4EmKAJVpd87gWr9KqgUFTapSh2HdqiQ3658TGLG",
+  yieldAdapter: "4vnxtj5w2Q6ijSJhPn98XEmxRn4b2erDCZHLcEX8eBgP",
+  valuationOracle: "5c3ArNidrz9ticU2JE5sqvZzVA3n9TauWM4BpV9gkqcE",
+  cashflowEngine: "4ps8FotUu75SPeyjG8ij6AyW8wuiPgD93Wmgk5Xw24pC",
+  purchaseOrder: "6KCm2iNZHz79PhiG66ZkCq6GSFoy2WUjkFeEqmrygyUv",
+  poolDistribution: "GBhbrpXQWfGTK6MSpbUUCMYh5X6hT5WWC66PDuiGx6Fm",
+};
+
+// Helper function to determine network type from endpoint
+function getNetworkType(endpoint: string): 'localnet' | 'devnet' | 'mainnet' {
+  if (endpoint.includes('127.0.0.1') || endpoint.includes('localhost') || endpoint.includes('0.0.0.0')) {
+    return 'localnet';
+  }
+  if (endpoint.includes('devnet')) {
+    return 'devnet';
+  }
+  return 'mainnet';
+}
+
+// Export function to get correct program IDs based on network
+export function getProgramIds(endpoint: string = RPC_ENDPOINT) {
+  const networkType = getNetworkType(endpoint);
+  console.log(`🌐 Network type detected: ${networkType} from endpoint: ${endpoint}`);
+
+  if (networkType === 'localnet') {
+    return PROGRAM_IDS_LOCALNET;
+  }
+  return PROGRAM_IDS_DEVNET;
+}
+
+// Export PROGRAM_IDS for backward compatibility (uses RPC_ENDPOINT to determine network)
+export const PROGRAM_IDS = getProgramIds();
 
 const LOCAL_IDL_BASE_PATH = "/idl";
 
@@ -185,16 +225,20 @@ export class SRWAClient {
       // Criar programas carregando IDL da blockchain (mesma abordagem do CLI que funciona)
       this.programs = {};
 
+      // Get correct program IDs based on current network
+      const currentProgramIds = getProgramIds(endpoint);
+
       const programConfigs: ProgramConfig[] = [
-        { name: 'srwaFactory', programId: PROGRAM_IDS.srwaFactory, required: true, idlFile: 'srwa_factory' },
-        { name: 'srwaController', programId: PROGRAM_IDS.srwaController, required: true, idlFile: 'srwa_controller' },
-        { name: 'identityClaims', programId: PROGRAM_IDS.identityClaims, required: true, idlFile: 'identity_claims' },
-        { name: 'complianceModules', programId: PROGRAM_IDS.complianceModules, required: true, idlFile: 'compliance_modules' },
-        { name: 'offeringPool', programId: PROGRAM_IDS.offeringPool, required: true, idlFile: 'offering_pool' },
-        { name: 'yieldAdapter', programId: PROGRAM_IDS.yieldAdapter, required: true, idlFile: 'yield_adapter' },
-        { name: 'valuationOracle', programId: PROGRAM_IDS.valuationOracle, required: true, idlFile: 'valuation_oracle' },
-        { name: 'cashflowEngine', programId: PROGRAM_IDS.cashflowEngine, required: true, idlFile: 'cashflow_engine' },
-        { name: 'purchaseOrder', programId: PROGRAM_IDS.purchaseOrder, required: false, idlFile: 'purchase_order' },
+        { name: 'srwaFactory', programId: currentProgramIds.srwaFactory, required: true, idlFile: 'srwa_factory' },
+        { name: 'srwaController', programId: currentProgramIds.srwaController, required: true, idlFile: 'srwa_controller' },
+        { name: 'identityClaims', programId: currentProgramIds.identityClaims, required: true, idlFile: 'identity_claims' },
+        { name: 'complianceModules', programId: currentProgramIds.complianceModules, required: true, idlFile: 'compliance_modules' },
+        { name: 'offeringPool', programId: currentProgramIds.offeringPool, required: true, idlFile: 'offering_pool' },
+        { name: 'yieldAdapter', programId: currentProgramIds.yieldAdapter, required: true, idlFile: 'yield_adapter' },
+        { name: 'valuationOracle', programId: currentProgramIds.valuationOracle, required: true, idlFile: 'valuation_oracle' },
+        { name: 'cashflowEngine', programId: currentProgramIds.cashflowEngine, required: true, idlFile: 'cashflow_engine' },
+        { name: 'purchaseOrder', programId: currentProgramIds.purchaseOrder, required: false, idlFile: 'purchase_order' },
+        { name: 'poolDistribution', programId: currentProgramIds.poolDistribution, required: false, idlFile: 'pool_distribution' },
       ];
 
       for (const config of programConfigs) {

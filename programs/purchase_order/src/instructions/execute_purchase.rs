@@ -6,17 +6,13 @@ use crate::errors::*;
 
 /// Executa a compra de forma automática e atômica
 /// 1. Investor envia SOL para pool vault
-/// 2. Admin transfere tokens RWA para investor
+/// 2. PDA escrow transfere tokens RWA para investor
 /// 3. Tudo em 1 transação, sem aprovação manual
 #[derive(Accounts)]
 #[instruction(quantity: u64, price_per_token_lamports: u64, timestamp: i64)]
 pub struct ExecutePurchase<'info> {
     #[account(mut)]
     pub investor: Signer<'info>,
-
-    /// Admin que possui os tokens e assina a transferência
-    #[account(mut)]
-    pub admin: Signer<'info>,
 
     /// Mint do token SRWA sendo comprado
     pub mint: InterfaceAccount<'info, anchor_spl::token_interface::Mint>,
@@ -41,13 +37,25 @@ pub struct ExecutePurchase<'info> {
     #[account(mut)]
     pub pool_vault: SystemAccount<'info>,
 
-    /// Token account do admin (origem dos tokens)
+    /// PDA que controla os tokens para venda (escrow authority)
+    /// CHECK: PDA seeds validation
+    #[account(
+        seeds = [
+            b"token_escrow",
+            mint.key().as_ref(),
+        ],
+        bump
+    )]
+    pub escrow_authority: UncheckedAccount<'info>,
+
+    /// Token account do escrow PDA (origem dos tokens)
     #[account(
         mut,
-        constraint = admin_token_account.mint == mint.key(),
-        constraint = admin_token_account.amount >= quantity @ PurchaseOrderError::InsufficientAdminTokens
+        constraint = escrow_token_account.mint == mint.key(),
+        constraint = escrow_token_account.owner == escrow_authority.key(),
+        constraint = escrow_token_account.amount >= quantity @ PurchaseOrderError::InsufficientAdminTokens
     )]
-    pub admin_token_account: InterfaceAccount<'info, TokenAccount>,
+    pub escrow_token_account: InterfaceAccount<'info, TokenAccount>,
 
     /// Token account do investor (destino dos tokens)
     #[account(
@@ -98,18 +106,28 @@ pub fn handler(
         total_lamports,
     )?;
 
-    // PASSO 2: Transferir tokens do admin para o investor
+    // PASSO 2: Transferir tokens do escrow PDA para o investor
     msg!("Step 2: Transferring {} tokens to investor", quantity);
     let decimals = ctx.accounts.mint.decimals;
 
-    let transfer_ctx = CpiContext::new(
+    // Seeds para assinar com o PDA
+    let mint_key = ctx.accounts.mint.key();
+    let seeds = &[
+        b"token_escrow",
+        mint_key.as_ref(),
+        &[ctx.bumps.escrow_authority],
+    ];
+    let signer_seeds = &[&seeds[..]];
+
+    let transfer_ctx = CpiContext::new_with_signer(
         ctx.accounts.token_program.to_account_info(),
         TransferChecked {
-            from: ctx.accounts.admin_token_account.to_account_info(),
+            from: ctx.accounts.escrow_token_account.to_account_info(),
             to: ctx.accounts.investor_token_account.to_account_info(),
-            authority: ctx.accounts.admin.to_account_info(),
+            authority: ctx.accounts.escrow_authority.to_account_info(),
             mint: ctx.accounts.mint.to_account_info(),
         },
+        signer_seeds,
     );
 
     token_interface::transfer_checked(transfer_ctx, quantity, decimals)?;
@@ -126,7 +144,7 @@ pub fn handler(
     purchase_order.status = PurchaseOrderStatus::Approved; // Já aprovado automaticamente
     purchase_order.created_at = timestamp;
     purchase_order.updated_at = clock.unix_timestamp;
-    purchase_order.processed_by = Some(ctx.accounts.admin.key());
+    purchase_order.processed_by = Some(ctx.accounts.escrow_authority.key()); // Processado pelo PDA escrow
     purchase_order.approval_tx = None; // Será preenchido pelo client
     purchase_order.reject_reason = None;
 

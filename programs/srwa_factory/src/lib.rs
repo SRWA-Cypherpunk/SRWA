@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("5suWp35g2vbxzRCTW2fRACD32DaL9Q3wy72Cxz4AesLg");
+declare_id!("9PheRCqa1vVvp5Ucp3BtGSyL7gvLPypffstFGrRBiprs");
 
 pub mod state;
 pub mod instructions;
@@ -72,13 +72,13 @@ pub mod srwa_factory {
         instructions::enable_module::handler(ctx, module_id, params)
     }
 
-    /// Disable a compliance module
-    pub fn disable_module(
-        ctx: Context<UpdateModule>,
-        module_id: u8,
-    ) -> Result<()> {
-        instructions::disable_module::handler(ctx, module_id)
-    }
+    // /// Disable a compliance module
+    // pub fn disable_module(
+    //     ctx: Context<UpdateModule>,
+    //     module_id: u8,
+    // ) -> Result<()> {
+    //     instructions::disable_module::handler(ctx, module_id)
+    // }
 
     /// Set oracle configuration
     pub fn set_oracle_cfg(
@@ -130,12 +130,12 @@ pub mod srwa_factory {
         instructions::remove_platform_admin::handler(ctx, admin_to_remove)
     }
 
-    /// Close the admin registry (super_admin only)
-    pub fn close_admin_registry(
-        ctx: Context<CloseAdminRegistry>,
-    ) -> Result<()> {
-        instructions::close_admin_registry::handler(ctx)
-    }
+    // /// Close the admin registry (super_admin only)
+    // pub fn close_admin_registry(
+    //     ctx: Context<CloseAdminRegistry>,
+    // ) -> Result<()> {
+    //     instructions::close_admin_registry::handler(ctx)
+    // }
 
     /// Initialize the KYC provider registry
     pub fn initialize_kyc_registry(

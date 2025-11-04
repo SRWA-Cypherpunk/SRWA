@@ -13,6 +13,7 @@ import type { EnhancedPoolData } from '@/types/markets';
 import type { SRWAMarketData } from '@/hooks/markets/useSRWAMarkets';
 import { usePurchaseOrders } from '@/hooks/solana/usePurchaseOrders';
 import { useKYCStatus } from '@/hooks/solana/useKYCStatus';
+import { usePoolDistribution } from '@/hooks/solana/usePoolDistribution';
 import { PublicKey } from '@solana/web3.js';
 import { BN } from '@coral-xyz/anchor';
 import { getMint, TOKEN_2022_PROGRAM_ID } from '@solana/spl-token';
@@ -36,8 +37,9 @@ export const LendingModal: React.FC<LendingModalProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const wallet = useWallet();
   const { connection } = useConnection();
-  const { createOrder } = usePurchaseOrders();
+  const { executePurchase } = usePurchaseOrders();
   const { kycStatus } = useKYCStatus();
+  const { getConfigByMint } = usePoolDistribution();
 
   // Check if this is an SRWA token
   const isSRWAToken = pool && 'marketType' in pool && pool.marketType === 'SRWA';
@@ -102,7 +104,15 @@ export const LendingModal: React.FC<LendingModalProps> = ({
         const actualPricePerToken = actualPricePerTokenLamports / 1e9;
         const actualTotalSol = tokenQuantity * actualPricePerToken;
 
-        console.log('[LendingModal] Creating purchase order:', {
+        // Get pool distribution config to find poolVault
+        const poolConfig = await getConfigByMint(tokenMint);
+        if (!poolConfig) {
+          throw new Error('Pool distribution not initialized for this token. Please contact admin.');
+        }
+
+        const poolVault = poolConfig.account.poolVault;
+
+        console.log('[LendingModal] Executing instant purchase:', {
           mint: tokenMint.toBase58(),
           tokenQuantity: tokenQuantity,
           decimals: decimals,
@@ -113,22 +123,23 @@ export const LendingModal: React.FC<LendingModalProps> = ({
           actualTotalSol: actualTotalSol,
           totalLamports: quantityInAtomicUnits * pricePerAtomicUnitLamports,
           adminVault: adminVault.toBase58(),
+          poolVault: poolVault.toBase58(),
         });
 
-        const result = await createOrder({
+        const result = await executePurchase({
           mint: tokenMint,
           quantity: quantityInAtomicUnits,
           pricePerTokenLamports: pricePerAtomicUnitLamports,
-          adminVault,
+          poolVault,
         });
 
-        toast.success('✅ Purchase order created!', {
-          description: `Order sent on-chain! You will receive ${tokenQuantity} tokens for ${actualTotalSol.toFixed(6)} SOL after admin approval.`,
+        toast.success('✅ Purchase completed!', {
+          description: `You received ${tokenQuantity} tokens for ${actualTotalSol.toFixed(6)} SOL instantly!`,
           duration: 8000,
           action: {
             label: 'View TX',
             onClick: () => window.open(
-              `https://explorer.solana.com/tx/${result.signature}?cluster=devnet`,
+              `https://explorer.solana.com/tx/${result}?cluster=localnet`,
               '_blank'
             ),
           },

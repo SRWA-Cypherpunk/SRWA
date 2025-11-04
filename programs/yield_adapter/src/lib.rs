@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("4RrVh2CZKUiU3g7uD2qVtVMYbXSvMQ1oSz2S8RnuHpEv");
+declare_id!("4vnxtj5w2Q6ijSJhPn98XEmxRn4b2erDCZHLcEX8eBgP");
 
 #[program]
 pub mod yield_adapter {

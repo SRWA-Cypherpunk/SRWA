@@ -1,0 +1,544 @@
+{
+  "address": "GBhbrpXQWfGTK6MSpbUUCMYh5X6hT5WWC66PDuiGx6Fm",
+  "metadata": {
+    "name": "pool_distribution",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "SRWA Pool Distribution - Automatic SOL distribution to Issuer based on threshold"
+  },
+  "instructions": [
+    {
+      "name": "distribute_to_issuer",
+      "docs": [
+        "Distribui SOL do pool vault para o issuer quando threshold é atingido",
+        "Esta instrução pode ser chamada por qualquer pessoa (permissionless)"
+      ],
+      "discriminator": [
+        165,
+        238,
+        220,
+        253,
+        156,
+        137,
+        44,
+        161
+      ],
+      "accounts": [
+        {
+          "name": "caller",
+          "docs": [
+            "Qualquer pessoa pode chamar esta instrução (permissionless)",
+            "Mas apenas é executada se threshold for atingido"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "distribution_config",
+          "docs": [
+            "Configuração de distribuição"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  105,
+                  115,
+                  116,
+                  114,
+                  105,
+                  98,
+                  117,
+                  116,
+                  105,
+                  111,
+                  110,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "distribution_config.mint",
+                "account": "DistributionConfig"
+              }
+            ]
+          }
+        },
+        {
+          "name": "pool_vault",
+          "docs": [
+            "Pool vault que contém SOL acumulado (deve ser um PDA ou signer)"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "issuer",
+          "docs": [
+            "Issuer que receberá o SOL"
+          ],
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "initialize",
+      "docs": [
+        "Inicializa a configuração de distribuição para um pool"
+      ],
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint",
+          "docs": [
+            "Mint do token SRWA associado a este pool"
+          ]
+        },
+        {
+          "name": "pool_vault",
+          "docs": [
+            "Pool vault que acumulará SOL das compras"
+          ],
+          "writable": true
+        },
+        {
+          "name": "distribution_config",
+          "docs": [
+            "Configuração de distribuição"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  105,
+                  115,
+                  116,
+                  114,
+                  105,
+                  98,
+                  117,
+                  116,
+                  105,
+                  111,
+                  110,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "threshold",
+          "type": "u64"
+        },
+        {
+          "name": "issuer",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "update_issuer",
+      "docs": [
+        "Atualiza o endereço do issuer (apenas admin)"
+      ],
+      "discriminator": [
+        9,
+        100,
+        234,
+        30,
+        84,
+        43,
+        30,
+        29
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "docs": [
+            "Apenas o admin pode atualizar issuer"
+          ],
+          "signer": true
+        },
+        {
+          "name": "distribution_config",
+          "docs": [
+            "Configuração de distribuição"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  105,
+                  115,
+                  116,
+                  114,
+                  105,
+                  98,
+                  117,
+                  116,
+                  105,
+                  111,
+                  110,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "distribution_config.mint",
+                "account": "DistributionConfig"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "new_issuer",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "update_threshold",
+      "docs": [
+        "Atualiza o threshold mínimo (apenas admin)"
+      ],
+      "discriminator": [
+        251,
+        36,
+        24,
+        179,
+        157,
+        31,
+        239,
+        234
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "docs": [
+            "Apenas o admin pode atualizar threshold"
+          ],
+          "signer": true
+        },
+        {
+          "name": "distribution_config",
+          "docs": [
+            "Configuração de distribuição"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  105,
+                  115,
+                  116,
+                  114,
+                  105,
+                  98,
+                  117,
+                  116,
+                  105,
+                  111,
+                  110,
+                  95,
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "distribution_config.mint",
+                "account": "DistributionConfig"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "new_threshold",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "DistributionConfig",
+      "discriminator": [
+        242,
+        166,
+        35,
+        212,
+        244,
+        125,
+        27,
+        87
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "ConfigUpdated",
+      "discriminator": [
+        40,
+        241,
+        230,
+        122,
+        11,
+        19,
+        198,
+        194
+      ]
+    },
+    {
+      "name": "SolDistributed",
+      "discriminator": [
+        2,
+        96,
+        42,
+        13,
+        219,
+        38,
+        173,
+        141
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "ThresholdNotMet",
+      "msg": "Threshold não foi atingido. Pool balance deve ser >= threshold configurado"
+    },
+    {
+      "code": 6001,
+      "name": "PoolVaultEmpty",
+      "msg": "Pool vault está vazio, não há SOL para distribuir"
+    },
+    {
+      "code": 6002,
+      "name": "InvalidThreshold",
+      "msg": "Threshold deve ser maior que zero"
+    },
+    {
+      "code": 6003,
+      "name": "Unauthorized",
+      "msg": "Apenas o admin pode executar esta ação"
+    },
+    {
+      "code": 6004,
+      "name": "MathOverflow",
+      "msg": "Overflow no cálculo"
+    },
+    {
+      "code": 6005,
+      "name": "InsufficientBalance",
+      "msg": "Pool vault deve ter saldo positivo"
+    }
+  ],
+  "types": [
+    {
+      "name": "ConfigUpdated",
+      "docs": [
+        "Evento emitido quando a configuração é atualizada"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "config",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "field",
+            "type": "string"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DistributionConfig",
+      "docs": [
+        "Configuração de distribuição para um pool específico"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "bump",
+            "docs": [
+              "Bump seed para o PDA"
+            ],
+            "type": "u8"
+          },
+          {
+            "name": "authority",
+            "docs": [
+              "Admin que pode atualizar configurações"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "docs": [
+              "Mint do token SRWA associado a este pool"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "pool_vault",
+            "docs": [
+              "Pool vault que acumula SOL das compras"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "issuer",
+            "docs": [
+              "Issuer que recebe SOL quando threshold é atingido"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "threshold",
+            "docs": [
+              "Threshold mínimo em lamports para distribuição",
+              "Ex: 100 SOL = 100_000_000_000 lamports"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "last_distribution",
+            "docs": [
+              "Timestamp da última distribuição"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "total_distributed",
+            "docs": [
+              "Total de SOL distribuído até agora"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "distribution_count",
+            "docs": [
+              "Número de distribuições realizadas"
+            ],
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SolDistributed",
+      "docs": [
+        "Evento emitido quando SOL é distribuído para o issuer"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "config",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "issuer",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          },
+          {
+            "name": "distribution_number",
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ]
+}

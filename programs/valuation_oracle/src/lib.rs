@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("C4sJ1phqCh2MxFJJqVHZuddXbp6hWfvz29N4CkscPpaW");
+declare_id!("5c3ArNidrz9ticU2JE5sqvZzVA3n9TauWM4BpV9gkqcE");
 
 #[program]
 pub mod valuation_oracle {

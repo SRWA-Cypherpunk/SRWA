@@ -570,6 +570,148 @@ export function usePurchaseOrders() {
     return orders.filter(order => order.account.investor.equals(investor));
   }, [orders]);
 
+  // Execute purchase (automático: SOL → pool, tokens → investor)
+  const executePurchase = useCallback(
+    async (params: {
+      mint: PublicKey;
+      quantity: number;
+      pricePerTokenLamports: number;
+      poolVault: PublicKey;
+    }) => {
+      if (!publicKey || !signTransaction || !program) {
+        throw new Error('Wallet not connected or program not loaded');
+      }
+
+      const { mint, quantity, pricePerTokenLamports, poolVault } = params;
+
+      // Generate timestamp
+      const nowMs = Date.now();
+      const nowMicros = nowMs * 1000;
+      const perfMs = performance.now();
+      const subMicrosPrecision = Math.floor((perfMs % 1) * 1000);
+      const randomSuffix = Math.floor(Math.random() * 1000);
+      const timestamp = nowMicros + subMicrosPrecision + randomSuffix;
+
+      // Derive PDA
+      const [purchaseOrderPda] = PublicKey.findProgramAddressSync(
+        [
+          Buffer.from('purchase_order'),
+          mint.toBuffer(),
+          publicKey.toBuffer(),
+          Buffer.from(new BN(timestamp).toArray('le', 8)),
+        ],
+        program.programId
+      );
+
+      // Derive escrow authority PDA
+      const [escrowAuthority] = PublicKey.findProgramAddressSync(
+        [Buffer.from('token_escrow'), mint.toBuffer()],
+        program.programId
+      );
+
+      // Get token accounts
+      const escrowTokenAccount = await getAssociatedTokenAddress(
+        mint,
+        escrowAuthority,
+        true, // allowOwnerOffCurve = true for PDA
+        TOKEN_2022_PROGRAM_ID
+      );
+
+      const investorTokenAccount = await getAssociatedTokenAddress(
+        mint,
+        publicKey,
+        false,
+        TOKEN_2022_PROGRAM_ID
+      );
+
+      // Derive transfer hook accounts
+      if (!programs?.srwaController) {
+        throw new Error('SRWA Controller program not loaded');
+      }
+
+      const transferHookProgram = programs.srwaController.programId;
+
+      const [extraAccountMetasPda] = PublicKey.findProgramAddressSync(
+        [Buffer.from('extra-account-metas'), mint.toBuffer()],
+        programs.srwaController.programId
+      );
+
+      const [senderKycRegistry] = PublicKey.findProgramAddressSync(
+        [Buffer.from('kyc_registry'), escrowAuthority.toBuffer()],
+        programs.srwaController.programId
+      );
+
+      const [recipientKycRegistry] = PublicKey.findProgramAddressSync(
+        [Buffer.from('kyc_registry'), publicKey.toBuffer()],
+        programs.srwaController.programId
+      );
+
+      console.log('[usePurchaseOrders.executePurchase]', {
+        mint: mint.toBase58(),
+        quantity,
+        pricePerTokenLamports,
+        poolVault: poolVault.toBase58(),
+        escrowAuthority: escrowAuthority.toBase58(),
+        escrowTokenAccount: escrowTokenAccount.toBase58(),
+        investorTokenAccount: investorTokenAccount.toBase58(),
+        purchaseOrderPda: purchaseOrderPda.toBase58(),
+        transferHookProgram: transferHookProgram.toBase58(),
+        extraAccountMetas: extraAccountMetasPda.toBase58(),
+        senderKycRegistry: senderKycRegistry.toBase58(),
+        recipientKycRegistry: recipientKycRegistry.toBase58(),
+      });
+
+      // Execute purchase (automatic, no admin signature needed)
+      const signature = await program.methods
+        .executePurchase(new BN(quantity), new BN(pricePerTokenLamports), new BN(timestamp))
+        .accounts({
+          investor: publicKey,
+          mint,
+          purchaseOrder: purchaseOrderPda,
+          poolVault,
+          escrowAuthority,
+          escrowTokenAccount,
+          investorTokenAccount,
+          tokenProgram: TOKEN_2022_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .remainingAccounts([
+          {
+            pubkey: transferHookProgram,
+            isSigner: false,
+            isWritable: false,
+          },
+          {
+            pubkey: extraAccountMetasPda,
+            isSigner: false,
+            isWritable: false,
+          },
+          {
+            pubkey: senderKycRegistry,
+            isSigner: false,
+            isWritable: false,
+          },
+          {
+            pubkey: recipientKycRegistry,
+            isSigner: false,
+            isWritable: false,
+          },
+        ])
+        .rpc({
+          skipPreflight: false,
+          commitment: 'confirmed',
+        });
+
+      console.log('[usePurchaseOrders.executePurchase] Success:', signature);
+
+      // Refresh orders
+      fetchOrders().catch(err => console.error('Error refreshing orders:', err));
+
+      return { signature, purchaseOrderPda };
+    },
+    [publicKey, signTransaction, program, fetchOrders, connection]
+  );
+
   return {
     orders,
     loading,
@@ -578,6 +720,7 @@ export function usePurchaseOrders() {
     approveOrder,
     rejectOrder,
     cancelOrder,
+    executePurchase,
     fetchOrders,
     getPendingOrders,
     getOrdersByInvestor,

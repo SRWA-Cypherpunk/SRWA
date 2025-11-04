@@ -32,6 +32,8 @@ import {
 import { PoolManager } from '@/components/srwa/admin/PoolManager';
 import { PoolsOverview } from '@/components/srwa/admin/PoolsOverview';
 import { PurchaseRequestsManager } from '@/components/srwa/admin/PurchaseRequestsManager';
+import { PoolDistributionMonitor } from '@/components/srwa/admin/PoolDistributionMonitor';
+import { TokenEscrowManager } from '@/components/srwa/admin/TokenEscrowManager';
 
 function mapStatus(status: any): RequestStatus {
   if (!status) return 'pending';
@@ -708,7 +710,7 @@ export function AdminPanel() {
 
       {/* Tabs */}
       <Tabs defaultValue="pending" className="space-y-6">
-        <TabsList className="grid w-full max-w-6xl grid-cols-6">
+        <TabsList className="grid w-full max-w-6xl grid-cols-8">
           <TabsTrigger value="pending">
             Pending ({grouped.pending.length})
           </TabsTrigger>
@@ -720,6 +722,12 @@ export function AdminPanel() {
           </TabsTrigger>
           <TabsTrigger value="purchases">
             Purchases
+          </TabsTrigger>
+          <TabsTrigger value="escrow">
+            Token Escrow
+          </TabsTrigger>
+          <TabsTrigger value="pool-distribution">
+            Pool Distribution
           </TabsTrigger>
           <TabsTrigger value="pools-overview">
             Pools Overview
@@ -782,6 +790,14 @@ export function AdminPanel() {
 
         <TabsContent value="purchases" className="space-y-4">
           <PurchaseRequestsManager />
+        </TabsContent>
+
+        <TabsContent value="escrow" className="space-y-4">
+          <TokenEscrowManager />
+        </TabsContent>
+
+        <TabsContent value="pool-distribution" className="space-y-4">
+          <PoolDistributionMonitor />
         </TabsContent>
 
         <TabsContent value="pools-overview">

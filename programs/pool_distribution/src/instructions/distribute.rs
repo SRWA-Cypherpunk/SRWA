@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_lang::system_program;
 use crate::state::*;
 use crate::errors::*;
 
@@ -20,13 +21,13 @@ pub struct DistributeToIssuer<'info> {
     )]
     pub distribution_config: Account<'info, DistributionConfig>,
 
-    /// Pool vault que contém SOL acumulado
+    /// Pool vault que contém SOL acumulado (deve ser um PDA ou signer)
     /// CHECK: Verificado via constraint de key match
     #[account(
         mut,
         constraint = pool_vault.key() == distribution_config.pool_vault @ DistributionError::Unauthorized
     )]
-    pub pool_vault: SystemAccount<'info>,
+    pub pool_vault: Signer<'info>,
 
     /// Issuer que receberá o SOL
     /// CHECK: Verificado via constraint de key match
@@ -61,18 +62,19 @@ pub fn handler(ctx: Context<DistributeToIssuer>) -> Result<()> {
         pool_balance as f64 / 1_000_000_000.0
     );
 
-    // Transferir TODO o saldo do pool vault para o issuer
+    // Transferir TODO o saldo do pool vault para o issuer usando System Program
     let transfer_amount = pool_balance;
 
-    **pool_vault.to_account_info().try_borrow_mut_lamports()? = pool_vault
-        .lamports()
-        .checked_sub(transfer_amount)
-        .ok_or(DistributionError::MathOverflow)?;
-
-    **issuer.to_account_info().try_borrow_mut_lamports()? = issuer
-        .lamports()
-        .checked_add(transfer_amount)
-        .ok_or(DistributionError::MathOverflow)?;
+    system_program::transfer(
+        CpiContext::new(
+            ctx.accounts.system_program.to_account_info(),
+            system_program::Transfer {
+                from: ctx.accounts.pool_vault.to_account_info(),
+                to: ctx.accounts.issuer.to_account_info(),
+            },
+        ),
+        transfer_amount,
+    )?;
 
     // Atualizar estatísticas
     config.last_distribution = clock.unix_timestamp;

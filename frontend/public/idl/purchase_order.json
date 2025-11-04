@@ -1,5 +1,5 @@
 {
-  "address": "43iQGS4Xyg6aGcpL52n7KurMm5eVNvQKEtgdPSxZwKPU",
+  "address": "6KCm2iNZHz79PhiG66ZkCq6GSFoy2WUjkFeEqmrygyUv",
   "metadata": {
     "name": "purchase_order",
     "version": "0.1.0",
@@ -277,6 +277,235 @@
       ]
     },
     {
+      "name": "deposit_tokens",
+      "docs": [
+        "Admin deposita tokens para a escrow account (PDA)",
+        "Necessário antes que investidores possam comprar automaticamente"
+      ],
+      "discriminator": [
+        176,
+        83,
+        229,
+        18,
+        191,
+        143,
+        176,
+        150
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint",
+          "docs": [
+            "Mint do token SRWA"
+          ]
+        },
+        {
+          "name": "escrow_authority",
+          "docs": [
+            "PDA que controla os tokens para venda (escrow authority)"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin_token_account",
+          "docs": [
+            "Token account do admin (origem dos tokens)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "escrow_token_account",
+          "docs": [
+            "Token account do escrow PDA (destino dos tokens)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "execute_purchase",
+      "docs": [
+        "Executa compra de forma automática e atômica",
+        "SOL → pool vault, tokens → investor (tudo em 1 transação)"
+      ],
+      "discriminator": [
+        193,
+        193,
+        250,
+        92,
+        23,
+        221,
+        96,
+        102
+      ],
+      "accounts": [
+        {
+          "name": "investor",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "mint",
+          "docs": [
+            "Mint do token SRWA sendo comprado"
+          ]
+        },
+        {
+          "name": "purchase_order",
+          "docs": [
+            "PDA da purchase order (criado nesta transação)"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  117,
+                  114,
+                  99,
+                  104,
+                  97,
+                  115,
+                  101,
+                  95,
+                  111,
+                  114,
+                  100,
+                  101,
+                  114
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              },
+              {
+                "kind": "account",
+                "path": "investor"
+              },
+              {
+                "kind": "arg",
+                "path": "timestamp"
+              }
+            ]
+          }
+        },
+        {
+          "name": "pool_vault",
+          "docs": [
+            "Pool vault que acumulará SOL (gerenciado pelo pool_distribution program)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "escrow_authority",
+          "docs": [
+            "PDA que controla os tokens para venda (escrow authority)"
+          ],
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  111,
+                  107,
+                  101,
+                  110,
+                  95,
+                  101,
+                  115,
+                  99,
+                  114,
+                  111,
+                  119
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "mint"
+              }
+            ]
+          }
+        },
+        {
+          "name": "escrow_token_account",
+          "docs": [
+            "Token account do escrow PDA (origem dos tokens)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "investor_token_account",
+          "docs": [
+            "Token account do investor (destino dos tokens)"
+          ],
+          "writable": true
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "quantity",
+          "type": "u64"
+        },
+        {
+          "name": "price_per_token_lamports",
+          "type": "u64"
+        },
+        {
+          "name": "timestamp",
+          "type": "i64"
+        }
+      ]
+    },
+    {
       "name": "reject_purchase_order",
       "docs": [
         "Admin rejeita a purchase order e reembolsa o SOL"
@@ -384,6 +613,21 @@
       ]
     }
   ],
+  "events": [
+    {
+      "name": "PurchaseExecuted",
+      "discriminator": [
+        119,
+        106,
+        168,
+        136,
+        190,
+        113,
+        126,
+        104
+      ]
+    }
+  ],
   "errors": [
     {
       "code": 6000,
@@ -437,6 +681,45 @@
     }
   ],
   "types": [
+    {
+      "name": "PurchaseExecuted",
+      "docs": [
+        "Evento emitido quando uma compra é executada automaticamente"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "purchase_order",
+            "type": "pubkey"
+          },
+          {
+            "name": "investor",
+            "type": "pubkey"
+          },
+          {
+            "name": "mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "quantity",
+            "type": "u64"
+          },
+          {
+            "name": "total_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "pool_vault",
+            "type": "pubkey"
+          },
+          {
+            "name": "timestamp",
+            "type": "i64"
+          }
+        ]
+      }
+    },
     {
       "name": "PurchaseOrder",
       "type": {
